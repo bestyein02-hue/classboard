@@ -518,6 +518,7 @@ mark.key{background:none;color:inherit;text-decoration:underline;text-decoration
   .nav{min-height:54px;font-size:24px}
   .foot .tg{min-height:46px;font-size:20px}
 }
+.ib.ye{font-family:var(--f-hand);font-weight:700;letter-spacing:.06em;min-width:64px;padding-left:14px;padding-right:14px}
 </style>
 </head>
 <body>
@@ -1023,7 +1024,10 @@ function setReveal(patch){ S.reveal = {...S.reveal, ...patch}; pushLive(); rende
 function setScale(v){ S.scale = Math.max(.7, Math.min(1.8, Math.round(v*10)/10)); try{localStorage.setItem("sb_scale",S.scale)}catch(e){} pushLive(); render(); }
 
 /* ================= auth ================= */
+function setLastMode(m){ try{ localStorage.setItem("cb_mode",m); }catch(e){} }
+function lastMode(){ try{ return localStorage.getItem("cb_mode"); }catch(e){ return null; } }
 function enterAdmin(){
+  setLastMode("admin");
   S.isAdmin=true; S.mode="admin"; S.sheet=null; S.drawer=false; stopPairPoll();
   S.adminTab = (window.innerWidth<760) ? "remote" : "edit";
   if(!S.editPid){ const first = allPassagesOrdered()[0]; if(first){ loadDraft(first.id); } }
@@ -1031,7 +1035,7 @@ function enterAdmin(){
 }
 async function exitAdmin(){
   if(S.dirty && !confirm("저장하지 않은 수정이 있습니다. 그래도 나갈까요?")) return;
-  S.dirty=false; S.mode="class"; S.isAdmin=false;
+  S.dirty=false; S.mode="class"; S.isAdmin=false; setLastMode("class");
   const remembered = (()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })();
   if(!remembered){ API.req("POST","/api/logout").catch(()=>{}); API.setToken(""); }
   render();
@@ -1076,7 +1080,7 @@ async function boot(){
   if(API.token){ try{ const me=await API.req("GET","/api/me"); if(me.admin) S.isAdmin=true; else API.setToken(""); }catch(e){} }
   const f=allPassagesOrdered()[0]; if(f) S.cur={pid:f.id, idx:0};
   if(PAIR_FROM_URL) S.pendingPair=PAIR_FROM_URL;
-  if(S.isAdmin){ enterAdmin(); approvePending(); }
+  if(S.isAdmin){ if(PAIR_FROM_URL || lastMode()!=="class") enterAdmin(); else render(); approvePending(); }
   else if(S.pendingPair){ S.sheet="login"; render(); setTimeout(()=>{ const p=$("#pw"); if(p) p.focus(); },80); }
   else render();
   pollLoop();
@@ -1150,11 +1154,11 @@ function renderClass(){
     <button class="ib hide-sm" data-act="bigger" aria-label="Larger">${L("가+","A+")}</button>
     <button class="ib hide-sm" data-act="full" aria-label="Fullscreen">${L("전체화면","Fullscreen")}</button>
     <button class="ib" data-act="review">${L("저장","Save")}</button>
-    <button class="ib solid" data-act="teacher">${L("선생님","Teacher")}</button>
+    <button class="ib solid ye" data-act="teacher" title="Made by YE" aria-label="YE 메뉴">YE</button>
   </header>
   ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:""}
   <main class="stage">${
-    !p ? `<div class="empty"><b>아직 수업 자료가 없어요</b>오른쪽 위 ‘선생님’에서 관리자 모드로 들어가 지문을 추가하세요.</div>`
+    !p ? `<div class="empty"><b>아직 수업 자료가 없어요</b>오른쪽 위 ‘YE’에서 관리자 모드로 들어가 지문을 추가하세요.</div>`
     : !sl ? `<div class="empty"><b>슬라이드가 없어요</b>관리자 모드에서 이 지문에 슬라이드를 추가하세요.</div>`
     : `<article class="slide${FIT_TYPES.includes(sl.type)?" fit":(sl.type==="draw"?" fit draw":"")}">${renderSlide(sl,{reveal:S.reveal, live:true, passage:p})}</article>`}
   </main>
@@ -1222,8 +1226,8 @@ function renderSheet(){
     <div class="row-btns" style="justify-content:center"><button class="btn" data-gtadd="-60">${L("−1분","−1 min")}</button><button class="btn" data-gtadd="60">${L("+1분","+1 min")}</button><button class="btn" data-gtadd="10">${L("+10초","+10 sec")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn pri" data-act="gt-go">${running?L("가는 중","Running"):L("시작","Start")}</button><button class="btn" data-act="gt-pause">${L("멈춤","Pause")}</button><button class="btn warn" data-act="gt-reset">${L("처음으로","Reset")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn" data-act="close">${L("닫기 (타이머는 계속 갑니다)","Close (timer keeps running)")}</button></div></div>`; }
-  if(S.sheet==="teacher") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="선생님 메뉴">
-    <h3>선생님 메뉴</h3>
+  if(S.sheet==="teacher") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴">
+    <h3>YE 메뉴</h3>
     <p>학생들이 보는 칠판에서는 비밀번호를 치지 않아도 됩니다. 폰으로 잠금을 풀어 주세요.</p>
     <div class="row-btns" style="flex-direction:column">
       <button class="btn pri" data-act="pair">폰으로 잠금 풀기 (번호·QR 표시)</button>
@@ -1489,7 +1493,7 @@ function renderRemote(){
     ${sl.type==="question"&&Number.isInteger(sl.answer)?`<p class="help" style="margin-bottom:0">정답 ${CIRC[sl.answer]} ${sl.explain?"— "+esc(sl.explain):""}</p>`:""}</div>`:""}
   <div class="r-card"><h5>슬라이드로 바로 가기</h5><div class="r-sl">${slides.map((s,i)=>`<button class="${i===S.cur.idx?"on":""}" data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button>`).join("")}</div></div>
   <div class="r-card"><h5>칠판 잠금 해제</h5>
-    <p class="help" style="margin-top:0">칠판의 ‘선생님 → 폰으로 잠금 풀기’에 나온 4자리 번호를 넣으세요.</p>
+    <p class="help" style="margin-top:0">칠판의 ‘YE → 폰으로 잠금 풀기’에 나온 4자리 번호를 넣으세요.</p>
     <div class="code-in"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="0000"><button class="btn pri" data-act="unlock">해제</button></div></div>
   <div class="r-pad"><button class="nav" data-act="prev">‹ 이전</button><button class="nav" data-act="next">다음 ›</button></div>`;
 }
@@ -1506,8 +1510,8 @@ function renderSettings(){
   <div class="r-card"><h5>이 기기</h5><p class="help" style="margin-top:0">‘30일 기억하기’로 로그인했다면 여기서 로그아웃하세요. 전자칠판에서는 기억하기를 켜지 마세요.</p>
     <button class="btn" data-act="forget">이 기기 로그아웃</button></div>
   <div class="r-card"><h5>사용 방법</h5><div class="note">1. 전자칠판: 이 사이트 주소를 열면 수업 화면이 나옵니다. 로그인은 필요 없습니다.
-2. 폰: 같은 주소를 열고 ‘선생님 → 이 기기에서 비밀번호로 열기’로 들어가면 리모컨이 됩니다. 폰에서 넘기면 칠판도 1~2초 안에 따라 넘어갑니다.
-3. 칠판에서 편집이 필요하면 칠판의 ‘선생님 → 폰으로 잠금 풀기’ 번호를 폰 리모컨에 입력하세요.
+2. 폰: 같은 주소를 열고 ‘YE → 이 기기에서 비밀번호로 열기’로 들어가면 리모컨이 됩니다. 폰에서 넘기면 칠판도 1~2초 안에 따라 넘어갑니다.
+3. 칠판에서 편집이 필요하면 칠판의 ‘YE → 폰으로 잠금 풀기’ 번호를 폰 리모컨에 입력하세요.
 4. 칠판은 주소 끝에 #board를 붙여 한 번만 열어 두세요 (예: …workers.dev/#board). 그 브라우저는 계속 칠판으로 기억됩니다.
 5. 교실을 돌아다닐 때는 프레젠터(클리커)의 다음·이전 버튼으로 칠판을 넘길 수 있습니다. 문장 읽기 화면에서는 1·2·3 키가 해석·어휘·어법, T 키가 타이머입니다.
 6. ✏️ 필기 버튼을 누르면 어느 화면에서든 펜·형광펜·지우개로 쓸 수 있고, ‘뒤로’로 되돌립니다. 필기는 저장되지 않고 슬라이드별로 남아 있다가 새로고침하면 사라집니다.
@@ -1571,7 +1575,7 @@ document.addEventListener("click", async e=>{
     case "rv-png": return rvPng();
     case "tl-reset": return setReveal({tl:[0,0,0,0,0,0]});
     case "today-add": { const sel=$("#todaysel"); if(sel && sel.value && !S.today.includes(sel.value)){ S.today.push(sel.value); pushLive(); renderRemote(); } return; }
-    case "uilang": try{ localStorage.setItem("cb_ui",UIEN?"ko":"en"); }catch(x){} location.reload(); return;
+    case "uilang": try{ localStorage.setItem("cb_ui",UIEN?"ko":"en"); }catch(x){} setLastMode(S.mode); location.reload(); return;
     case "gt-go": return gtCmd("go",180);
     case "gt-pause": return gtCmd("pause");
     case "gt-reset": return gtCmd("reset");
