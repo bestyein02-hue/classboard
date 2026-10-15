@@ -628,8 +628,27 @@ body.ann-on .stage{padding-right:92px}
 .lock-cls .cls{min-width:92px;min-height:64px;font-family:var(--f-hand);font-weight:700;font-size:32px;border:2px solid var(--line);border-radius:14px;color:var(--muted);background:#fff}
 .lock-cls .cls:hover{border-color:var(--orange);color:var(--orange-dk)}
 .lock-cls .cls.on{background:var(--orange);border-color:var(--orange);color:#fff}
-.cls{font-family:var(--f-hand);font-size:21px}
-.lock-cls .cls{font-size:32px}
+.cls{font-family:var(--f-hand);font-weight:700;font-size:21px}
+.lock-cls .cls{font-family:var(--f-hand);font-weight:700;font-size:32px}
+
+/* 대기 화면: 문고판 표지 (주황 띠 · 흰 띠 · 주황 띠) */
+.lock.cover{flex-direction:column;align-items:stretch;justify-content:stretch;background:var(--orange)}
+.cv-top{flex:0 0 24%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff}
+.cv-lotus{width:min(9vw,72px);height:auto}
+.cv-pub{font-family:var(--f-ui);font-weight:900;font-size:clamp(14px,1.5vw,22px);letter-spacing:.32em;padding-left:.32em}
+.cv-mid{flex:1;background:#FBF8F1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;border-top:3px solid #fff;border-bottom:3px solid #fff;box-shadow:inset 0 6px 0 #FBF8F1,inset 0 -6px 0 #FBF8F1}
+.cv-title{font-family:Fredoka,var(--f-ui);font-weight:600;font-size:min(15vw,168px);line-height:1;letter-spacing:.05em;color:var(--ink)}
+.cv-rule{width:min(22vw,200px);height:5px;background:var(--orange);border-radius:3px}
+.cv-by{font-family:var(--f-hand);font-weight:700;font-size:clamp(24px,3vw,40px);color:var(--muted);letter-spacing:.08em}
+.cv-bot{flex:0 0 30%;display:flex;align-items:center;justify-content:center}
+.cv-bot .lock-cls{margin-top:0}
+.cv-bot .lock-cls .cls{background:#fff;border:0;color:var(--orange-dk)}
+.cv-bot .lock-cls .cls:hover{background:#FFF1E6;color:var(--orange-dk)}
+.cv-bot .lock-cls .cls.on{background:var(--ink);color:#fff}
+.lock.cover~.lock-ye{background:#fff;border-color:#fff}
+
+/* 수업 화면: 크림색 종이 바탕 (눈부심 줄이기) */
+.stage{background-color:#FBF8F1}
 </style>
 </head>
 <body>
@@ -1322,7 +1341,8 @@ function renderClass(){
   const app=$("#app");
   if(!S.isAdmin || S.blank){
     const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
-    app.innerHTML = `<div class="lock"><div class="lock-t">${pickCls?`<small>진주동명고</small><b>ENGLISH</b><div class="lock-cls">${cl.map(c=>`<button class="cls${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}">${esc(c)}</button>`).join("")}</div>`:""}</div></div><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    const lotus=`<svg class="cv-lotus" viewBox="0 0 64 40" aria-hidden="true"><g fill="#fff"><ellipse cx="32" cy="17" rx="6.5" ry="15"/><ellipse cx="32" cy="17" rx="6" ry="14" transform="rotate(-38 32 33)"/><ellipse cx="32" cy="17" rx="6" ry="14" transform="rotate(38 32 33)"/><ellipse cx="32" cy="22" rx="5" ry="11" transform="rotate(-72 32 34)"/><ellipse cx="32" cy="22" rx="5" ry="11" transform="rotate(72 32 34)"/><rect x="12" y="35" width="40" height="3" rx="1.5"/></g></svg>`;
+    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${lotus}<span class="cv-pub">DONGMYEONG BOOKS</span></div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">진주동명고</small></div><div class="cv-bot"><div class="lock-cls">${cl.map(c=>`<button class="cls${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}">${esc(c)}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
   }
   const p=getP(S.cur.pid);
