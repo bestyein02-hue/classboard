@@ -1322,7 +1322,7 @@ function renderSheet(){
     const body = S.isAdmin
       ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
 `
-      : `<p>이 화면은 선생님이 열어야 볼 수 있어요.</p><div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwclass","비밀번호로 칠판 열기")}${B("pwlogin","관리자 화면 (비밀번호)")}${B("close","닫기")}</div>`;
+      : `<p>이 화면은 선생님이 열어야 볼 수 있어요.</p><div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwopen","비밀번호로 열기")}${B("close","닫기")}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
   }
   if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="폰으로 칠판 열기">
@@ -1710,6 +1710,7 @@ document.addEventListener("click", async e=>{
     case "full": S.sheet=null; render(); try{ document.fullscreenElement? document.exitFullscreen() : await document.documentElement.requestFullscreen(); }catch(err){ toast("브라우저 메뉴의 전체 화면을 써 주세요"); } return;
     case "teacher": S.sheet="teacher"; return render();
     case "pair": return startPair();
+    case "pwopen": S.loginTo=(innerWidth<760)?"admin":"class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwclass": S.loginTo="class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwlogin": S.loginTo="admin"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "dologin": {
