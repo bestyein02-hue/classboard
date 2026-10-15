@@ -757,7 +757,7 @@ function curSlide(){ const p=getP(S.cur.pid); return p?(p.slides||[])[S.cur.idx]
 function fmtT(sec){ sec=Math.ceil(sec); return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
 function gtOn(){ return !!S.gtm && !S.gtm.off; }
 function gtSecs(){ if(!gtOn()) return 0; return (S.gtm.run && S.gtEnd) ? Math.max(0,(S.gtEnd-Date.now())/1000) : S.gtm.sec; }
-function tmrSecs(sl){ return gtOn() ? gtSecs() : (parseFloat(sl.minutes)||3)*60; }
+function tmrSecs(sl){ return gtOn() ? gtSecs() : (parseFloat(sl.minutes)||2)*60; }
 function gtApply(){ const m=S.gtm; if(!m||m.off){ S.gtEnd=null; S.gtDone=false; return; } if(m.at!==S.gtAt){ S.gtAt=m.at; S.gtEnd=m.run?Date.now()+m.sec*1000:null; S.gtDone=false; } }
 function gtRefresh(){ if(S.mode==="class" || (S.mode==="admin" && S.adminTab==="remote")) render(); }
 function gtCmd(cmd,arg){
@@ -766,18 +766,21 @@ function gtCmd(cmd,arg){
   else{
     let sec=gtSecs(), total=gtOn()?S.gtm.total:0, run=gtOn()?S.gtm.run:false;
     if(cmd==="start"){ sec=arg; total=arg; run=true; }
-    else if(cmd==="go"){ if(!gtOn() || sec<=0){ sec=arg||total||180; total=sec; } run=true; }
+    else if(cmd==="go"){ if(!gtOn() || sec<=0){ sec=arg||total||120; total=sec; } run=true; }
     else if(cmd==="pause"){ run=false; }
     else if(cmd==="add"){ sec=Math.max(0,sec+arg); total=Math.max(total,sec); }
     S.gtm={sec,run,at:now,total};
   }
   gtApply(); pushLive(); gtRefresh();
 }
-function tmCmd(cmd){ const sl=curSlide(), def=((sl&&sl.type==="task"?parseFloat(sl.minutes):0)||3)*60; if(cmd==="go") gtCmd("go",def); else if(cmd==="pause") gtCmd("pause"); else gtCmd("reset"); }
+function tmCmd(cmd){ const sl=curSlide(), def=((sl&&sl.type==="task"?parseFloat(sl.minutes):0)||2)*60; if(cmd==="go") gtCmd("go",def); else if(cmd==="pause") gtCmd("pause"); else gtCmd("reset"); }
 function beep(){ try{ const c=S.audio; if(!c) return; if(c.state==="suspended") c.resume(); [[0,880],[0.18,1320]].forEach(([t,f])=>{ const o=c.createOscillator(), g=c.createGain(); o.type="sine"; o.frequency.value=f; o.connect(g); g.connect(c.destination); const T=c.currentTime+t; g.gain.setValueAtTime(0.0001,T); g.gain.exponentialRampToValueAtTime(0.35,T+0.02); g.gain.exponentialRampToValueAtTime(0.0001,T+0.45); o.start(T); o.stop(T+0.5); }); }catch(e){} }
 function tickTmr(){
-  const on=gtOn(), sl=curSlide(), sec=on?gtSecs():((sl&&sl.type==="task")?(parseFloat(sl.minutes)||3)*60:0);
-  if(on && S.gtm.run && sec<=0 && !S.gtDone){ S.gtDone=true; S.gtm={...S.gtm,run:false,sec:0}; S.gtEnd=null; beep(); gtRefresh(); return; }
+  const on=gtOn(), sl=curSlide(), sec=on?gtSecs():((sl&&sl.type==="task")?(parseFloat(sl.minutes)||2)*60:0);
+  if(on && S.gtm.run && sec<=0 && !S.gtDone){ S.gtDone=true; const tot=S.gtm.total||120; S.gtm={...S.gtm,run:false,sec:0}; S.gtEnd=null; beep(); gtRefresh();
+    // 끝나면 3초 뒤 처음 시간으로 되돌려 둠 (시작만 누르면 다시 같은 시간)
+    clearTimeout(S.gtResetT); S.gtResetT=setTimeout(()=>{ if(S.gtm && !S.gtm.off && !S.gtm.run && gtSecs()<=0){ S.gtm={sec:tot,run:false,at:Date.now(),total:tot}; S.gtDone=false; gtApply(); pushLive(); gtRefresh(); } },3000);
+    return; }
   const done=on && sec<=0;
   document.querySelectorAll(".tmr-txt").forEach(el=>{ el.textContent=fmtT(sec); el.classList.toggle("done",done); });
 }
@@ -792,7 +795,7 @@ function fromAnalyzer(it, unitId, order){
   const blocks=(d.structure||[]).map(b=>({label:b.role||"", span:String(b.sents||b.span||"").replace(/\s*-\s*/g,"~"), ko:b.kr||"", en:b.en_key||"", thesis:false}));
   const slides=[
     {id:uid(),type:"text",title:"원문",paras,note:it.source?("출처: "+it.source):""},
-    {id:uid(),type:"task",title:"문제를 풀어 보세요",body:"",minutes:3,note:""},
+    {id:uid(),type:"task",title:"문제를 풀어 보세요",body:"",minutes:2,note:""},
     {id:uid(),type:"structure",title:"구조도",blank:true,blocks,sub:d.subject||"",theme:d.theme||"",thesis:"",thesisKo:"",
       note:"지문 분석 마지막에 아이들과 정리 (블록 → 소재 → 주제)"+(te?("\n분석기 주제문 후보(칠판엔 표시 안 함): "+te):"")+(d.flow_type?("\n전개 방식: "+d.flow_type):"")},
     {id:uid(),type:"textmap",title:"구조 표시",hidden:true,note:""}
@@ -1325,7 +1328,7 @@ function renderSheet(){
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="타이머">
     <h3>${L("타이머","Timer")}</h3>
     <div class="code tmr-txt${on&&gtSecs()<=0?" done":""}">${fmtT(on?gtSecs():0)}</div>
-    <div class="row-btns" style="justify-content:center">${[1,3,5,10].map(m=>`<button class="btn" data-gt="${m*60}">${m}${L("분"," min")}</button>`).join("")}</div>
+    <div class="row-btns" style="justify-content:center">${[1,2,3,5,10].map(m=>`<button class="btn" data-gt="${m*60}">${m}${L("분"," min")}</button>`).join("")}</div>
     <div class="row-btns" style="justify-content:center"><button class="btn" data-gtadd="-60">${L("−1분","−1 min")}</button><button class="btn" data-gtadd="60">${L("+1분","+1 min")}</button><button class="btn" data-gtadd="10">${L("+10초","+10 sec")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn pri" data-act="gt-go">${running?L("가는 중","Running"):L("시작","Start")}</button><button class="btn" data-act="gt-pause">${L("멈춤","Pause")}</button><button class="btn warn" data-act="gt-reset">${L("처음으로","Reset")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn" data-act="close">${L("닫기 (타이머는 계속 갑니다)","Close (timer keeps running)")}</button></div></div>`; }
@@ -1543,7 +1546,7 @@ function newSlide(type){
   if(type==="translate"){ base.pairs=[]; }
   if(type==="background") base.items=[];
   if(type==="reading"){ base.title="문장 읽기"; base.memos={}; base.xpts={}; }
-  if(type==="task"){ base.title="문제를 풀어 보세요"; base.minutes=3; base.body=""; }
+  if(type==="task"){ base.title="문제를 풀어 보세요"; base.minutes=2; base.body=""; }
   if(type==="draw"){ base.title="그림판"; base.body=""; }
   if(type==="free"){ base.title=""; base.body=""; }
   return base;
@@ -1579,7 +1582,7 @@ function renderRemote(){
   <div class="r-card"><h5>오늘의 수업 (칠판 목차 맨 위에 나오고, 지문이 끝나면 다음 지문으로 이어집니다)</h5>
     ${S.today.map(getP).filter(Boolean).map((q,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="flex:1">${i+1}. ${esc(q.title)}</span><button class="mini" data-tmove="${i}|-1">↑</button><button class="mini" data-tmove="${i}|1">↓</button><button class="mini" data-today="${q.id}">✕</button></div>`).join("")||'<p class="help" style="margin:0 0 8px">아직 없어요. 아래에서 지문을 골라 추가하세요.</p>'}
     <div class="code-in"><select class="inp" id="todaysel">${allPassagesOrdered().filter(q=>!S.today.includes(q.id)).map(q=>`<option value="${q.id}">${esc(q.title)}</option>`).join("")}</select><button class="btn pri" data-act="today-add">추가</button></div></div>
-  <div class="r-card"><h5>타이머 (칠판 어디서든 보임)</h5><div class="r-toggles"><span class="tm tmr-txt" style="font-size:34px;font-weight:700;margin-right:8px">${fmtT(gtOn()?gtSecs():0)}</span>${[1,3,5,10].map(m=>`<button class="tg" data-gt="${m*60}">${m}분</button>`).join("")}<button class="tg" data-act="gt-go">▶</button><button class="tg" data-act="gt-pause">⏸</button><button class="tg" data-act="gt-reset">↺</button></div></div>
+  <div class="r-card"><h5>타이머 (칠판 어디서든 보임)</h5><div class="r-toggles"><span class="tm tmr-txt" style="font-size:34px;font-weight:700;margin-right:8px">${fmtT(gtOn()?gtSecs():0)}</span>${[1,2,3,5,10].map(m=>`<button class="tg" data-gt="${m*60}">${m}분</button>`).join("")}<button class="tg" data-act="gt-go">▶</button><button class="tg" data-act="gt-pause">⏸</button><button class="tg" data-act="gt-reset">↺</button></div></div>
   ${sl?`<div class="r-card"><h5>칠판 조작</h5><div class="r-toggles">
     ${sl.type==="question"?tg("answer","정답 공개",S.reveal.answer)+tg("tally","손 들기 집계",S.reveal.tally)+`<button class="tg" data-act="tl-reset">집계 0으로</button>`:""}
     ${sl.type==="vocab"?(S.reveal.vlist?tg("cover","뜻 가리기",S.reveal.cover):`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?"한→영":"영→한"}</button><button class="tg" data-act="vq-shuf">섞기</button>`)+`<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">목록으로</button>`:""}
@@ -1708,7 +1711,7 @@ document.addEventListener("click", async e=>{
     case "tl-reset": return setReveal({tl:[0,0,0,0,0,0]});
     case "today-add": { const sel=$("#todaysel"); if(sel && sel.value && !S.today.includes(sel.value)){ S.today.push(sel.value); pushLive(); renderRemote(); } return; }
     case "uilang": try{ localStorage.setItem("cb_ui",UIEN?"ko":"en"); }catch(x){} setLastMode(S.mode); location.reload(); return;
-    case "gt-go": return gtCmd("go",180);
+    case "gt-go": return gtCmd("go",120);
     case "gt-pause": return gtCmd("pause");
     case "gt-reset": return gtCmd("reset");
     case "tm-go": return tmCmd("go");
