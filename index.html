@@ -1775,7 +1775,8 @@ function renderSettings(){
   <div class="r-card"><h5>학생 접속 막기</h5>
     <p class="help" style="margin-top:0">주소를 알아도 로그인하지 않은 기기에는 아무것도 보이지 않아요. 전자칠판은 수업 때마다 <b>YE → 폰으로 칠판 열기</b>로 열고, 끝나면 <b>수업 끝내기</b>를 누르면 다시 잠겨요.</p></div>
   <div class="r-card"><h5>이 기기</h5><p class="help" style="margin-top:0">‘30일 기억하기’로 로그인했다면 여기서 로그아웃하세요. 전자칠판에서는 기억하기를 켜지 마세요.</p>
-    <button class="btn" data-act="forget">이 기기 로그아웃</button><button class="btn warn" data-act="logoutall" style="margin-top:8px">전체 기기 로그아웃</button></div>
+    <button class="btn" data-act="forget">이 기기 로그아웃</button></div>
+  <div class="r-card"><h5>모든 기기 로그아웃 (폰을 잃어버렸을 때 등)</h5><p class="help" style="margin-top:0">Cloudflare → <b>Storage &amp; Databases → D1</b> → <b>classboard-db</b> → <b>Console</b>에서 아래 한 줄을 실행하세요. 모든 기기가 로그아웃돼요(이 기기 포함).</p><div class="note" style="font-family:monospace;background:var(--paper);padding:8px 10px;border-radius:8px">DELETE FROM sessions;</div></div>
   <div class="r-card"><h5>사용 방법</h5><div class="note">1. 전자칠판: 이 사이트 주소를 열면 수업 화면이 나옵니다. 로그인은 필요 없습니다.
 2. 폰: 같은 주소를 열고 ‘YE → 이 기기에서 비밀번호로 열기’로 들어가면 리모컨이 됩니다. 폰에서 넘기면 칠판도 1~2초 안에 따라 넘어갑니다.
 3. 칠판에서 편집이 필요하면 칠판의 ‘YE → 폰으로 잠금 풀기’ 번호를 폰 리모컨에 입력하세요.
