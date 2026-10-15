@@ -1301,7 +1301,7 @@ function renderSheet(){
     const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
     const fs=!!document.fullscreenElement;
     const body = S.isAdmin
-      ? `<div class="ye-grid">${B("admin","관리자 화면 열기",1)}${B("review","복습 자료 저장")}${B("blank-board","칠판 비우기")}${B("end-class","수업 끝내기")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
+      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("blank-board","칠판 비우기")}${B("end-class","수업 끝내기")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
          <p class="help" style="margin:10px 0 0">수업 끝내기: 칠판을 비우고, 모든 필기를 지우고, 폰으로 연 칠판은 다시 잠가요.</p>`
       : `<p>이 화면은 선생님이 열어야 볼 수 있어요.</p><div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwclass","비밀번호로 칠판 열기")}${B("pwlogin","관리자 화면 (비밀번호)")}${B("close","닫기")}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
@@ -1543,7 +1543,7 @@ function renderRemote(){
     <div class="r-now" style="margin-top:10px">${sl?esc(slideTitle(sl)):"슬라이드 없음"} <span class="help">${slides.length?`${S.cur.idx+1} / ${slides.length}`:""}</span></div></div>
   <div class="r-card"><h5>칠판</h5><div class="r-tools">
     <button class="tg" data-act="blank-board">칠판 비우기</button><button class="tg" data-act="end-class">수업 끝내기</button><button class="tg" data-act="a-clearall">모든 필기 지우기</button></div>
-    <p class="help" style="margin:8px 0 0">${S.blank?"<b>지금 칠판이 비어 있어요.</b> 지문이나 슬라이드를 고르면 다시 나타나요.":"수업 끝내기: 칠판을 비우고 필기를 지우고, 폰으로 연 칠판은 다시 잠가요."}</p></div>
+    <p class="help" style="margin:8px 0 0">${S.blank?`<b>지금 칠판이 비어 있어요.</b> <button class="btn pri sm" data-act="unblank">다시 띄우기</button>`:"수업 끝내기: 칠판을 비우고 필기를 지우고, 폰으로 연 칠판은 다시 잠가요."}</p></div>
   <div class="r-card"><h5>오늘의 수업 (칠판 목차 맨 위에 나오고, 지문이 끝나면 다음 지문으로 이어집니다)</h5>
     ${S.today.map(getP).filter(Boolean).map((q,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="flex:1">${i+1}. ${esc(q.title)}</span><button class="mini" data-tmove="${i}|-1">↑</button><button class="mini" data-tmove="${i}|1">↓</button><button class="mini" data-today="${q.id}">✕</button></div>`).join("")||'<p class="help" style="margin:0 0 8px">아직 없어요. 아래에서 지문을 골라 추가하세요.</p>'}
     <div class="code-in"><select class="inp" id="todaysel">${allPassagesOrdered().filter(q=>!S.today.includes(q.id)).map(q=>`<option value="${q.id}">${esc(q.title)}</option>`).join("")}</select><button class="btn pri" data-act="today-add">추가</button></div></div>
@@ -1648,7 +1648,8 @@ document.addEventListener("click", async e=>{
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
     case "admin": S.sheet=null; return enterAdmin();
-    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 비웠어요. 지문을 고르면 다시 나타나요"); return render();
+    case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
+    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 비웠어요. 다시 띄우려면 YE → 칠판 다시 띄우기 (또는 클리커 버튼)"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
     case "end-class": if(!confirm("수업을 끝낼까요? 칠판을 비우고 모든 필기를 지워요.")) return; S.sheet=null; return endClass();
     case "a-clearall": S.drawData={}; S.drawBackup={}; S.sheet=null; render(); toast("모든 쪽의 필기를 지웠어요"); return;
     case "sound": S.sheet=null; render(); unlockAudio(); beep(); toast("‘띵-동’이 들리면 정상이에요. 안 들리면 칠판 볼륨을 확인하세요"); return;
@@ -1750,6 +1751,8 @@ document.addEventListener("change", async e=>{
 document.addEventListener("keydown", e=>{
   if(S.mode!=="class" || S.sheet) return;
   if(e.target.closest("input,textarea,select")) return;
+  if(S.blank && S.isAdmin && ["ArrowRight","ArrowLeft","ArrowDown","ArrowUp","PageDown","PageUp"," ","Enter"].includes(e.key)){ e.preventDefault(); S.blank=false; pushLive(); toast("칠판을 다시 띄웠어요"); return render(); }
+  if(!S.isAdmin || S.blank) return;
   if((e.ctrlKey||e.metaKey) && String(e.key).toLowerCase()==="z" && annActive()){ e.preventDefault(); annUndo(); return; }
   if(e.target.closest("button") && (e.key===" "||e.key==="Enter")) return;
   if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key==="PageDown"||e.key===" "){ e.preventDefault(); step(1); }
