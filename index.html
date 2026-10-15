@@ -519,6 +519,22 @@ mark.key{background:none;color:inherit;text-decoration:underline;text-decoration
   .foot .tg{min-height:46px;font-size:20px}
 }
 .ib.ye{font-family:var(--f-hand);font-weight:700;letter-spacing:.06em;min-width:64px;padding-left:14px;padding-right:14px}
+
+/* ===== 관리자 화면 글꼴: 교보 손글씨 2020 박도연 (칠판 화면에는 쓰지 않아 내려받지 않음) ===== */
+@font-face{font-family:'KyoboHandwriting2020A';src:url('https://cdn.jsdelivr.net/npm/@noonnu/kyobo-handwriting2020-a@0.1.0/fonts/kyobohandwriting2020a-normal.woff') format('woff');font-weight:normal;font-style:normal;font-display:swap}
+body.mode-admin,body.mode-admin input,body.mode-admin textarea,body.mode-admin select,body.mode-admin button,body.mode-admin .btn,body.mode-admin .tg,body.mode-admin .li,body.mode-admin .inp,body.mode-admin .sheet h3,body.mode-admin .adm-top b,body.mode-admin .r-card h5,body.mode-admin .note,body.mode-admin .help{font-family:'KyoboHandwriting2020A',var(--f-ui)}
+body.mode-admin .btn,body.mode-admin .tg,body.mode-admin .li,body.mode-admin .adm-top .seg-t button{font-weight:400}
+body.mode-admin{font-size:20px}
+body.mode-admin textarea[data-f="paras"],body.mode-admin .preview{font-family:var(--f-ui)}
+.cz{display:inline-block;position:relative;margin:0 .12em;padding:0 .15em;cursor:pointer;border-radius:4px}
+.cz::before{content:"(";color:var(--muted)} .cz::after{content:")";color:var(--muted)}
+.cz .czw{display:inline-block;visibility:hidden;padding:0 .35em}
+.cz.on .czw{visibility:visible;color:var(--orange-dk);font-weight:700}
+.cz.on{background:#FFF6C2}
+.cz.hint .czw{visibility:visible;color:transparent}
+.cz.hint .czw::first-letter{color:var(--muted)}
+.cz:not(.on):hover{background:#F3F1EA}
+.czans{color:var(--orange-dk)}
 </style>
 </head>
 <body>
@@ -604,7 +620,8 @@ function inline(s){
   let h = esc(s);
   h = h.replace(/\*\*(.+?)\*\*/g,'<mark class="key">$1</mark>')
        .replace(/__(.+?)__/g,'<u>$1</u>')
-       .replace(/(^|[^*])\*([^*\s][^*]*?)\*/g,'$1<em>$2</em>');
+       .replace(/(^|[^*])\*([^*\s][^*]*?)\*/g,'$1<em>$2</em>')
+       .replace(/\[\[(.+?)\]\]/g,'<b class="czans">$1</b>');
   return h;
 }
 function segs(s){
@@ -873,10 +890,12 @@ function balanceSents(p){
 }
 function passageSentences(paras){ return paras.flatMap(balanceSents); }
 function parseSpan(sp){ const m=String(sp||"").match(/(\d+)\s*(?:[~\-–]\s*(\d+))?/); if(!m) return null; const a=+m[1], b=m[2]?+m[2]:+m[1]; return [Math.min(a,b),Math.max(a,b)]; }
+function czMarks(t){ return (String(t||"").match(/\[\[.+?\]\]/g)||[]).length; }
+function czCount(sl){ let n=0; (sl.blocks||[]).forEach(b=>n+=czMarks(b.ko)); if(sl.sub) n+=Math.max(1,czMarks(sl.sub)); n+=czMarks(sl.theme); return n; }
 function stepInfo(p, sl){
   if(!sl) return null;
   if(sl.type==="textmap"){ const st=(p.slides||[]).find(x=>x.type==="structure"); return {key:"step",min:0,max:(st?.blocks||[]).length}; }
-  if(sl.type==="structure" && sl.blank){ const n=(sl.blocks||[]).length+(sl.sub?1:0)+(sl.theme?1:0)+((thesisIdx(p)!=null||sl.thesis)?1:0); return {key:"sbk",min:0,max:n}; }
+  if(sl.type==="structure" && sl.blank){ const n=czCount(sl); return n?{key:"sbk",min:0,max:n}:null; }
   if(sl.type==="reading"){ const txt=(p.slides||[]).find(x=>x.type==="text"); const n=txt?passageSentences(txt.paras||[]).length:0; return {key:"sent",min:0,max:Math.max(0,n-1)}; }
   return null;
 }
@@ -909,15 +928,19 @@ function renderSlide(sl, ctx){
       const thI=thesisIdx(P), thB=thI!=null?bl.findIndex(b=>{ const r=parseSpan(b.span); return r && thI+1>=r[0] && thI+1<=r[1]; }):-1;
       let thEn=sl.thesis||"", thKo=sl.thesisKo||"";
       if(thI!=null){ const txt=(P.slides||[]).find(x=>x.type==="text"), ss=txt?passageSentences(txt.paras||[]):[]; if(ss[thI]) thEn=ss[thI].trim(); const inf=sentInfo(P,thI); thKo=(inf&&inf.ko)||thKo; }
-      const order=[...bl.map((_,i)=>i), ...(sl.sub?["sub"]:[]), ...(sl.theme?["theme"]:[]), ...(thEn?["th"]:[])];
-      const shown=k=>!blank || order.indexOf(k)<sb || bo.includes(k);
-      const blocks=bl.map((b,i)=>{ const on=shown(i), isTh=thB>=0?i===thB:!!b.thesis, hn=!on&&hint;
+      let k=0; const total=czCount(sl);
+      const cz=t=>String(t||"").split(/(\[\[.+?\]\])/).map(part=>{ const m=part.match(/^\[\[(.+)\]\]$/); if(!m) return inline(part);
+        const i=k++, on=!blank || i<sb || bo.includes("c"+i), w=m[1].replace(/[*_]/g,"");
+        return `<span class="cz${on?" on":""}${(!on&&hint)?" hint":""}" data-cz="${i}" data-h="${esc(w.slice(0,1))}"><span class="czw">${inline(m[1])}</span></span>`; }).join("");
+      const blocks=bl.map((b,i)=>{ const isTh=thB>=0?i===thB:!!b.thesis;
         return `${i?'<div class="arrow" aria-hidden="true">▼</div>':""}
-        <div class="blk bc${i%5}${isTh&&on?" thesis":""}${on?"":" blank"}${hn?" hinted":""}" data-bk="${i}"><div class="lab">${(on||hn)?esc(b.label||""):"?"}</div>
-          <div class="body"><div class="ko"${hn?" data-h":""}>${inline(b.ko||"　")}</div>${b.en?`<div class="k en">${inline(b.en)}</div>`:""}</div></div>`; }).join("");
-      const sum=(k,lab,txt,cls)=>{ const on=shown(k), hn=!on&&hint, plain=String(txt).replace(/[*_]/g,""); return `<div class="blk sum ${cls}${on?"":" blank"}${hn?" hinted":""}" data-bk="${k}"><div class="lab">${lab}</div><div class="body"><div class="ko">${hn?esc(plain.slice(0,6))+"…":inline(txt)}</div></div></div>`; };
-      const sums=(sl.sub?sum("sub","소재",sl.sub,"bc3"):"")+(sl.theme?sum("theme","주제",sl.theme,"bc4"):"");
-      const th = thEn ? `<div class="thesis-line${shown("th")?"":" blank"}" data-bk="th"><span class="en">${inline(thEn)}</span>${thKo?`<span class="ko">${inline(thKo)}</span>`:""}</div>`:"";
+        <div class="blk bc${i%5}${isTh?" thesis":""}"><div class="lab">${esc(b.label||"")}</div>
+          <div class="body"><div class="ko">${cz(b.ko||"　")}</div>${b.en?`<div class="k en">${inline(b.en)}</div>`:""}</div></div>`; }).join("");
+      const subTxt=sl.sub?(czMarks(sl.sub)?sl.sub:"[["+sl.sub+"]]"):"";
+      const sum=(lab,txt,cls)=>`<div class="blk sum ${cls}"><div class="lab">${lab}</div><div class="body"><div class="ko">${cz(txt)}</div></div></div>`;
+      const sums=(sl.sub?sum("소재",subTxt,"bc3"):"")+(sl.theme?sum("주제",sl.theme,"bc4"):"");
+      const thOn=!blank || sb>=total;
+      const th = thEn ? `<div class="thesis-line${thOn?"":" blank"}"><span class="en">${inline(thEn)}</span>${thKo?`<span class="ko">${inline(thKo)}</span>`:""}</div>`:"";
       return `<div class="fit-box"><div class="flow">${blocks}</div>${sums?`<div class="flow sums">${sums}</div>`:""}${th}</div>`;
     }
     case "reading": {
@@ -1123,6 +1146,7 @@ function softRender(){
 /* ================= RENDER ================= */
 function render(){
   if(S.drawing && S.mode==="class") return;
+  document.body.classList.toggle("mode-admin", S.mode==="admin");
   document.documentElement.style.setProperty("--fs", S.scale);
   const app = $("#app");
   if(S.dbState==="loading"){ app.innerHTML = `<div class="empty"><b>불러오는 중…</b>수업 자료를 가져오고 있습니다.</div>`; return; }
@@ -1351,7 +1375,8 @@ function slideForm(sl){
   switch(sl.type){
     case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}<div class="help">수업 화면에서 문장을 누르면 형광 표시가 켜지고 꺼집니다.</div></div>`; break;
     case "structure": { const tx0=(S.draft.slides||[]).find(x=>x.type==="text"), ss0=tx0?passageSentences(tx0.paras||[]):[];
-      body = `<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작 (수업 마지막에 아이들과 맞추기 — ‘다음’을 누를 때마다 한 칸씩 열립니다)</label>
+      body = `<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작 (수업 마지막에 아이들과 맞추기 — ‘다음’을 누를 때마다 빈칸이 하나씩 열립니다)</label>
+      <p class="help" style="margin:-4px 0 12px">빈칸으로 만들 말은 <code>[[ ]]</code>로 감싸세요. 예: <code>[[월식]]은 지구가 태양과 달 사이에 들어가 생긴다</code> → 칠판에는 <code>(　　)은 지구가 …</code>로 보여요. 소재는 통째로 빈칸이 되고, 주제는 [[ ]] 부분만 빈칸이 돼요.</p>
       <div class="field"><label>글의 소재 (명사구로, 예: 월식 때 붉게 보이는 달)</label>${H.in("sub",sl.sub)}</div>
       <div class="field"><label>글의 주제 (한 문장으로)</label>${H.ta("theme",sl.theme,"",2)}</div>
       <div class="field"><label>주제문 — 뚜렷한 문장이 있을 때만 고르세요 (없으면 ‘표시 안 함’)</label><select class="inp" data-f="thesisN"><option value="">주제문 표시 안 함</option>${ss0.map((t,i)=>`<option value="${i+1}"${sl.thesisN===i+1?" selected":""}>${i+1}. ${esc(t.replace(/[*_]/g,"").trim().slice(0,60))}</option>`).join("")}</select></div>
@@ -1361,7 +1386,7 @@ function slideForm(sl){
       <label class="help">문단·흐름 블록</label>
       <div class="rows">${(sl.blocks||[]).map((b,i)=>`<div class="r"><div class="r-h">블록 ${i+1}<span><button class="mini" data-rmove="blocks|${i}|-1">↑</button><button class="mini" data-rmove="blocks|${i}|1">↓</button><button class="mini" data-rdel="blocks|${i}">✕</button></span></div>
         <div class="two"><input class="inp" data-r="blocks|${i}|label" value="${esc(b.label||"")}" placeholder="역할 (도입·전개·결론)"><input class="inp" data-r="blocks|${i}|span" value="${esc(b.span||"")}" placeholder="원문 문장 번호 (예: 3~6)"></div>
-        <textarea class="inp" style="margin-top:6px" rows="2" data-r="blocks|${i}|ko" placeholder="우리말 요약">${esc(b.ko||"")}</textarea>
+        <textarea class="inp" style="margin-top:6px" rows="2" data-r="blocks|${i}|ko" placeholder="우리말 요약 — 빈칸은 [[ ]]로 (예: [[월식]]의 정의)">${esc(b.ko||"")}</textarea>
         <input class="inp" style="margin-top:6px" data-r="blocks|${i}|en" value="${esc(b.en||"")}" placeholder="핵심 영어 표현 (선택)">
         <label style="font-size:13px;display:flex;gap:6px;margin-top:6px"><input type="checkbox" data-r="blocks|${i}|thesis"${b.thesis?" checked":""}> 주제 블록으로 강조 (주제문을 고르면 자동)</label></div>`).join("")}</div>
       <button class="btn sm" data-radd="blocks">+ 블록</button>`; break; }
@@ -1488,7 +1513,7 @@ function renderRemote(){
     ${row("해석",esc(inf.ko||"(없음)"))}${inf.block?row("흐름",esc(inf.block.label||"")+" — "+esc(inf.block.ko||"")):""}
     ${inf.vocab.length?row("어휘",inf.vocab.map(v=>esc(v.w)+" "+esc(v.m||"")).join(" · ")):""}
     ${inf.points.length?row("어법",inf.points.map(t=>inline(t)).join(" / ")):""}${inf.memo?row("메모",esc(inf.memo)):""}</div>`; })():""}
-  ${sl&&(sl.type==="textmap"||sl.type==="structure")?(()=>{ const st=sl.type==="structure"?sl:(p.slides||[]).find(x=>x.type==="structure"), bl=st?.blocks||[], cs=(sl.type==="structure"?(S.reveal.sbk||0):(S.reveal.step||0)); return `<div class="r-card"><h5>구조 메모·정답 (칠판엔 안 보임) — 다음을 누를 때마다 한 칸씩</h5>${(sl.type==="structure"&&(sl.sub||sl.theme))?`<div class="note" style="margin-bottom:8px"><b>소재</b> ${esc(sl.sub||"")}<br><b>주제</b> ${esc(sl.theme||"")}</div>`:""}${bl.map((b,i)=>`<div class="note" style="margin-bottom:6px;${i===cs-1?"font-weight:700;color:var(--navy)":""}">${i+1}. ${esc(b.label||"")} — ${esc(b.ko||"")}</div>`).join("")}</div>`; })():""}
+  ${sl&&(sl.type==="textmap"||sl.type==="structure")?(()=>{ const st=sl.type==="structure"?sl:(p.slides||[]).find(x=>x.type==="structure"), bl=st?.blocks||[], cs=(sl.type==="structure"?(S.reveal.sbk||0):(S.reveal.step||0)); return `<div class="r-card"><h5>구조 메모·정답 (칠판엔 안 보임) — 「」가 빈칸, 다음을 누를 때마다 하나씩 열려요</h5>${(sl.type==="structure"&&(sl.sub||sl.theme))?`<div class="note" style="margin-bottom:8px"><b>소재</b> ${esc(String(sl.sub||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}<br><b>주제</b> ${esc(String(sl.theme||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}</div>`:""}${bl.map((b,i)=>`<div class="note" style="margin-bottom:6px;${i===cs-1?"font-weight:700;color:var(--navy)":""}">${i+1}. ${esc(b.label||"")} — ${esc(String(b.ko||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}</div>`).join("")}</div>`; })():""}
   ${sl?`<div class="r-card"><h5>수업 메모</h5><div class="note">${sl.note?esc(sl.note):'<span class="help">메모 없음 — 자료 편집에서 슬라이드마다 적어 둘 수 있습니다.</span>'}</div>
     ${sl.type==="question"&&Number.isInteger(sl.answer)?`<p class="help" style="margin-bottom:0">정답 ${CIRC[sl.answer]} ${sl.explain?"— "+esc(sl.explain):""}</p>`:""}</div>`:""}
   <div class="r-card"><h5>슬라이드로 바로 가기</h5><div class="r-sl">${slides.map((s,i)=>`<button class="${i===S.cur.idx?"on":""}" data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button>`).join("")}</div></div>
@@ -1519,7 +1544,7 @@ function renderSettings(){
 }
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
-  const t = e.target.closest("[data-act],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
+  const t = e.target.closest("[data-act],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
@@ -1532,6 +1557,7 @@ document.addEventListener("click", async e=>{
   if(ds.atool){ ANN.tool=ds.atool; annUI(); return; }
   if(ds.asize!=null){ ANN.size=+ds.asize; annUI(); return; }
   if(ds.acolor){ if(ANN.tool==="pen") ANN.pen=ds.acolor; else ANN.hl=ds.acolor; annUI(); return; }
+  if(ds.cz!=null && S.mode==="class"){ const key="c"+ds.cz, o=new Set(S.reveal.bo||[]); o.has(key)?o.delete(key):o.add(key); return setReveal({bo:[...o]}); }
   if(ds.bk!=null && S.mode==="class"){ const key=/^\d+$/.test(ds.bk)?+ds.bk:ds.bk, o=new Set(S.reveal.bo||[]); o.has(key)?o.delete(key):o.add(key); return setReveal({bo:[...o]}); }
   if(ds.pick){ S.drawer=false; return go(ds.pick,0); }
   if(ds.choice!=null && S.mode==="class"){ const v=+ds.choice; return setReveal({pick: S.reveal.pick===v?null:v}); }
