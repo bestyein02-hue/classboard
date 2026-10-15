@@ -520,12 +520,6 @@ mark.key{background:none;color:inherit;text-decoration:underline;text-decoration
 }
 .ib.ye{font-family:var(--f-hand);font-weight:700;letter-spacing:.06em;min-width:64px;padding-left:14px;padding-right:14px}
 
-/* ===== 관리자 화면 글꼴: 교보 손글씨 2020 박도연 (칠판 화면에는 쓰지 않아 내려받지 않음) ===== */
-@font-face{font-family:'KyoboHandwriting2020A';src:url('https://cdn.jsdelivr.net/npm/@noonnu/kyobo-handwriting2020-a@0.1.0/fonts/kyobohandwriting2020a-normal.woff') format('woff');font-weight:normal;font-style:normal;font-display:swap}
-body.mode-admin,body.mode-admin input,body.mode-admin textarea,body.mode-admin select,body.mode-admin button,body.mode-admin .btn,body.mode-admin .tg,body.mode-admin .li,body.mode-admin .inp,body.mode-admin .sheet h3,body.mode-admin .adm-top b,body.mode-admin .r-card h5,body.mode-admin .note,body.mode-admin .help{font-family:'KyoboHandwriting2020A',var(--f-ui)}
-body.mode-admin .btn,body.mode-admin .tg,body.mode-admin .li,body.mode-admin .adm-top .seg-t button{font-weight:400}
-body.mode-admin{font-size:20px}
-body.mode-admin textarea[data-f="paras"],body.mode-admin .preview{font-family:var(--f-ui)}
 .cz{display:inline-block;position:relative;margin:0 .12em;padding:0 .15em;cursor:pointer;border-radius:4px}
 .cz::before{content:"(";color:var(--muted)} .cz::after{content:")";color:var(--muted)}
 .cz .czw{display:inline-block;visibility:hidden;padding:0 .35em}
@@ -549,6 +543,28 @@ body.mode-admin textarea[data-f="paras"],body.mode-admin .preview{font-family:va
 .vq-back.on{visibility:visible}
 .vq-back .vq-w,.vq-back .vq-m{color:var(--orange-dk)}
 .vq-x{font-size:.75em;color:var(--muted);margin-top:.3em;font-style:italic}
+
+/* 원문 = 문장 읽기 */
+.rs{opacity:1;background:none;box-shadow:none;transition:opacity .15s}
+.rs.done{opacity:1}
+.has-cur .rs{opacity:.28}
+.has-cur .rs.cur{opacity:1;background:linear-gradient(transparent 35%,var(--hl) 35%,var(--hl) 92%,transparent 92%);-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.rs{cursor:pointer}
+/* 잠금·빈 칠판 */
+.lock{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--paper)}
+.lock-t{font-family:var(--f-hand);font-weight:700;font-size:44px;color:#C9C5BB}
+.lock-ye{position:fixed;right:18px;top:16px;z-index:5;background:#fff;color:var(--orange-dk);border:2px solid var(--line)}
+.ye-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ye-grid .btn{min-height:52px}
+/* 다음 옆 작은 이전 */
+.navpair{display:flex;gap:8px;align-items:stretch}
+.nav.nav-back{min-width:64px;padding:0;font-size:30px}
+/* 필기 도구: 아래쪽 가로 막대 (세로로 넘치지 않게) */
+.atools{top:auto!important;bottom:96px;left:50%;right:auto;transform:translateX(-50%);width:auto;max-width:96vw;max-height:none;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;padding:6px 10px;overflow:visible;border-radius:12px}
+.atools .at{width:auto;min-width:58px;height:58px;padding:2px 6px}
+.atools .asz,.atools .acol{flex-direction:row;display:flex;gap:4px;margin:0 4px}
+.atools .ahint{max-width:120px;font-size:12px}
+@media (max-width:760px){ .atools{bottom:calc(120px + env(safe-area-inset-bottom,0px))} .nav.nav-back{min-width:48px} }
 </style>
 </head>
 <body>
@@ -762,7 +778,6 @@ function fromAnalyzer(it, unitId, order){
   const slides=[
     {id:uid(),type:"text",title:"원문",paras,note:it.source?("출처: "+it.source):""},
     {id:uid(),type:"task",title:"문제를 풀어 보세요",body:"",minutes:3,note:""},
-    {id:uid(),type:"reading",title:"문장 읽기",memos:{},xpts:{},note:""},
     {id:uid(),type:"structure",title:"구조도",blank:true,blocks,sub:d.subject||"",theme:d.theme||"",thesis:"",thesisKo:"",
       note:"지문 분석 마지막에 아이들과 정리 (블록 → 소재 → 주제)"+(te?("\n분석기 주제문 후보(칠판엔 표시 안 함): "+te):"")+(d.flow_type?("\n전개 방식: "+d.flow_type):"")},
     {id:uid(),type:"textmap",title:"구조 표시",hidden:true,note:""}
@@ -846,7 +861,7 @@ const ANN={tool:"pen",size:1,pen:"#26294D",hl:"#FFE14D"};
 const PEN_COLORS=["#26294D","#E0524C","#2F6FE0","#1E9E5A","#8A63D2","#F08A24"];
 const HL_COLORS=["#FFE14D","#FF9BBE","#7FE0C4","#FFB36B","#9CC8FF","#D6B8FF"];
 const A_W={pen:[.0028,.0055,.0100], hl:[.012,.020,.032], eraser:[.015,.035,.070]};
-function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && sl.type==="reading")?":"+(S.reveal.sent||0):""); }
+function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && (sl.type==="reading"||sl.type==="text"))?":"+(S.reveal.sent??-1):""); }
 function annStrokes(){ const k=annKey(); return S.drawData[k]||(S.drawData[k]=[]); }
 function annActive(){ const sl=curSlide(); return !!S.annOn || !!(sl && sl.type==="draw"); }
 function annToolsHTML(){
@@ -857,7 +872,7 @@ function annToolsHTML(){
     +`<div class="asz">${[0,1,2].map(i=>`<button class="${ANN.size===i?"on":""}" data-asize="${i}" aria-label="굵기 ${i+1}"><i style="width:${8+i*7}px;height:${8+i*7}px"></i></button>`).join("")}</div>`
     +(pal?`<div class="acol">${pal.map(c=>`<button class="${c===cur?"on":""}" data-acolor="${c}" style="background:${c}" aria-label="색"></button>`).join("")}</div>`:`<div class="ahint">${L("문지른 곳만 지워져요","Erases only what you rub")}</div>`)
     +`<button class="at" data-act="a-undo"${canUndo?"":" disabled"}><span>↶</span><small>${L("뒤로","Undo")}</small></button>`
-    +`<button class="at warn" data-act="a-clear"><span>⌫</span><small>${L("전체 지우기","Clear")}</small></button>`
+    +`<button class="at warn" data-act="a-clear"><span>⌫</span><small>${L("이 쪽 지우기","Clear page")}</small></button>`+`<button class="at warn" data-act="a-clearall"><span>⌫⌫</span><small>${L("모든 쪽","All pages")}</small></button>`
     +((curSlide()||{}).type==="draw"?"":`<button class="at" data-act="a-off"><span>✓</span><small>${L("필기 끄기","Done")}</small></button>`);
 }
 function annUI(){ const el=$(".atools"); if(el) el.innerHTML=annToolsHTML(); }
@@ -911,7 +926,7 @@ function stepInfo(p, sl){
   if(sl.type==="vocab" && !S.reveal.vlist){ const n=(sl.items||[]).length; return n?{key:"vq",min:0,max:2*n-1}:null; }
   if(sl.type==="textmap"){ const st=(p.slides||[]).find(x=>x.type==="structure"); return {key:"step",min:0,max:(st?.blocks||[]).length}; }
   if(sl.type==="structure" && sl.blank){ const n=czCount(sl); return n?{key:"sbk",min:0,max:n}:null; }
-  if(sl.type==="reading"){ const txt=(p.slides||[]).find(x=>x.type==="text"); const n=txt?passageSentences(txt.paras||[]).length:0; return {key:"sent",min:0,max:Math.max(0,n-1)}; }
+  if(sl.type==="reading" || sl.type==="text"){ const txt=sl.type==="text"?sl:(p.slides||[]).find(x=>x.type==="text"); const n=txt?passageSentences(txt.paras||[]).length:0; return n?{key:"sent",min:-1,max:n-1}:null; }
   return null;
 }
 function stepPatch(si,v){ return si.key==="sent"?{sent:v,ko:false,vc:false,gm:false}:{[si.key]:v}; }
@@ -921,11 +936,6 @@ function renderSlide(sl, ctx){
   const R = ctx.reveal||{};
   const head = `<h2><span class="kind">${esc(TYPES[sl.type]?.name||"")}</span>${sl.title?esc(sl.title):""}</h2>`;
   switch(sl.type){
-    case "text": {
-      const th=thesisIdx(ctx.passage||{slides:[]}); let k=0;
-      const paras = (sl.paras||[]).map(balanceSents).map((ps,pi)=>`<p class="para en">${(sl.paras.length>1)?`<span class="pn">${CIRC[pi]||pi+1}</span>`:""}${ps.map((s0,si)=>{ const i=k++, key=pi+"-"+si, lit=(R.lit||[]).includes(key); return `<span class="sent${lit?" lit":""}" data-sent="${key}">${hl(s0,i===th)}</span>`; }).join("")}</p>`).join("");
-      return `<div class="fit-box">${paras}</div>`;
-    }
     case "textmap": {
       const P = ctx.passage || {slides:[]};
       const txt = (P.slides||[]).find(x=>x.type==="text"), st = (P.slides||[]).find(x=>x.type==="structure");
@@ -950,7 +960,7 @@ function renderSlide(sl, ctx){
       const blocks=bl.map((b,i)=>{ const isTh=thB>=0?i===thB:!!b.thesis;
         return `${i?'<div class="arrow" aria-hidden="true">▼</div>':""}
         <div class="blk bc${i%5}${isTh?" thesis":""}"><div class="lab">${esc(b.label||"")}</div>
-          <div class="body"><div class="ko">${cz(b.ko||"　")}</div>${b.en?`<div class="k en">${inline(b.en)}</div>`:""}</div></div>`; }).join("");
+          <div class="body"><div class="ko">${cz(b.ko||"　")}</div></div></div>`; }).join("");
       const subTxt=sl.sub?(czMarks(sl.sub)?sl.sub:"[["+sl.sub+"]]"):"";
       const sum=(lab,txt,cls)=>`<div class="blk sum ${cls}"><div class="lab">${lab}</div><div class="body"><div class="ko">${cz(txt)}</div></div></div>`;
       const sums=sl.sub?sum("소재",subTxt,"bc3"):"";
@@ -958,13 +968,13 @@ function renderSlide(sl, ctx){
       const th = thEn ? `<div class="thesis-line${thOn?"":" blank"}"><span class="en">${inline(thEn)}</span>${thKo?`<span class="ko">${inline(thKo)}</span>`:""}</div>`:"";
       return `<div class="fit-box"><div class="flow">${blocks}</div>${sums?`<div class="flow sums">${sums}</div>`:""}${th}</div>`;
     }
-    case "reading": {
-      const P = ctx.passage || {slides:[]}, txt = (P.slides||[]).find(x=>x.type==="text");
+    case "text": case "reading": {
+      const P = ctx.passage || {slides:[]}, txt = sl.type==="text" ? sl : (P.slides||[]).find(x=>x.type==="text");
       if(!txt) return `<p class="help">‘원문’ 슬라이드가 있어야 합니다.</p>`;
-      const total = passageSentences(txt.paras||[]).length, cur = Math.max(0,Math.min(R.sent||0,total-1)); let k=0;
+      const total = passageSentences(txt.paras||[]).length, cur = (Number.isInteger(R.sent) && R.sent>=0 && R.sent<total) ? R.sent : -1; let k=0;
       const multi=(txt.paras||[]).length>1, th=thesisIdx(P);
-      const paras=(txt.paras||[]).map(balanceSents).map((ps,pi)=>`<p class="para en">${multi?`<span class="pn">${CIRC[pi]||pi+1}</span>`:""}${ps.map(s0=>{ const i=k++; return `<span class="rs${i===cur?" cur":(i<cur?" done":"")}" data-rs="${i}">${hl(s0,i===th)}</span>`; }).join("")}</p>`).join("");
-      return `<div class="fit-box">${paras}</div>`+(ctx.live?readingPanel(sentInfo(P,cur),R):"");
+      const paras=(txt.paras||[]).map(balanceSents).map((ps,pi)=>`<p class="para en">${multi?`<span class="pn">${CIRC[pi]||pi+1}</span>`:""}${ps.map(s0=>{ const i=k++; return `<span class="rs${i===cur?" cur":""}" data-rs="${i}">${hl(s0,i===th)}</span>`; }).join("")}</p>`).join("");
+      return `<div class="fit-box${cur>=0?" has-cur":""}">${paras}</div>`+((ctx.live && cur>=0)?readingPanel(sentInfo(P,cur),R):"");
     }
     case "task": {
       return `<div class="fit-box task"><div class="tk-t">${inline((UIEN&&(!sl.title||sl.title==="문제를 풀어 보세요"))?"Solve the questions":(sl.title||"문제를 풀어 보세요"))}</div>${sl.body?`<div class="tk-b">${inline(sl.body)}</div>`:""}<div class="tm tmr-txt">${fmtT(tmrSecs(sl))}</div></div>`;
@@ -1032,7 +1042,7 @@ function pushLive(){
   if(!S.isAdmin) return;
   clearTimeout(liveTimer);
   liveTimer = setTimeout(()=>{
-    const body = {pid:S.cur.pid, idx:S.cur.idx, reveal:S.reveal, scale:S.scale, gt:S.gtm||null, today:S.today, ts:Date.now(), by:S.session};
+    const body = {pid:S.cur.pid, idx:S.cur.idx, reveal:S.reveal, scale:S.scale, gt:S.gtm||null, today:S.today, blank:!!S.blank, endAt:S.endAt||0, ts:Date.now(), by:S.session};
     S.lastLiveTs = body.ts;
     liveQueue = liveQueue.then(()=>API.req("POST","/api/live",body)).catch(()=>{});
   },120);
@@ -1042,7 +1052,7 @@ function go(pid, idx, opts={}){
   const n = (p.slides||[]).length;
   idx = Math.max(0, Math.min(idx, Math.max(0,n-1)));
   const changed = pid!==S.cur.pid || idx!==S.cur.idx;
-  S.cur = {pid, idx};
+  S.cur = {pid, idx}; S.blank=false;
   if(changed) S.reveal = {};
   if(!opts.silent) pushLive();
   render();
@@ -1076,10 +1086,7 @@ function enterAdmin(){
 }
 async function exitAdmin(){
   if(S.dirty && !confirm("저장하지 않은 수정이 있습니다. 그래도 나갈까요?")) return;
-  S.dirty=false; S.mode="class"; S.isAdmin=false; setLastMode("class");
-  const remembered = (()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })();
-  if(!remembered){ API.req("POST","/api/logout").catch(()=>{}); API.setToken(""); }
-  render();
+  S.dirty=false; S.mode="class"; setLastMode("class"); render();
 }
 /* pairing: board asks server for a 4-digit code, phone approves it */
 let pairTimer=null;
@@ -1093,8 +1100,8 @@ window.addEventListener("hashchange",()=>{
 });
 async function approvePending(){
   const c=S.pendingPair; if(!c) return; S.pendingPair=null;
-  try{ await API.req("POST","/api/pair/approve",{code:c}); toast("칠판 잠금을 풀었습니다"); }
-  catch(e){ toast(e.message||"칠판 잠금을 풀지 못했습니다. 칠판에서 번호를 새로 받아 주세요"); }
+  try{ await API.req("POST","/api/pair/approve",{code:c}); toast("칠판을 열었습니다"); }
+  catch(e){ toast(e.message||"칠판을 열지 못했습니다. 칠판에서 번호를 새로 받아 주세요"); }
 }
 async function startPair(){
   stopPairPoll(); S.pairCode="…"; S.sheet="pair"; render();
@@ -1104,7 +1111,7 @@ async function startPair(){
   pairTimer=setInterval(async()=>{
     if(S.sheet!=="pair" || Date.now()-S.pairAt>5*60e3){ stopPairPoll(); return; }
     try{ const r=await API.req("GET","/api/pair/"+S.pairCode);
-      if(r.status==="ok"){ API.setToken(r.token,false); enterAdmin(); toast("폰에서 잠금 해제됨"); }
+      if(r.status==="ok"){ stopPairPoll(); API.setToken(r.token,false); S.sheet=null; await afterLogin("class"); toast("칠판을 열었습니다"); }
       else if(r.status==="expired"){ stopPairPoll(); }
     }catch(e){}
   },2000);
@@ -1116,17 +1123,32 @@ async function loadData(){
 }
 async function boot(){
   render();
+  if(API.token){ try{ const me=await API.req("GET","/api/me"); if(me.admin) S.isAdmin=true; else API.setToken(""); }catch(e){} }
+  if(PAIR_FROM_URL) S.pendingPair=PAIR_FROM_URL;
+  if(!S.isAdmin){ S.dbState="ok"; if(S.pendingPair){ S.loginTo="admin"; S.sheet="login"; setTimeout(()=>{ const p=$("#pw"); if(p) p.focus(); },80); } render(); return; }
+  await afterLogin((PAIR_FROM_URL || lastMode()!=="class") ? "admin" : "class");
+}
+/* 로그인(비밀번호·폰 QR) 뒤: 자료를 불러오고 칠판(수업 화면) 또는 관리자 화면으로 */
+async function afterLogin(to){
+  S.isAdmin=true; S.dbState="loading"; render();
   try{ await loadData(); }catch(e){ S.dbState="nodb"; render(); return; }
   S.dbState="ok";
-  if(API.token){ try{ const me=await API.req("GET","/api/me"); if(me.admin) S.isAdmin=true; else API.setToken(""); }catch(e){} }
-  const f=allPassagesOrdered()[0]; if(f) S.cur={pid:f.id, idx:0};
-  if(PAIR_FROM_URL) S.pendingPair=PAIR_FROM_URL;
-  if(S.isAdmin){ if(PAIR_FROM_URL || lastMode()!=="class") enterAdmin(); else render(); approvePending(); }
-  else if(S.pendingPair){ S.sheet="login"; render(); setTimeout(()=>{ const p=$("#pw"); if(p) p.focus(); },80); }
-  else render();
-  pollLoop();
+  if(!getP(S.cur.pid)){ const f=allPassagesOrdered()[0]; if(f) S.cur={pid:f.id, idx:0}; }
+  if(!pollLoop.started){ pollLoop.started=true; pollLoop(); }
+  if(to==="admin"){ enterAdmin(); approvePending(); }
+  else { S.mode="class"; S.sheet=null; setLastMode("class"); render(); }
 }
-function fastMode(){ return S.isAdmin || IS_BOARD; }
+async function lockDevice(){
+  API.req("POST","/api/logout").catch(()=>{}); API.setToken("");
+  S.isAdmin=false; S.mode="class"; S.sheet=null; S.drawer=false; S.units=[]; S.passages=[]; render();
+}
+function endClass(){
+  S.blank=true; S.endAt=Date.now(); S.drawData={}; S.drawBackup={}; S.reveal={}; pushLive();
+  const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })();
+  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,700); toast("수업을 끝냈어요. 칠판을 잠갔습니다"); }
+  else { toast("수업을 끝냈어요. 칠판을 비우고 잠갔습니다"); render(); }
+}
+function fastMode(){ return S.isAdmin; }
 function pollLoop(){
   const run = async()=>{
     if(!fastMode() && Date.now()-lastAct > IDLE_MS){
@@ -1140,13 +1162,17 @@ function pollLoop(){
 function wake(){ asleep=false; lastAct=Date.now(); pollLive(); render(); }
 let polling=false;
 async function pollLive(){
-  if(polling || document.hidden || S.dbState!=="ok") return; polling=true;
+  if(polling || document.hidden || S.dbState!=="ok" || !S.isAdmin) return; polling=true;
   try{
     const r = await API.req("GET","/api/live");
     if(r.ver!==S.ver){ await loadData(); softRender(); }
     const d=r.state;
-    if(d && d.by!==S.session && d.ts>S.lastLiveTs){
-      S.lastLiveTs=d.ts;
+    const mid=d?(d.by+":"+d.ts):"";
+    if(d && d.by!==S.session && mid!==S.lastMid){
+      S.lastMid=mid; S.lastLiveTs=d.ts;
+      S.blank=!!d.blank;
+      if(S.endSeen===undefined) S.endSeen=d.endAt||0;
+      else if(d.endAt && d.endAt!==S.endSeen){ S.endSeen=d.endAt; S.drawData={}; S.drawBackup={}; const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })(); if(!remembered && S.mode==="class"){ polling=false; return lockDevice(); } }
       if(d.pid && getP(d.pid)) S.cur={pid:d.pid, idx:d.idx||0};
       S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); } if(Array.isArray(d.today)) S.today=d.today;
       S.remoteSeen=Date.now(); softRender();
@@ -1175,12 +1201,17 @@ function render(){
 
 /* ---------- class board ---------- */
 function renderClass(){
-  const app=$("#app"); const p=getP(S.cur.pid);
+  const app=$("#app");
+  if(!S.isAdmin || S.blank){
+    app.innerHTML = `<div class="lock"><div class="lock-t">${S.isAdmin?"":"수업 보드"}</div></div><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    if(S.sheet==="pair") drawQR(); return;
+  }
+  const p=getP(S.cur.pid);
   const slides = p?.slides||[]; const sl = slides[S.cur.idx];
   const live = S.remoteSeen && Date.now()-S.remoteSeen < 15*60e3;
   const vis = slides.map((s0,i)=>i).filter(i=>!slides[i].hidden || i===S.cur.idx);
   const si = stepInfo(p, sl), atStart = !si || (S.reveal[si.key]??si.min)<=si.min;
-  const tools = !sl ? "" : sl.type==="reading" ? `<div class="tools"><button class="tg${S.reveal.ko?" on":""}" data-rv="ko">${L("해석","Korean")}</button><button class="tg${S.reveal.vc?" on":""}" data-rv="vc">${L("어휘","Words")}</button><button class="tg${S.reveal.gm?" on":""}" data-rv="gm">${L("어법","Grammar")}</button></div>`
+  const tools = !sl ? "" : ((sl.type==="reading"||sl.type==="text") && Number.isInteger(S.reveal.sent) && S.reveal.sent>=0) ? `<div class="tools"><button class="tg${S.reveal.ko?" on":""}" data-rv="ko">${L("해석","Korean")}</button><button class="tg${S.reveal.vc?" on":""}" data-rv="vc">${L("어휘","Words")}</button><button class="tg${S.reveal.gm?" on":""}" data-rv="gm">${L("어법","Grammar")}</button></div>`
     : (sl.type==="structure" && sl.blank) ? `<div class="tools"><button class="tg${S.reveal.hint?" on":""}" data-rv="hint">${L("힌트","Hint")}</button><button class="tg" data-act="sbk-reset">${L("다시 가리기","Hide all")}</button></div>`
     : sl.type==="vocab" ? `<div class="tools">${S.reveal.vlist?`<button class="tg${S.reveal.cover?" on":""}" data-rv="cover">${L("뜻 가리기","Hide meanings")}</button>`:`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?L("한→영","KO→EN"):L("영→한","EN→KO")}</button><button class="tg" data-act="vq-shuf">${L("섞기","Shuffle")}</button>`}<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">${L("목록으로","List")}</button></div>`
     : sl.type==="question" ? `<div class="tools"><button class="tg${S.reveal.tally?" on":""}" data-rv="tally">${L("손 들기 집계","Hand count")}</button><button class="tg" data-act="tl-reset">${L("0으로","Zero")}</button><button class="tg${S.reveal.answer?" on":""}" data-rv="answer">${L("정답","Answer")}</button></div>`
@@ -1193,10 +1224,6 @@ function renderClass(){
     ${window.PointerEvent?`<button class="ib${S.annOn?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
     <button class="ib" data-act="picker">${L("뽑기","Pick")}</button>
-    <button class="ib hide-sm" data-act="smaller" aria-label="Smaller">${L("가−","A−")}</button>
-    <button class="ib hide-sm" data-act="bigger" aria-label="Larger">${L("가+","A+")}</button>
-    <button class="ib hide-sm" data-act="full" aria-label="Fullscreen">${L("전체화면","Fullscreen")}</button>
-    <button class="ib" data-act="review">${L("저장","Save")}</button>
     <button class="ib solid ye" data-act="teacher" title="Made by YE" aria-label="YE 메뉴">YE</button>
   </header>
   ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:""}
@@ -1211,7 +1238,7 @@ function renderClass(){
     <button class="nav" data-act="prev" ${(vis[0]===S.cur.idx && atStart && allPassagesOrdered()[0]?.id===p.id)?"disabled":""}>${L("‹ 이전","‹ Prev")}</button>
     ${tools || `<div class="dots">${vis.map((i,n)=>`<button class="dot${i===S.cur.idx?" on":""}" data-go="${i}" aria-label="${n+1}번 슬라이드"></button>`).join("")}</div>`}
     <span class="count">${vis.indexOf(S.cur.idx)+1} / ${vis.length}</span>
-    <button class="nav" data-act="next">${L("다음 ›","Next ›")}</button>
+    <span class="navpair"><button class="nav nav-back" data-act="prev" aria-label="이전">‹</button><button class="nav" data-act="next">${L("다음 ›","Next ›")}</button></span>
   </footer>`:""}
   ${gtOn()&&S.sheet!=="timer"?`<button class="gtchip${S.gtDone?" done":""}" data-act="timer" aria-label="타이머"><span class="tmr-txt">${fmtT(gtSecs())}</span></button>`:""}
   ${asleep?`<div class="sleep" role="status"><span>${L("연결이 멈췄어요. 선생님 칠판을 따라가려면 다시 연결하세요.","Connection paused. Reconnect to follow the teacher.")}</span><button class="btn pri sm" data-act="wake">${L("다시 연결","Reconnect")}</button></div>`:""}
@@ -1242,7 +1269,7 @@ function renderSheet(){
   if(S.sheet==="paste"){
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="분석기에서 가져오기" style="width:min(640px,94vw)">
     <h3>지문분석기에서 가져오기</h3>
-    <p>지문분석기에서 분석한 뒤 <b>‘수업 보드용 복사’</b>를 누르고, 아래 칸에 붙여 넣으세요(Ctrl+V). 파일로 저장됐다면 파일을 고르면 됩니다. 원문·문제 풀이·문장 읽기·구조도(빈칸)가 자동으로 만들어져요.</p>
+    <p>지문분석기에서 분석한 뒤 <b>‘수업 보드용 복사’</b>를 누르고, 아래 칸에 붙여 넣으세요(Ctrl+V). 파일로 저장됐다면 파일을 고르면 됩니다. 원문(문장 읽기 포함)·문제 풀이·구조도(빈칸)가 자동으로 만들어져요.</p>
     <div class="field"><label>넣을 단원</label><select class="inp" id="pasteunit">${sortedUnits().map(u=>`<option value="${u.id}">${esc(u.title)}</option>`).join("")||'<option value="">새 단원 ‘가져온 지문’</option>'}</select></div>
     <div class="field"><textarea class="inp" id="pastebox" rows="7" placeholder="여기에 붙여 넣기"></textarea></div>
     <div class="field"><input class="inp" type="file" id="pastefile" accept=".json,application/json,text/plain"></div>
@@ -1270,27 +1297,27 @@ function renderSheet(){
     <div class="row-btns" style="justify-content:center"><button class="btn" data-gtadd="-60">${L("−1분","−1 min")}</button><button class="btn" data-gtadd="60">${L("+1분","+1 min")}</button><button class="btn" data-gtadd="10">${L("+10초","+10 sec")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn pri" data-act="gt-go">${running?L("가는 중","Running"):L("시작","Start")}</button><button class="btn" data-act="gt-pause">${L("멈춤","Pause")}</button><button class="btn warn" data-act="gt-reset">${L("처음으로","Reset")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn" data-act="close">${L("닫기 (타이머는 계속 갑니다)","Close (timer keeps running)")}</button></div></div>`; }
-  if(S.sheet==="teacher") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴">
-    <h3>YE 메뉴</h3>
-    <p>학생들이 보는 칠판에서는 비밀번호를 치지 않아도 됩니다. 폰으로 잠금을 풀어 주세요.</p>
-    <div class="row-btns" style="flex-direction:column">
-      <button class="btn pri" data-act="pair">폰으로 잠금 풀기 (번호·QR 표시)</button>
-      <button class="btn" data-act="pwlogin">이 기기에서 비밀번호로 열기</button>
-      <button class="btn" data-act="uilang">${UIEN?"화면 글자를 한국어로 바꾸기":"Switch screen text to English"}</button>
-      <button class="btn" data-act="close">닫기</button>
-    </div></div>`;
-  if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="폰으로 잠금 풀기">
-    <h3>폰으로 잠금 풀기</h3>
-    <p>폰 카메라로 아래 QR을 찍고 비밀번호를 넣으면 이 칠판이 바로 관리자 모드로 바뀌어요. 폰에서 이미 로그인해 두었다면 QR만 찍으면 됩니다. 번호는 5분 동안만 유효해요.</p>
+  if(S.sheet==="teacher"){
+    const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
+    const fs=!!document.fullscreenElement;
+    const body = S.isAdmin
+      ? `<div class="ye-grid">${B("admin","관리자 화면 열기",1)}${B("review","복습 자료 저장")}${B("blank-board","칠판 비우기")}${B("end-class","수업 끝내기")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
+         <p class="help" style="margin:10px 0 0">수업 끝내기: 칠판을 비우고, 모든 필기를 지우고, 폰으로 연 칠판은 다시 잠가요.</p>`
+      : `<p>이 화면은 선생님이 열어야 볼 수 있어요.</p><div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwclass","비밀번호로 칠판 열기")}${B("pwlogin","관리자 화면 (비밀번호)")}${B("close","닫기")}</div>`;
+    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
+  }
+  if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="폰으로 칠판 열기">
+    <h3>폰으로 칠판 열기</h3>
+    <p>폰 카메라로 QR을 찍으세요. 폰에서 로그인해 두었다면 바로, 아니면 비밀번호를 넣으면 이 칠판에 수업 화면이 열려요. 폰은 리모컨이 되고, 칠판은 수업 화면 그대로예요. 번호는 5분 동안만 유효해요.</p>
     <div class="code">${esc(S.pairCode)}</div>
     <div class="qr" id="qr"></div>
     <p style="text-align:center;font-size:13px">QR이 안 되면 폰 리모컨 맨 아래 ‘칠판 잠금 해제’에 위 번호를 넣으세요.</p>
     <div class="row-btns"><button class="btn" data-act="pair">번호 새로 받기</button><button class="btn" data-act="close">닫기</button></div></div>`;
   if(S.sheet==="login") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="관리자 로그인">
     <h3>관리자 로그인</h3>
-    ${S.pendingPair?`<p><b>칠판 잠금 풀기</b> — 비밀번호를 넣으면 칠판(번호 ${esc(S.pendingPair)})이 바로 관리자 모드로 바뀌어요. 내 폰이면 아래 ‘30일 기억하기’를 켜 두세요. 다음부터는 QR만 찍으면 됩니다.</p>`:`<p>비밀번호를 입력하세요. 학생들이 보는 칠판에서는 ‘폰으로 잠금 풀기’를 쓰세요.</p>`}
+    ${S.pendingPair?`<p><b>칠판 열기</b> — 비밀번호를 넣으면 칠판(번호 ${esc(S.pendingPair)})에 수업 화면이 열리고, 이 폰은 리모컨이 돼요. ‘30일 기억하기’를 켜 두면 다음부터는 QR만 찍으면 됩니다.</p>`:`<p>비밀번호를 입력하세요. 학생들이 보는 칠판에서는 ‘폰으로 잠금 풀기’를 쓰세요.</p>`}
     <div class="field"><input class="inp" id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"></div>
-    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)"><input type="checkbox" id="remember"> 이 기기 30일 동안 기억하기 (내 폰·내 PC에서만)</label>
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)"><input type="checkbox" id="remember"${innerWidth<760?" checked":""}> 이 기기 30일 동안 기억하기 (내 폰·내 PC에서만, 전자칠판은 끄기)</label>
     <div class="err" id="pwerr"></div>
     <div class="row-btns"><button class="btn pri" data-act="dologin">들어가기</button><button class="btn" data-act="close">취소</button></div></div>`;
   return "";
@@ -1367,6 +1394,7 @@ function renderEditor(){
   <div class="savebar"><button class="btn pri" data-act="save">저장</button><span class="st" id="savest">${S.dirty?"저장 안 됨":"저장됨"}</span>
     <span style="flex:1"></span>
     <button class="btn sm" data-act="showboard">이 지문 칠판에 띄우기</button>
+    <button class="btn sm" data-act="blank-board">칠판에서 지우기</button>
     <button class="btn sm warn" data-act="delp">지문 삭제</button></div>
   <div class="two">
     <div class="field"><label>지문 제목 (목차에 표시)</label><input class="inp" data-pf="title" value="${esc(d.title||"")}"></div>
@@ -1393,7 +1421,7 @@ function slideForm(sl){
   const mk = `<div class="help">강조 <code>**주제문**</code> · 밑줄 <code>__단어__</code> · 기울임 <code>*제목*</code></div>`;
   let body="";
   switch(sl.type){
-    case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}<div class="help">수업 화면에서 문장을 누르면 형광 표시가 켜지고 꺼집니다.</div></div>`; break;
+    case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}<div class="help">수업 화면에서 문장을 누르면(또는 클리커 ▶) 그 문장만 형광펜, 나머지는 흐려지고 해석·어휘·어법 버튼이 나와요. 같은 문장을 다시 누르면 처음 상태로 돌아가요.</div></div>`; break;
     case "structure": { const tx0=(S.draft.slides||[]).find(x=>x.type==="text"), ss0=tx0?passageSentences(tx0.paras||[]):[];
       body = `<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작 (수업 마지막에 아이들과 맞추기 — ‘다음’을 누를 때마다 빈칸이 하나씩 열립니다)</label>
       <p class="help" style="margin:-4px 0 12px">빈칸으로 만들 말은 <code>[[ ]]</code>로 감싸세요. 예: <code>[[월식]]은 지구가 태양과 달 사이에 들어가 생긴다</code> → 칠판에는 <code>(　　)은 지구가 …</code>로 보여요. 소재는 통째로 빈칸이 되고, 주제는 [[ ]] 부분만 빈칸이 돼요.</p>
@@ -1513,6 +1541,9 @@ function renderRemote(){
   <div class="r-card"><h5>지금 칠판</h5>
     <select class="inp" id="rpick">${allPassagesOrdered().map(x=>`<option value="${x.id}"${x.id===S.cur.pid?" selected":""}>${esc(unitName(x.unitId))} / ${esc(x.title)}</option>`).join("")}</select>
     <div class="r-now" style="margin-top:10px">${sl?esc(slideTitle(sl)):"슬라이드 없음"} <span class="help">${slides.length?`${S.cur.idx+1} / ${slides.length}`:""}</span></div></div>
+  <div class="r-card"><h5>칠판</h5><div class="r-tools">
+    <button class="tg" data-act="blank-board">칠판 비우기</button><button class="tg" data-act="end-class">수업 끝내기</button><button class="tg" data-act="a-clearall">모든 필기 지우기</button></div>
+    <p class="help" style="margin:8px 0 0">${S.blank?"<b>지금 칠판이 비어 있어요.</b> 지문이나 슬라이드를 고르면 다시 나타나요.":"수업 끝내기: 칠판을 비우고 필기를 지우고, 폰으로 연 칠판은 다시 잠가요."}</p></div>
   <div class="r-card"><h5>오늘의 수업 (칠판 목차 맨 위에 나오고, 지문이 끝나면 다음 지문으로 이어집니다)</h5>
     ${S.today.map(getP).filter(Boolean).map((q,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="flex:1">${i+1}. ${esc(q.title)}</span><button class="mini" data-tmove="${i}|-1">↑</button><button class="mini" data-tmove="${i}|1">↓</button><button class="mini" data-today="${q.id}">✕</button></div>`).join("")||'<p class="help" style="margin:0 0 8px">아직 없어요. 아래에서 지문을 골라 추가하세요.</p>'}
     <div class="code-in"><select class="inp" id="todaysel">${allPassagesOrdered().filter(q=>!S.today.includes(q.id)).map(q=>`<option value="${q.id}">${esc(q.title)}</option>`).join("")}</select><button class="btn pri" data-act="today-add">추가</button></div></div>
@@ -1522,13 +1553,13 @@ function renderRemote(){
     ${sl.type==="vocab"?(S.reveal.vlist?tg("cover","뜻 가리기",S.reveal.cover):`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?"한→영":"영→한"}</button><button class="tg" data-act="vq-shuf">섞기</button>`)+`<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">목록으로</button>`:""}
     ${sl.type==="translate"?tg("cover","해석 가리기",S.reveal.cover):""}
     ${(sl.type==="structure"&&sl.blank)?tg("hint","힌트 띄우기",S.reveal.hint)+`<button class="tg" data-act="sbk-reset">다시 가리기</button>`:""}
-    ${sl.type==="reading"?tg("ko","해석 띄우기",S.reveal.ko)+tg("vc","어휘 띄우기",S.reveal.vc)+tg("gm","어법 띄우기",S.reveal.gm):""}
+    ${(sl.type==="reading"||sl.type==="text")?tg("ko","해석 띄우기",S.reveal.ko)+tg("vc","어휘 띄우기",S.reveal.vc)+tg("gm","어법 띄우기",S.reveal.gm):""}
     ${sl.type==="task"?`<span class="tm tmr-txt" style="font-size:34px;font-weight:700;margin-right:8px">${fmtT(tmrSecs(sl))}</span><button class="tg" data-act="tm-go">▶ 시작</button><button class="tg" data-act="tm-pause">⏸ 멈춤</button><button class="tg" data-act="tm-reset">처음으로</button>`:""}
     ${sl.type==="text"?`<button class="tg" data-rv="clearlit">형광 지우기</button>`:""}
     <button class="tg" data-act="smaller">가−</button><button class="tg" data-act="bigger">가+</button><span class="help" style="align-self:center">${Math.round(S.scale*100)}%</span>
   </div></div>`:""}
   ${sl&&sl.type==="question"&&S.reveal.tally?`<div class="r-card"><h5>손 든 학생 수 (칠판에 막대로 보임)</h5>${[0,1,2,3,4].map(i=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="width:2em;font-size:20px">${CIRC[i]}</span><button class="btn" data-tl="${i}|-1" style="min-width:56px;min-height:56px;font-size:24px">−</button><b style="min-width:2em;text-align:center;font-size:26px">${(S.reveal.tl||[])[i]||0}</b><button class="btn pri" data-tl="${i}|1" style="min-width:56px;min-height:56px;font-size:24px">+</button></div>`).join("")}</div>`:""}
-  ${sl&&sl.type==="reading"?(()=>{ const i=Math.max(0,S.reveal.sent||0), inf=sentInfo(p,i); if(!inf) return ""; const row=(k,v)=>`<div class="note" style="margin-bottom:8px"><b>${k}</b> ${v}</div>`;
+  ${sl&&(sl.type==="reading"||sl.type==="text")?(()=>{ const i=Math.max(0,S.reveal.sent||0), inf=sentInfo(p,i); if(!inf) return ""; const row=(k,v)=>`<div class="note" style="margin-bottom:8px"><b>${k}</b> ${v}</div>`;
     return `<div class="r-card"><h5>문장 ${i+1} / ${inf.n} — 수업 도우미 (칠판엔 안 보임)</h5>
     <div class="note en" style="margin-bottom:8px">${inline(inf.en)}</div>
     ${row("해석",esc(inf.ko||"(없음)"))}${inf.block?row("흐름",esc(inf.block.label||"")+" — "+esc(inf.block.ko||"")):""}
@@ -1551,9 +1582,8 @@ function renderSettings(){
     <div class="row-btns"><button class="btn pri" data-act="export">백업 저장</button><label class="btn" style="display:inline-flex;align-items:center">백업 불러오기<input type="file" id="importfile" accept=".json,application/json" hidden></label></div>
     <p class="help">불러오기는 지금 있는 단원·지문을 모두 지우고 파일 내용으로 바꿉니다.</p></div>
   <div class="r-card"><h5>비밀번호</h5><p class="help" style="margin-top:0">비밀번호는 Cloudflare 대시보드 → 이 Worker → Settings → Variables and Secrets의 <b>ADMIN_PASSWORD</b>에서 바꿉니다.</p></div>
-  <div class="r-card"><h5>칠판 기기 지정</h5>
-    <p class="help" style="margin-top:0">${IS_BOARD?"이 기기는 <b>칠판으로 지정</b>되어 있습니다. 빠르게 따라가고, 오래 두어도 멈추지 않습니다.":"이 기기는 칠판으로 지정되어 있지 않습니다."} 전자칠판에서는 주소 끝에 <code>#board</code>를 붙여 한 번 열면 그 브라우저가 칠판으로 기억됩니다. (학생 기기는 10초마다 확인하고 15분간 조작이 없으면 멈춥니다)</p>
-    ${IS_BOARD?`<button class="btn" data-act="unboard">이 기기 칠판 지정 해제</button>`:`<button class="btn" data-act="setboard">이 기기를 칠판으로 지정</button>`}</div>
+  <div class="r-card"><h5>학생 접속 막기</h5>
+    <p class="help" style="margin-top:0">주소를 알아도 로그인하지 않은 기기에는 아무것도 보이지 않아요. 전자칠판은 수업 때마다 <b>YE → 폰으로 칠판 열기</b>로 열고, 끝나면 <b>수업 끝내기</b>를 누르면 다시 잠겨요.</p></div>
   <div class="r-card"><h5>이 기기</h5><p class="help" style="margin-top:0">‘30일 기억하기’로 로그인했다면 여기서 로그아웃하세요. 전자칠판에서는 기억하기를 켜지 마세요.</p>
     <button class="btn" data-act="forget">이 기기 로그아웃</button></div>
   <div class="r-card"><h5>사용 방법</h5><div class="note">1. 전자칠판: 이 사이트 주소를 열면 수업 화면이 나옵니다. 로그인은 필요 없습니다.
@@ -1575,7 +1605,7 @@ document.addEventListener("click", async e=>{
   if(ds.tmove){ const [ti,td]=ds.tmove.split("|").map(Number), tj=ti+td; if(tj<0||tj>=S.today.length) return; [S.today[ti],S.today[tj]]=[S.today[tj],S.today[ti]]; pushLive(); return renderRemote(); }
   if(ds.gt){ gtCmd("start",+ds.gt); return; }
   if(ds.gtadd){ gtCmd("add",+ds.gtadd); return; }
-  if(ds.rs!=null && S.mode==="class"){ return setReveal({sent:+ds.rs, ko:false, vc:false, gm:false}); }
+  if(ds.rs!=null && S.mode==="class"){ return setReveal({sent: S.reveal.sent===+ds.rs ? -1 : +ds.rs, ko:false, vc:false, gm:false}); }
   if(ds.atool){ ANN.tool=ds.atool; annUI(); return; }
   if(ds.asize!=null){ ANN.size=+ds.asize; annUI(); return; }
   if(ds.acolor){ if(ANN.tool==="pen") ANN.pen=ds.acolor; else ANN.hl=ds.acolor; annUI(); return; }
@@ -1617,6 +1647,12 @@ document.addEventListener("click", async e=>{
     case "drawer": S.drawer=true; return render();
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
+    case "admin": S.sheet=null; return enterAdmin();
+    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 비웠어요. 지문을 고르면 다시 나타나요"); return render();
+    case "end-class": if(!confirm("수업을 끝낼까요? 칠판을 비우고 모든 필기를 지워요.")) return; S.sheet=null; return endClass();
+    case "a-clearall": S.drawData={}; S.drawBackup={}; S.sheet=null; render(); toast("모든 쪽의 필기를 지웠어요"); return;
+    case "sound": S.sheet=null; render(); unlockAudio(); beep(); toast("‘띵-동’이 들리면 정상이에요. 안 들리면 칠판 볼륨을 확인하세요"); return;
+    case "closewin": try{ if(document.fullscreenElement) await document.exitFullscreen(); }catch(x){} window.close(); setTimeout(()=>toast("브라우저가 창 닫기를 막았어요. 화면 맨 위 오른쪽 X를 누르거나 키보드 Alt+F4를 누르세요"),400); return;
     case "vq-flip": { const q=S.reveal.vq||0; return setReveal({vq: q%2?q-1:q+1}); }
     case "vq-dir": { const q=S.reveal.vq||0; return setReveal({dir: S.reveal.dir==="ke"?"ek":"ke", vq: Math.floor(q/2)*2}); }
     case "vq-shuf": { const n=(curSlide()?.items||[]).length, o=[...Array(n).keys()]; for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [o[i],o[j]]=[o[j],o[i]]; } toast("단어 순서를 섞었어요"); return setReveal({ord:o, vq:0}); }
@@ -1648,22 +1684,23 @@ document.addEventListener("click", async e=>{
     case "close": S.drawer=false; S.sheet=null; stopPairPoll(); return render();
     case "prev": return step(-1);
     case "next": return step(1);
-    case "smaller": return setScale(S.scale-.1);
-    case "bigger": return setScale(S.scale+.1);
-    case "full": try{ document.fullscreenElement? document.exitFullscreen() : await document.documentElement.requestFullscreen(); }catch(err){ toast("브라우저 메뉴의 전체 화면을 써 주세요"); } return;
+    case "smaller": S.sheet=null; return setScale(S.scale-.1);
+    case "bigger": S.sheet=null; return setScale(S.scale+.1);
+    case "full": S.sheet=null; render(); try{ document.fullscreenElement? document.exitFullscreen() : await document.documentElement.requestFullscreen(); }catch(err){ toast("브라우저 메뉴의 전체 화면을 써 주세요"); } return;
     case "teacher": S.sheet="teacher"; return render();
     case "pair": return startPair();
-    case "pwlogin": S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
+    case "pwclass": S.loginTo="class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
+    case "pwlogin": S.loginTo="admin"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "dologin": {
       const pw=$("#pw").value, err=$("#pwerr");
       try{ const r=await API.req("POST","/api/login",{password:pw, remember:$("#remember").checked}); API.setToken(r.token,$("#remember").checked); }
       catch(x){ err.textContent = x.status===401 ? "비밀번호가 맞지 않습니다." : (x.message||"로그인하지 못했습니다."); return; }
       if(S.mode==="admin"){ S.sheet=null; S.isAdmin=true; render(); toast("다시 로그인했습니다. 저장을 눌러 주세요"); return; }
-      enterAdmin(); approvePending(); return;
+      S.sheet=null; await afterLogin(S.pendingPair ? "admin" : (S.loginTo||"admin")); return;
     }
     case "exitadmin": return exitAdmin();
     case "answer": return setReveal({answer:!S.reveal.answer});
-    case "unlock": { const c=$("#pcode").value.trim(); if(!/^\d{4}$/.test(c)){ toast("4자리 번호를 넣어 주세요"); return; } try{ await API.req("POST","/api/pair/approve",{code:c}); toast("칠판 잠금을 풀었습니다"); $("#pcode").value=""; }catch(x){ toast(x.message||"보내지 못했습니다"); } return; }
+    case "unlock": { const c=$("#pcode").value.trim(); if(!/^\d{4}$/.test(c)){ toast("4자리 번호를 넣어 주세요"); return; } try{ await API.req("POST","/api/pair/approve",{code:c}); toast("칠판을 열었습니다"); $("#pcode").value=""; }catch(x){ toast(x.message||"보내지 못했습니다"); } return; }
     case "save": return saveDraft();
     case "addunit": { const v=prompt("단원 이름 (예: 수프림 12과)"); if(!v||!v.trim()) return; const id=uid(); try{ await API.put("units",id,{title:v.trim(), order:S.units.length}); S.units.push({id,title:v.trim(),order:S.units.length}); renderTree(); }catch(x){ toast("만들지 못했습니다"); } return; }
     case "delp": { if(!confirm(`‘${S.draft.title}’ 지문을 지울까요? 되돌릴 수 없습니다.`)) return; const id=S.draft.id; await API.del("passages",id); S.passages=S.passages.filter(p=>p.id!==id); S.draft=null; S.editPid=null; S.dirty=false; renderAdminSide(true); return; }
@@ -1718,7 +1755,8 @@ document.addEventListener("keydown", e=>{
   if(e.key==="ArrowRight"||e.key==="ArrowDown"||e.key==="PageDown"||e.key===" "){ e.preventDefault(); step(1); }
   if(e.key==="ArrowLeft"||e.key==="ArrowUp"||e.key==="PageUp"){ e.preventDefault(); step(-1); }
   { const sl=curSlide(), kk=String(e.key).toLowerCase();
-    if(sl && sl.type==="reading"){ const k={"1":"ko","2":"vc","3":"gm","b":"ko",".":"ko"}[kk]; if(k){ e.preventDefault(); setReveal({[k]:!S.reveal[k]}); } }
+    if(kk==="+"||kk==="="){ e.preventDefault(); return setScale(S.scale+.1); } if(kk==="-"){ e.preventDefault(); return setScale(S.scale-.1); }
+    if(sl && (sl.type==="reading"||sl.type==="text") && S.reveal.sent>=0){ const k={"1":"ko","2":"vc","3":"gm","b":"ko",".":"ko"}[kk]; if(k){ e.preventDefault(); setReveal({[k]:!S.reveal[k]}); } }
     if(kk==="t"){ S.sheet="timer"; render(); } }
   if(e.key==="Escape"){ S.drawer=false; render(); }
 });
