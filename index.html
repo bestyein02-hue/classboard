@@ -559,12 +559,24 @@ mark.key{background:none;color:inherit;text-decoration:underline;text-decoration
 /* 다음 옆 작은 이전 */
 .navpair{display:flex;gap:8px;align-items:stretch}
 .nav.nav-back{min-width:64px;padding:0;font-size:30px}
-/* 필기 도구: 아래쪽 가로 막대 (세로로 넘치지 않게) */
-.atools{top:auto!important;bottom:96px;left:50%;right:auto;transform:translateX(-50%);width:auto;max-width:96vw;max-height:none;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;padding:6px 10px;overflow:visible;border-radius:12px}
-.atools .at{width:auto;min-width:58px;height:58px;padding:2px 6px}
-.atools .asz,.atools .acol{flex-direction:row;display:flex;gap:4px;margin:0 4px}
-.atools .ahint{max-width:120px;font-size:12px}
-@media (max-width:760px){ .atools{bottom:calc(120px + env(safe-area-inset-bottom,0px))} .nav.nav-back{min-width:48px} }
+@media (max-width:760px){ .nav.nav-back{min-width:48px} }
+
+/* 필기 도구: 오른쪽 세로 얇은 막대 + 그만큼 본문을 비켜서 글씨를 가리지 않음 */
+.atools{top:50%!important;bottom:auto;right:6px;left:auto;transform:translateY(-50%);width:72px;max-width:none;max-height:calc(100vh - 150px);display:flex;flex-direction:column;flex-wrap:nowrap;align-items:center;gap:4px;padding:6px 4px;overflow-y:auto;overflow-x:hidden;border-radius:10px}
+.atools .at{width:60px;min-width:0;height:auto;min-height:46px;padding:3px 2px;flex:none}
+.atools .at span{font-size:18px;line-height:1}
+.atools .at small{font-size:11px}
+.atools .asz{display:flex;flex-direction:row;gap:2px;margin:2px 0}
+.atools .asz button{width:19px;height:26px;padding:0}
+.atools .asz button i{max-width:15px;max-height:15px}
+.atools .acol{display:grid;grid-template-columns:repeat(2,24px);gap:4px;margin:2px 0}
+.atools .acol button{width:24px;height:24px}
+.atools .ahint{display:none}
+.atools.min{padding:4px}
+body.ann-on .stage{padding-right:92px}
+@media (max-height:820px){ .atools .at{min-height:40px} .atools .at small{font-size:10px} }
+@media (max-width:760px){ .atools{width:62px} .atools .at{width:52px} body.ann-on .stage{padding-right:70px} }
+.ib.endc{border-color:#FFD6C2}
 </style>
 </head>
 <body>
@@ -865,14 +877,15 @@ function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && (
 function annStrokes(){ const k=annKey(); return S.drawData[k]||(S.drawData[k]=[]); }
 function annActive(){ const sl=curSlide(); return !!S.annOn || !!(sl && sl.type==="draw"); }
 function annToolsHTML(){
+  if(S.annMin) return `<button class="at" data-act="a-min" aria-label="도구 펼치기"><span>«</span><small>${L("도구","Tools")}</small></button>`;
   const canUndo=annStrokes().length>0 || !!S.drawBackup[annKey()];
   const T=(k,ic,lb)=>`<button class="at${ANN.tool===k?" on":""}" data-atool="${k}" aria-label="${lb}"><span>${ic}</span><small>${lb}</small></button>`;
   const pal = ANN.tool==="pen"?PEN_COLORS:(ANN.tool==="hl"?HL_COLORS:null), cur = ANN.tool==="pen"?ANN.pen:ANN.hl;
-  return T("pen","✎",L("펜","Pen"))+T("hl","▰",L("형광펜","Marker"))+T("eraser","◌",L("지우개","Eraser"))
+  return `<button class="at amin" data-act="a-min" aria-label="도구 접기"><span>»</span><small>${L("접기","Hide")}</small></button>`+T("pen","✎",L("펜","Pen"))+T("hl","▰",L("형광펜","Marker"))+T("eraser","◌",L("지우개","Eraser"))
     +`<div class="asz">${[0,1,2].map(i=>`<button class="${ANN.size===i?"on":""}" data-asize="${i}" aria-label="굵기 ${i+1}"><i style="width:${8+i*7}px;height:${8+i*7}px"></i></button>`).join("")}</div>`
     +(pal?`<div class="acol">${pal.map(c=>`<button class="${c===cur?"on":""}" data-acolor="${c}" style="background:${c}" aria-label="색"></button>`).join("")}</div>`:`<div class="ahint">${L("문지른 곳만 지워져요","Erases only what you rub")}</div>`)
     +`<button class="at" data-act="a-undo"${canUndo?"":" disabled"}><span>↶</span><small>${L("뒤로","Undo")}</small></button>`
-    +`<button class="at warn" data-act="a-clear"><span>⌫</span><small>${L("이 쪽 지우기","Clear page")}</small></button>`+`<button class="at warn" data-act="a-clearall"><span>⌫⌫</span><small>${L("모든 쪽","All pages")}</small></button>`
+    +`<button class="at warn" data-act="a-clear"><span>⌫</span><small>${L("이 쪽","This page")}</small></button>`+`<button class="at warn" data-act="a-clearall"><span>⌫⌫</span><small>${L("모든 쪽","All pages")}</small></button>`
     +((curSlide()||{}).type==="draw"?"":`<button class="at" data-act="a-off"><span>✓</span><small>${L("필기 끄기","Done")}</small></button>`);
 }
 function annUI(){ const el=$(".atools"); if(el) el.innerHTML=annToolsHTML(); }
@@ -1209,7 +1222,8 @@ function renderClass(){
   const p=getP(S.cur.pid);
   const slides = p?.slides||[]; const sl = slides[S.cur.idx];
   const live = S.remoteSeen && Date.now()-S.remoteSeen < 15*60e3;
-  const vis = slides.map((s0,i)=>i).filter(i=>!slides[i].hidden || i===S.cur.idx);
+  const vis = slides.map((s0,i)=>i).filter(i=>!slides[i].hidden);
+  if(p && sl && sl.hidden && vis.length){ const nx=vis.find(i=>i>S.cur.idx) ?? vis[vis.length-1]; S.cur={pid:p.id, idx:nx}; S.reveal={}; return renderClass(); }
   const si = stepInfo(p, sl), atStart = !si || (S.reveal[si.key]??si.min)<=si.min;
   const tools = !sl ? "" : ((sl.type==="reading"||sl.type==="text") && Number.isInteger(S.reveal.sent) && S.reveal.sent>=0) ? `<div class="tools"><button class="tg${S.reveal.ko?" on":""}" data-rv="ko">${L("해석","Korean")}</button><button class="tg${S.reveal.vc?" on":""}" data-rv="vc">${L("어휘","Words")}</button><button class="tg${S.reveal.gm?" on":""}" data-rv="gm">${L("어법","Grammar")}</button></div>`
     : (sl.type==="structure" && sl.blank) ? `<div class="tools"><button class="tg${S.reveal.hint?" on":""}" data-rv="hint">${L("힌트","Hint")}</button><button class="tg" data-act="sbk-reset">${L("다시 가리기","Hide all")}</button></div>`
@@ -1224,16 +1238,17 @@ function renderClass(){
     ${window.PointerEvent?`<button class="ib${S.annOn?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
     <button class="ib" data-act="picker">${L("뽑기","Pick")}</button>
+    <button class="ib endc" data-act="end-class">${L("수업 끝","End class")}</button>
     <button class="ib solid ye" data-act="teacher" title="Made by YE" aria-label="YE 메뉴">YE</button>
   </header>
   ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:""}
   <main class="stage">${
     !p ? `<div class="empty"><b>아직 수업 자료가 없어요</b>오른쪽 위 ‘YE’에서 관리자 모드로 들어가 지문을 추가하세요.</div>`
-    : !sl ? `<div class="empty"><b>슬라이드가 없어요</b>관리자 모드에서 이 지문에 슬라이드를 추가하세요.</div>`
+    : (!sl || !vis.length) ? `<div class="empty"><b>칠판에 넣은 슬라이드가 없어요</b>편집 화면에서 슬라이드를 ‘넣음’으로 바꾸거나 새로 추가하세요.</div>`
     : `<article class="slide${FIT_TYPES.includes(sl.type)?" fit":(sl.type==="draw"?" fit draw":"")}">${renderSlide(sl,{reveal:S.reveal, live:true, passage:p})}</article>`}
   </main>
   ${p?`<canvas id="ann"></canvas>`:""}
-  ${p&&annActive()?`<div class="atools">${annToolsHTML()}</div>`:""}
+  ${p&&annActive()?`<div class="atools${S.annMin?" min":""}">${annToolsHTML()}</div>`:""}
   ${p?`<footer class="foot">
     <button class="nav" data-act="prev" ${(vis[0]===S.cur.idx && atStart && allPassagesOrdered()[0]?.id===p.id)?"disabled":""}>${L("‹ 이전","‹ Prev")}</button>
     ${tools || `<div class="dots">${vis.map((i,n)=>`<button class="dot${i===S.cur.idx?" on":""}" data-go="${i}" aria-label="${n+1}번 슬라이드"></button>`).join("")}</div>`}
@@ -1244,6 +1259,7 @@ function renderClass(){
   ${asleep?`<div class="sleep" role="status"><span>${L("연결이 멈췄어요. 선생님 칠판을 따라가려면 다시 연결하세요.","Connection paused. Reconnect to follow the teacher.")}</span><button class="btn pri sm" data-act="wake">${L("다시 연결","Reconnect")}</button></div>`:""}
   ${S.drawer?renderDrawer():""}
   ${S.sheet?renderSheet():""}`;
+  document.body.classList.toggle("ann-on", !!(p && annActive() && !S.annMin));
   if(S.sheet==="pair") drawQR();
   requestAnimationFrame(()=>{ fitAll(); placePanel(); initAnn(); });
 }
@@ -1301,8 +1317,8 @@ function renderSheet(){
     const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
     const fs=!!document.fullscreenElement;
     const body = S.isAdmin
-      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("blank-board","칠판 비우기")}${B("end-class","수업 끝내기")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
-         <p class="help" style="margin:10px 0 0">수업 끝내기: 칠판을 비우고, 모든 필기를 지우고, 폰으로 연 칠판은 다시 잠가요.</p>`
+      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
+`
       : `<p>이 화면은 선생님이 열어야 볼 수 있어요.</p><div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwclass","비밀번호로 칠판 열기")}${B("pwlogin","관리자 화면 (비밀번호)")}${B("close","닫기")}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
   }
@@ -1394,7 +1410,7 @@ function renderEditor(){
   <div class="savebar"><button class="btn pri" data-act="save">저장</button><span class="st" id="savest">${S.dirty?"저장 안 됨":"저장됨"}</span>
     <span style="flex:1"></span>
     <button class="btn sm" data-act="showboard">이 지문 칠판에 띄우기</button>
-    <button class="btn sm" data-act="blank-board">칠판에서 지우기</button>
+    <button class="btn sm" data-act="blank-board">칠판 잠깐 가리기</button>
     <button class="btn sm warn" data-act="delp">지문 삭제</button></div>
   <div class="two">
     <div class="field"><label>지문 제목 (목차에 표시)</label><input class="inp" data-pf="title" value="${esc(d.title||"")}"></div>
@@ -1542,8 +1558,8 @@ function renderRemote(){
     <select class="inp" id="rpick">${allPassagesOrdered().map(x=>`<option value="${x.id}"${x.id===S.cur.pid?" selected":""}>${esc(unitName(x.unitId))} / ${esc(x.title)}</option>`).join("")}</select>
     <div class="r-now" style="margin-top:10px">${sl?esc(slideTitle(sl)):"슬라이드 없음"} <span class="help">${slides.length?`${S.cur.idx+1} / ${slides.length}`:""}</span></div></div>
   <div class="r-card"><h5>칠판</h5><div class="r-tools">
-    <button class="tg" data-act="blank-board">칠판 비우기</button><button class="tg" data-act="end-class">수업 끝내기</button><button class="tg" data-act="a-clearall">모든 필기 지우기</button></div>
-    <p class="help" style="margin:8px 0 0">${S.blank?`<b>지금 칠판이 비어 있어요.</b> <button class="btn pri sm" data-act="unblank">다시 띄우기</button>`:"수업 끝내기: 칠판을 비우고 필기를 지우고, 폰으로 연 칠판은 다시 잠가요."}</p></div>
+    <button class="tg" data-act="blank-board">잠깐 가리기</button><button class="tg" data-act="end-class">수업 끝내기</button><button class="tg" data-act="a-clearall">모든 필기 지우기</button></div>
+    <p class="help" style="margin:8px 0 0">${S.blank?`<b>지금 칠판이 비어 있어요.</b> <button class="btn pri sm" data-act="unblank">다시 띄우기</button>`:"잠깐 가리기: 화면만 잠시 숨겨요(다시 띄우기 가능). 수업 끝내기: 칠판을 비우고 필기를 모두 지우고 칠판을 잠가요."}</p></div>
   <div class="r-card"><h5>오늘의 수업 (칠판 목차 맨 위에 나오고, 지문이 끝나면 다음 지문으로 이어집니다)</h5>
     ${S.today.map(getP).filter(Boolean).map((q,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="flex:1">${i+1}. ${esc(q.title)}</span><button class="mini" data-tmove="${i}|-1">↑</button><button class="mini" data-tmove="${i}|1">↓</button><button class="mini" data-today="${q.id}">✕</button></div>`).join("")||'<p class="help" style="margin:0 0 8px">아직 없어요. 아래에서 지문을 골라 추가하세요.</p>'}
     <div class="code-in"><select class="inp" id="todaysel">${allPassagesOrdered().filter(q=>!S.today.includes(q.id)).map(q=>`<option value="${q.id}">${esc(q.title)}</option>`).join("")}</select><button class="btn pri" data-act="today-add">추가</button></div></div>
@@ -1569,7 +1585,7 @@ function renderRemote(){
   ${sl?`<div class="r-card"><h5>수업 메모</h5><div class="note">${sl.note?esc(sl.note):'<span class="help">메모 없음 — 자료 편집에서 슬라이드마다 적어 둘 수 있습니다.</span>'}</div>
     ${sl.type==="question"&&Number.isInteger(sl.answer)?`<p class="help" style="margin-bottom:0">정답 ${CIRC[sl.answer]} ${sl.explain?"— "+esc(sl.explain):""}</p>`:""}</div>`:""}
   <div class="r-card"><h5>칠판에 나오는 슬라이드 (− 눌러 빼기)</h5><div class="r-sl">${slides.map((s,i)=>s.hidden?"":`<div class="r-sli"><button class="${i===S.cur.idx?"on":""}" data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button><button class="r-x" data-pinc="${i}|0" aria-label="빼기">−</button></div>`).join("")}</div>
-    ${slides.some(s=>s.hidden)?`<h5 style="margin-top:12px">빠진 슬라이드 (+ 눌러 넣기)</h5><div class="r-sl">${slides.map((s,i)=>!s.hidden?"":`<div class="r-sli out"><button data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button><button class="r-x" data-pinc="${i}|1" aria-label="넣기">+</button></div>`).join("")}</div>`:""}</div>
+    ${slides.some(s=>s.hidden)?`<h5 style="margin-top:12px">빠진 슬라이드 (+ 눌러 넣기)</h5><div class="r-sl">${slides.map((s,i)=>!s.hidden?"":`<div class="r-sli out"><button data-pinc="${i}|1"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button><button class="r-x" data-pinc="${i}|1" aria-label="넣기">+</button></div>`).join("")}</div>`:""}</div>
   <div class="r-card"><h5>칠판 잠금 해제</h5>
     <p class="help" style="margin-top:0">칠판의 ‘YE → 폰으로 잠금 풀기’에 나온 4자리 번호를 넣으세요.</p>
     <div class="code-in"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="0000"><button class="btn pri" data-act="unlock">해제</button></div></div>
@@ -1649,8 +1665,8 @@ document.addEventListener("click", async e=>{
     case "timer": S.sheet="timer"; return render();
     case "admin": S.sheet=null; return enterAdmin();
     case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
-    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 비웠어요. 다시 띄우려면 YE → 칠판 다시 띄우기 (또는 클리커 버튼)"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
-    case "end-class": if(!confirm("수업을 끝낼까요? 칠판을 비우고 모든 필기를 지워요.")) return; S.sheet=null; return endClass();
+    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 잠깐 가렸어요. 다시 띄우려면 YE → 칠판 다시 띄우기 (또는 클리커 버튼)"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
+    case "end-class": if(!confirm("수업을 끝낼까요?\n칠판을 비우고, 모든 필기를 지우고, 칠판을 다시 잠가요.")) return; S.sheet=null; return endClass();
     case "a-clearall": S.drawData={}; S.drawBackup={}; S.sheet=null; render(); toast("모든 쪽의 필기를 지웠어요"); return;
     case "sound": S.sheet=null; render(); unlockAudio(); beep(); toast("‘띵-동’이 들리면 정상이에요. 안 들리면 칠판 볼륨을 확인하세요"); return;
     case "closewin": try{ if(document.fullscreenElement) await document.exitFullscreen(); }catch(x){} window.close(); setTimeout(()=>toast("브라우저가 창 닫기를 막았어요. 화면 맨 위 오른쪽 X를 누르거나 키보드 Alt+F4를 누르세요"),400); return;
@@ -1680,6 +1696,7 @@ document.addEventListener("click", async e=>{
     case "a-undo": return annUndo();
     case "sbk-reset": return setReveal({sbk:0,bo:[],hint:false});
     case "a-clear": return annClear();
+    case "a-min": S.annMin=!S.annMin; return render();
     case "setboard": try{ localStorage.setItem("cb_board","1"); }catch(x){} toast("칠판으로 지정했습니다. 새로고침하면 적용됩니다"); return;
     case "unboard": try{ localStorage.removeItem("cb_board"); }catch(x){} toast("지정을 풀었습니다. 새로고침하면 적용됩니다"); return;
     case "close": S.drawer=false; S.sheet=null; stopPairPoll(); return render();
