@@ -582,6 +582,17 @@ body.ann-on .stage{padding-right:92px}
 .lock-t{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink)}
 .lock-t small{font-family:var(--f-hand);font-weight:700;font-size:34px;color:var(--muted);letter-spacing:.08em}
 .lock-t b{font-family:Fredoka,"Gamja Flower",var(--f-ui);font-weight:600;font-size:min(16vw,160px);line-height:1;letter-spacing:.04em;color:var(--orange);transform:rotate(-2deg)}
+/* 창(뽑기·타이머·메뉴·해석 창·필기 도구): 검은 테두리 대신 부드러운 그림자 */
+.sheet{border:0;border-top:6px solid var(--orange);border-radius:16px;box-shadow:0 24px 70px rgba(30,20,10,.22),0 0 0 1px rgba(0,0,0,.04)}
+.sheet .btn{border:1.5px solid var(--line);border-radius:10px;color:var(--ink)}
+.sheet .btn:hover{border-color:var(--orange)}
+.sheet .btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
+.sheet .btn.warn{border-color:#F2B8AC;color:var(--red)}
+.pk-opt input[type=number]{border:1.5px solid var(--line);border-radius:10px}
+.rpanel{border:0;border-top:6px solid var(--orange);border-radius:14px;box-shadow:0 18px 50px rgba(30,20,10,.2),0 0 0 1px rgba(0,0,0,.04)}
+.atools{border:0;border-radius:14px;box-shadow:0 12px 36px rgba(30,20,10,.18),0 0 0 1px rgba(0,0,0,.05)}
+.atools .at{border:1.5px solid var(--line)}
+.atools .at.on{border-color:var(--orange)}
 </style>
 </head>
 <body>
