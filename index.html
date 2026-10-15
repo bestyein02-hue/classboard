@@ -623,6 +623,11 @@ body.ann-on .stage{padding-right:92px}
 .ugrp>summary small{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
 .ugrp>summary:hover{background:#F3F1EA}
 .ugrp[open]{padding-bottom:6px}
+
+.lock-cls{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:48px;max-width:min(1000px,94vw)}
+.lock-cls .cls{min-width:92px;min-height:64px;font-family:var(--f-ui);font-size:26px;border:2px solid var(--line);border-radius:14px;color:var(--muted);background:#fff}
+.lock-cls .cls:hover{border-color:var(--orange);color:var(--orange-dk)}
+.lock-cls .cls.on{background:var(--orange);border-color:var(--orange);color:#fff}
 </style>
 </head>
 <body>
@@ -1104,6 +1109,7 @@ function renderSlide(sl, ctx){
 
 /* ================= 반별 진도 ================= */
 const DEF_CLASSES=["1반","2반","3반","4반","5반","6반","7반","8반","9반"];
+function cachedClasses(){ try{ const c=JSON.parse(localStorage.getItem("cb_classes")||"null"); if(Array.isArray(c)&&c.length) return c; }catch(e){} return DEF_CLASSES; }
 function progClasses(){ const c=S.prog&&S.prog.classes; return (Array.isArray(c)&&c.length)?c:DEF_CLASSES; }
 function progOf(cls){ S.prog=S.prog||{}; S.prog.by=S.prog.by||{}; const g=S.prog.by[cls]||(S.prog.by[cls]={done:{},last:null}); g.done=g.done||{}; return g; }
 function firstVis(p){ const i=(p.slides||[]).findIndex(x=>!x.hidden); return i<0?0:i; }
@@ -1131,8 +1137,7 @@ function progHTML(){
   const cl=progClasses(), cur=S.cls?nextFor(S.cls):null;
   return `<div class="clsrow">${cl.map(c=>`<button class="cls${c===S.cls?" on":""}" data-cls="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   ${S.cls?`<div class="nextup"><div><b>${esc(S.cls)}</b> 다음 차례 — ${progDesc(cur)}</div><div class="row-btns" style="margin-top:8px">${cur&&cur.pid?`<button class="btn pri sm" data-act="prog-go">여기로 가기</button>`:""}<button class="btn sm" data-act="prog-here">지금 화면까지 했음</button></div></div>`
-    :`<p class="help" style="margin:0 6px 10px">수업 시작 때 반을 고르세요. ‘수업 끝’을 누르면 그 반이 어디까지 했는지 자동으로 기록돼요.</p>`}
-  <div class="plist">${cl.map(c=>{ const g=progOf(c); return `<button class="prow${c===S.cls?" on":""}" data-clsgo="${esc(c)}"><b>${esc(c)}</b><span>${progDesc(nextFor(c))}</span><small>${g.at?md(g.at):""}</small></button>`; }).join("")}</div>`;
+    :`<p class="help" style="margin:0 6px 10px">수업 시작 때 반을 고르세요. ‘수업 끝’을 누르면 그 반이 어디까지 했는지 자동으로 기록돼요.</p>`}`;
 }
 function rerenderHere(){ if(S.mode==="admin"){ return S.adminTab==="remote"?renderRemote():(S.adminTab==="settings"?renderSettings():render()); } render(); }
 
@@ -1220,7 +1225,7 @@ async function startPair(){
 /* ================= data loading ================= */
 async function loadData(){
   const d = await API.req("GET","/api/data");
-  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.prog=(({id,...b})=>b)(ps.find(x=>x.id==="_prog")||{id:0}); S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
+  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.prog=(({id,...b})=>b)(ps.find(x=>x.id==="_prog")||{id:0}); try{ localStorage.setItem("cb_classes",JSON.stringify(progClasses())); }catch(e){} S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
 }
 async function boot(){
   render();
@@ -1237,7 +1242,9 @@ async function afterLogin(to){
   if(!getP(S.cur.pid)){ const f=allPassagesOrdered()[0]; if(f) S.cur={pid:f.id, idx:0}; }
   if(!pollLoop.started){ pollLoop.started=true; pollLoop(); }
   if(to==="admin"){ enterAdmin(); approvePending(); }
-  else { S.mode="class"; S.sheet=null; setLastMode("class"); render(); }
+  else { S.mode="class"; S.sheet=null; setLastMode("class");
+    if(S.pendCls){ const c=S.pendCls; S.pendCls=null; setCls(c,true); S.doneP={}; const n=nextFor(c); if(n&&n.pid){ S.cur={pid:n.pid,idx:n.idx}; S.reveal={}; } S.blank=false; pushLive(); }
+    render(); }
 }
 async function pinHash(pin){ const b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode("classboard:"+pin)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
 async function gateGo(){
@@ -1312,7 +1319,8 @@ function render(){
 function renderClass(){
   const app=$("#app");
   if(!S.isAdmin || S.blank){
-    app.innerHTML = `<div class="lock"><div class="lock-t">${S.isAdmin?"":`<small>진주동명고</small><b>ENGLISH</b>`}</div></div><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
+    app.innerHTML = `<div class="lock"><div class="lock-t">${pickCls?`<small>진주동명고</small><b>ENGLISH</b><div class="lock-cls">${cl.map(c=>`<button class="cls${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}">${esc(c)}</button>`).join("")}</div>`:""}</div></div><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
   }
   const p=getP(S.cur.pid);
@@ -1373,12 +1381,12 @@ if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>fitAll(
 function renderDrawer(){
   const g=S.cls?progOf(S.cls):null, nx=S.cls?nextFor(S.cls):null;
   const mark=p=>{ if(!g) return ""; if(g.done[p.id]) return `<span class="pm done">✓ ${md(g.done[p.id])}</span>`; if(nx&&nx.pid===p.id) return `<span class="pm ${nx.partial?"part":"next"}">${nx.partial?"◐ 이어서":"▶ 차례"}</span>`; return `<span class="pm"></span>`; };
-  const row=(p,lab)=>`<div class="pirow"><button class="pi${p.id===S.cur.pid?" on":""}" data-pick="${p.id}">${mark(p)}${lab}${p.topic?`<small>${esc(p.topic)}</small>`:""}</button>${g?`<button class="mini pdn${g.done[p.id]?" on":""}" data-pdone="${p.id}" title="${esc(S.cls)} 끝남 표시 / 취소">${g.done[p.id]?"✓":"○"}</button>`:""}</div>`;
-  const block=(title,list)=>list.length?`<details class="ugrp"><summary>${esc(title)}<small>${list.length}개${g?` · ✓ ${list.filter(p=>g.done[p.id]).length}`:""}</small></summary>${list.map(p=>row(p,esc(p.title))).join("")}</details>`:"";
+  const row=(p,lab,pm)=>`<div class="pirow"><button class="pi${p.id===S.cur.pid?" on":""}" data-pick="${p.id}">${pm?mark(p):""}${lab}${p.topic?`<small>${esc(p.topic)}</small>`:""}</button>${(g&&pm)?`<button class="mini pdn${g.done[p.id]?" on":""}" data-pdone="${p.id}" title="${esc(S.cls)} 끝남 표시 / 취소">${g.done[p.id]?"✓":"○"}</button>`:""}</div>`;
+  const block=(title,list)=>list.length?`<details class="ugrp"><summary>${esc(title)}<small>${list.length}개</small></summary>${list.map(p=>row(p,esc(p.title),false)).join("")}</details>`:"";
   return `<div class="scrim" data-act="close"></div><aside class="drawer" aria-label="목차">
     <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:19px">${L("목차","Contents")}</b><button class="btn sm" data-act="close">${L("닫기","Close")}</button></div>
     <h3>${L("반별 진도","Progress by class")}</h3>${progHTML()}
-    ${nx&&nx.pid?(()=>{ const up=getP(nx.pid), ul=S.units.some(u=>u.id===up.unitId)?passagesOf(up.unitId):[up]; return `<h3>${esc(S.cls)} 이번 차례 — ${esc(unitName(up.unitId))}</h3>${ul.map(p=>row(p,esc(p.title))).join("")}`; })():""}<h3>${L("차시 목록","All lessons")}</h3>${sortedUnits().map(u=>block(u.title, passagesOf(u.id))).join("")}${block("분류 없음", orphanPassages())}
+    ${nx&&nx.pid?(()=>{ const up=getP(nx.pid), ul=S.units.some(u=>u.id===up.unitId)?passagesOf(up.unitId):[up]; return `<h3>${esc(S.cls)} 이번 차례 — ${esc(unitName(up.unitId))}</h3>${ul.map(p=>row(p,esc(p.title),true)).join("")}`; })():""}<h3>${L("차시 목록","All lessons")}</h3>${sortedUnits().map(u=>block(u.title, passagesOf(u.id))).join("")}${block("분류 없음", orphanPassages())}
   </aside>`;
 }
 function renderSheet(){
@@ -1425,7 +1433,7 @@ function renderSheet(){
     const body = S.isAdmin
       ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
 `
-      : `<p>이 화면은 선생님이 열어야 볼 수 있어요.</p><div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwopen","비밀번호로 열기")}${B("close","닫기")}</div>`;
+      : `${S.pendCls?`<p><b>${esc(S.pendCls)}</b> 수업으로 열어요. 그 반이 멈춘 곳에서 바로 시작해요.</p>`:`<p>이 화면은 선생님이 열어야 볼 수 있어요.</p>`}<div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwopen","비밀번호로 열기")}${B("close","닫기")}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
   }
   if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="폰으로 칠판 열기">
@@ -1727,10 +1735,13 @@ function renderSettings(){
 }
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
-  const t = e.target.closest("[data-act],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
+  const t = e.target.closest("[data-act],[data-lockcls],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
+  if(ds.lockcls){ const c=ds.lockcls;
+    if(!S.isAdmin){ S.pendCls=c; S.sheet="teacher"; return render(); }
+    setCls(c,true); S.doneP={}; S.blank=false; const n=nextFor(c); toast(c+" 수업을 시작해요"); if(n&&n.pid) return go(n.pid,n.idx); pushLive(); return render(); }
   if(ds.cls){ setCls(S.cls===ds.cls?null:ds.cls); S.doneP={}; return rerenderHere(); }
   if(ds.clsgo){ setCls(ds.clsgo,true); S.doneP={}; const n=nextFor(ds.clsgo); S.drawer=false; if(n&&n.pid) return go(n.pid,n.idx); pushLive(); return rerenderHere(); }
   if(ds.pdone && S.cls){ const g=progOf(S.cls); if(g.done[ds.pdone]) delete g.done[ds.pdone]; else g.done[ds.pdone]=Date.now(); progSave(); return rerenderHere(); }
@@ -1781,7 +1792,7 @@ document.addEventListener("click", async e=>{
     case "drawer": S.drawer=true; return render();
     case "prog-go": { const n=S.cls&&nextFor(S.cls); if(n&&n.pid){ S.drawer=false; return go(n.pid,n.idx); } return; }
     case "prog-here": { if(!S.cls) return; progRecord(); const p=getP(S.cur.pid), x=p&&(p.slides||[])[S.cur.idx]; toast(S.cls+" 진도: "+(p?p.title:"")+(x?" · "+uiName(x):"")+"까지 기록했어요"); return rerenderHere(); }
-    case "cls-save": { const v=($("#clsset")?.value||"").split(/[,，\n]/).map(x=>x.trim()).filter(Boolean); if(!v.length){ toast("반을 하나 이상 적어 주세요"); return; } S.prog=S.prog||{}; S.prog.classes=v; await progSave(); toast("반 목록을 저장했어요"); return renderSettings(); }
+    case "cls-save": { const v=($("#clsset")?.value||"").split(/[,，\n]/).map(x=>x.trim()).filter(Boolean); if(!v.length){ toast("반을 하나 이상 적어 주세요"); return; } S.prog=S.prog||{}; S.prog.classes=v; try{ localStorage.setItem("cb_classes",JSON.stringify(v)); }catch(e){} await progSave(); toast("반 목록을 저장했어요"); return renderSettings(); }
     case "prog-clear": if(!confirm("모든 반의 진도 기록을 지울까요? 되돌릴 수 없어요.")) return; S.prog={classes:(S.prog||{}).classes}; await progSave(); toast("진도 기록을 지웠어요"); return renderSettings();
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
