@@ -719,6 +719,47 @@ function tickTmr(){
   document.querySelectorAll(".tmr-txt").forEach(el=>{ el.textContent=fmtT(sec); el.classList.toggle("done",done); });
 }
 document.addEventListener("pointerdown",()=>{ try{ if(!S.audio){ const A=window.AudioContext||window.webkitAudioContext; if(A) S.audio=new A(); } if(S.audio && S.audio.state==="suspended") S.audio.resume(); }catch(e){} },{capture:true,passive:true});
+/* ===== 지문분석기에서 가져오기 ===== */
+function fromAnalyzer(it, unitId, order){
+  const d=it.data||{};
+  const paras=String(it.passage||"").split(/\n\s*\n/).map(x=>x.replace(/\s*\n\s*/g," ").trim()).filter(Boolean);
+  const chunks=d.chunks||[];
+  const te=(d.topic_sentence&&d.topic_sentence.en)||"";
+  const blocks=(d.structure||[]).map(b=>({label:b.role||"", span:String(b.sents||b.span||"").replace(/\s*-\s*/g,"~"), ko:b.kr||"", en:b.en_key||"", thesis:false}));
+  const slides=[
+    {id:uid(),type:"text",title:"원문",paras,note:it.source?("출처: "+it.source):""},
+    {id:uid(),type:"task",title:"문제를 풀어 보세요",body:"",minutes:3,note:""},
+    {id:uid(),type:"reading",title:"문장 읽기",memos:{},xpts:{},note:""},
+    {id:uid(),type:"structure",title:"구조도",blank:true,blocks,sub:d.subject||"",theme:d.theme||"",thesis:"",thesisKo:"",
+      note:"지문 분석 마지막에 아이들과 정리 (블록 → 소재 → 주제)"+(te?("\n분석기 주제문 후보(칠판엔 표시 안 함): "+te):"")+(d.flow_type?("\n전개 방식: "+d.flow_type):"")},
+    {id:uid(),type:"textmap",title:"구조 표시",hidden:true,note:""}
+  ];
+  if((d.vocab||[]).length) slides.push({id:uid(),type:"vocab",title:"",hidden:true,items:d.vocab.map(v=>({w:v.w||"",m:v.m||"",x:""})),note:""});
+  const sx=chunks.filter(c=>c && c.en).map(c=>{ const pts=[]; if((c.parts||[]).length){ pts.push("끊어 읽기: "+c.parts.map(p=>p.e).join(" / ")); pts.push("덩어리 뜻: "+c.parts.map(p=>p.k).join(" / ")); } if(c.note) pts.push("구문: "+c.note); return {en:c.en, ko:c.kr||"", points:pts}; });
+  if(sx.length) slides.push({id:uid(),type:"sentence",title:"끊어 읽기",hidden:true,items:sx,note:""});
+  if(chunks.length) slides.push({id:uid(),type:"translate",title:"",hidden:true,pairs:chunks.filter(c=>c&&c.en).map(c=>({en:c.en,ko:c.kr||""})),note:""});
+  if((d.background||[]).length) slides.push({id:uid(),type:"background",title:"",hidden:true,items:d.background.map(b=>(b.title?b.title+": ":"")+(b.content||"")),note:""});
+  const words=String(it.passage||"").trim().split(/\s+/).slice(0,5).join(" ");
+  return {unitId, title:it.source||(d.subject?d.subject:words+"…"), topic:d.subject||"", order, slides};
+}
+function parsePayload(text){
+  const t=String(text||"").replace(/^\uFEFF/,"").trim(); if(!t) throw new Error("붙여 넣은 내용이 없습니다");
+  let j; try{ j=JSON.parse(t); }catch(e){ throw new Error("분석기의 ‘수업 보드용 복사’ 내용이 아닙니다"); }
+  const items=Array.isArray(j)?j:(Array.isArray(j.items)?j.items:(j.passage?[j]:null));
+  if(!items||!items.length) throw new Error("가져올 지문이 없습니다");
+  return items.filter(x=>x && x.passage);
+}
+async function importPaste(){
+  const err=$("#pasteerr"); if(err) err.textContent="";
+  let items; try{ items=parsePayload($("#pastebox").value); }catch(e){ if(err) err.textContent=e.message; return; }
+  let unitId=$("#pasteunit")?.value;
+  try{
+    if(!unitId){ unitId=uid(); await API.put("units",unitId,{title:"가져온 지문",order:S.units.length}); S.units.push({id:unitId,title:"가져온 지문",order:S.units.length}); }
+    let order=passagesOf(unitId).length, first=null;
+    for(const it of items){ const id=uid(), body=fromAnalyzer(it,unitId,order++); await API.put("passages",id,body); S.passages.push({id,...body}); if(!first) first=id; }
+    S.sheet=null; if(first){ loadDraft(first); } S.adminTab="edit"; render(); toast(items.length+"개 지문을 만들었습니다. 구조도 칸의 문장 번호와 소재·주제를 확인하세요");
+  }catch(e){ if(err) err.textContent=e.message||"만들지 못했습니다"; }
+}
 /* ===== 학생 뽑기 ===== */
 function pickSave(){ try{ localStorage.setItem("cb_pick",JSON.stringify({n:S.pick.n,excl:S.pick.excl})); }catch(e){} }
 function pickHist(){ const h=S.pick.hist; return (h.length?`<small>${L("뽑은 순서","Picked")}</small>`:"")+h.map(n=>`<span>${n}</span>`).join(""); }
@@ -1150,6 +1191,15 @@ function renderDrawer(){
   </aside>`;
 }
 function renderSheet(){
+  if(S.sheet==="paste"){
+    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="분석기에서 가져오기" style="width:min(640px,94vw)">
+    <h3>지문분석기에서 가져오기</h3>
+    <p>지문분석기에서 분석한 뒤 <b>‘수업 보드용 복사’</b>를 누르고, 아래 칸에 붙여 넣으세요(Ctrl+V). 파일로 저장됐다면 파일을 고르면 됩니다. 원문·문제 풀이·문장 읽기·구조도(빈칸)가 자동으로 만들어져요.</p>
+    <div class="field"><label>넣을 단원</label><select class="inp" id="pasteunit">${sortedUnits().map(u=>`<option value="${u.id}">${esc(u.title)}</option>`).join("")||'<option value="">새 단원 ‘가져온 지문’</option>'}</select></div>
+    <div class="field"><textarea class="inp" id="pastebox" rows="7" placeholder="여기에 붙여 넣기"></textarea></div>
+    <div class="field"><input class="inp" type="file" id="pastefile" accept=".json,application/json,text/plain"></div>
+    <div class="err" id="pasteerr"></div>
+    <div class="row-btns"><button class="btn pri" data-act="paste-go">지문 만들기</button><button class="btn" data-act="close">닫기</button></div></div>`; }
   if(S.sheet==="picker"){ const P=S.pick;
     return `<div class="scrim" data-act="close"></div><div class="sheet pick" role="dialog" aria-label="${L("학생 뽑기","Pick a student")}">
     <h3>${L("학생 뽑기","Pick a student")}</h3>
@@ -1234,7 +1284,7 @@ function renderTree(){
   const el=$("#tree"); if(!el) return;
   const pItem = p=>`<div style="display:flex;align-items:center"><button class="li${p.id===S.editPid?" on":""}" data-edit="${p.id}"><span class="t">${esc(p.title||"(제목 없음)")}</span></button>
       <button class="mini" data-pmove="${p.id}|-1" aria-label="위로">↑</button><button class="mini" data-pmove="${p.id}|1" aria-label="아래로">↓</button><button class="mini" data-today="${p.id}" aria-label="오늘 수업" title="오늘의 수업에 넣기">${S.today.includes(p.id)?"★":"☆"}</button></div>`;
-  el.innerHTML = `<h4>목차 <button class="btn sm" data-act="addunit">+ 단원</button></h4>
+  el.innerHTML = `<h4>목차 <span><button class="btn sm" data-act="paste">붙여넣기</button> <button class="btn sm" data-act="addunit">+ 단원</button></span></h4>
   ${sortedUnits().map(u=>`<div class="unit"><div class="unit-h"><span>${esc(u.title)}</span>
      <button class="mini" data-umove="${u.id}|-1" aria-label="단원 위로">↑</button><button class="mini" data-umove="${u.id}|1" aria-label="단원 아래로">↓</button>
      <button class="mini" data-uren="${u.id}" aria-label="단원 이름 바꾸기">✎</button><button class="mini" data-udel="${u.id}" aria-label="단원 삭제">✕</button></div>
@@ -1512,6 +1562,8 @@ document.addEventListener("click", async e=>{
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
     case "picker": S.sheet="picker"; return render();
+    case "paste": S.sheet="paste"; render(); setTimeout(()=>{ const b=$("#pastebox"); if(b) b.focus(); },60); return;
+    case "paste-go": return importPaste();
     case "pk-go": return pickGo();
     case "pk-reset": S.pick.hist=[]; S.pick.cur=null; return render();
     case "review": S.sheet="review"; return render();
@@ -1579,6 +1631,7 @@ document.addEventListener("input", e=>{
 document.addEventListener("change", async e=>{
   const t=e.target;
   if(t.id==="rpick"){ return go(t.value,0); }
+  if(t.id==="pastefile" && t.files[0]){ const b=$("#pastebox"); if(b) b.value=await t.files[0].text(); return; }
   if(t.id==="pkn"){ S.pick.n=Math.max(2,Math.min(60,parseInt(t.value)||26)); t.value=S.pick.n; S.pick.hist=S.pick.hist.filter(x=>x<=S.pick.n); pickSave(); return; }
   if(t.id==="pkex"){ S.pick.excl=t.checked; pickSave(); return; }
   if(t.dataset && t.dataset.rvopt){ S.rv[t.dataset.rvopt]=t.checked; return; }
