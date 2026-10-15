@@ -981,11 +981,11 @@ function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && (
 function annStrokes(){ const k=annKey(); return S.drawData[k]||(S.drawData[k]=[]); }
 function annActive(){ const sl=curSlide(); return !!S.annOn || !!(sl && sl.type==="draw"); }
 function annToolsHTML(){
-  if(S.annMin) return `<button class="at" data-act="a-min" aria-label="도구 펼치기"><span>«</span><small>${L("도구","Tools")}</small></button>`;
+  if(S.annMin) return `<button class="at" data-act="a-min" aria-label="필기 다시 켜기"><span>✎</span><small>${L("필기 켜기","Pen on")}</small></button>`;
   const canUndo=annStrokes().length>0 || !!S.drawBackup[annKey()];
   const T=(k,ic,lb)=>`<button class="at${ANN.tool===k?" on":""}" data-atool="${k}" aria-label="${lb}"><span>${ic}</span><small>${lb}</small></button>`;
   const pal = ANN.tool==="pen"?PEN_COLORS:(ANN.tool==="hl"?HL_COLORS:null), cur = ANN.tool==="pen"?ANN.pen:ANN.hl;
-  return `<button class="at amin" data-act="a-min" aria-label="도구 접기"><span>»</span><small>${L("접기","Hide")}</small></button>`+T("pen","✎",L("펜","Pen"))+T("hl","▰",L("형광펜","Marker"))+T("eraser","◌",L("지우개","Eraser"))
+  return `<button class="at amin" data-act="a-min" aria-label="접고 잠시 멈추기"><span>»</span><small>${L("접기","Pause")}</small></button>`+T("pen","✎",L("펜","Pen"))+T("hl","▰",L("형광펜","Marker"))+T("eraser","◌",L("지우개","Eraser"))
     +`<div class="asz">${[0,1,2].map(i=>`<button class="${ANN.size===i?"on":""}" data-asize="${i}" aria-label="굵기 ${i+1}"><i style="width:${8+i*7}px;height:${8+i*7}px"></i></button>`).join("")}</div>`
     +(pal?`<div class="acol">${pal.map(c=>`<button class="${c===cur?"on":""}" data-acolor="${c}" style="background:${c}" aria-label="색"></button>`).join("")}</div>`:`<div class="ahint">${L("문지른 곳만 지워져요","Erases only what you rub")}</div>`)
     +`<button class="at" data-act="a-undo"${canUndo?"":" disabled"}><span>↶</span><small>${L("뒤로","Undo")}</small></button>`
@@ -1015,7 +1015,7 @@ function initAnn(){
   cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
   const tl=$(".atools"); if(tl && innerWidth>=760) tl.style.top=(r.top+8)+"px";
   annRedraw();
-  const on=annActive(); cv.style.pointerEvents=on?"auto":"none"; if(!on) return;
+  const on=annActive() && !S.annMin; cv.style.pointerEvents=on?"auto":"none"; if(!on) return;
   let down=false, cur=null, raf=0;
   const pt=e=>{ const b=cv.getBoundingClientRect(); return [(e.clientX-b.left)/b.width,(e.clientY-b.top)/b.height]; };
   cv.onpointerdown=e=>{ if(!e.isPrimary) return; down=true; S.drawing=true; cur={t:ANN.tool,c:ANN.tool==="pen"?ANN.pen:ANN.hl,w:A_W[ANN.tool][ANN.size],p:[pt(e)]}; annStrokes().push(cur); S.drawBackup[annKey()]=null; try{ cv.setPointerCapture(e.pointerId); }catch(x){} annRedraw(); };
@@ -1886,7 +1886,7 @@ document.addEventListener("click", async e=>{
     case "a-undo": return annUndo();
     case "sbk-reset": return setReveal({sbk:0,bo:[],hint:false});
     case "a-clear": return annClear();
-    case "a-min": S.annMin=!S.annMin; return render();
+    case "a-min": S.annMin=!S.annMin; toast(S.annMin?"필기를 잠시 멈췄어요. 화면을 눌러 쓸 수 있어요 (쓴 글씨는 그대로)":"다시 쓸 수 있어요"); return render();
     case "setboard": try{ localStorage.setItem("cb_board","1"); }catch(x){} toast("칠판으로 지정했습니다. 새로고침하면 적용됩니다"); return;
     case "unboard": try{ localStorage.removeItem("cb_board"); }catch(x){} toast("지정을 풀었습니다. 새로고침하면 적용됩니다"); return;
     case "close": S.drawer=false; S.sheet=null; stopPairPoll(); return render();
