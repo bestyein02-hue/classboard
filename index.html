@@ -535,6 +535,20 @@ body.mode-admin textarea[data-f="paras"],body.mode-admin .preview{font-family:va
 .cz.hint .czw::first-letter{color:var(--muted)}
 .cz:not(.on):hover{background:#F3F1EA}
 .czans{color:var(--orange-dk)}
+.mini.inc{font-size:12px;border:1.5px solid var(--line);border-radius:6px;padding:2px 6px;margin-right:4px}
+.mini.inc.on{background:#FFE9DC;border-color:var(--orange);color:var(--orange-dk)}
+.r-sli{display:flex;gap:4px}
+.r-sli>button:first-child{flex:1}
+.r-sli .r-x{flex:none;width:40px;font-size:20px;font-weight:700;padding:0;text-align:center}
+.r-sli.out>button:first-child{opacity:.6}
+.vq{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:.3em 0}
+.vq-n{font-family:var(--f-ui);font-size:.5em;color:var(--muted);margin-bottom:.4em}
+.vq-w{font-size:2.2em;font-weight:600;line-height:1.15}
+.vq-m{font-size:1.7em;font-weight:700;line-height:1.3}
+.vq-back{visibility:hidden;margin-top:.5em;padding:.2em .8em;background:#FFF6C2;border-radius:4px}
+.vq-back.on{visibility:visible}
+.vq-back .vq-w,.vq-back .vq-m{color:var(--orange-dk)}
+.vq-x{font-size:.75em;color:var(--muted);margin-top:.3em;font-style:italic}
 </style>
 </head>
 <body>
@@ -729,14 +743,15 @@ function gtCmd(cmd,arg){
   gtApply(); pushLive(); gtRefresh();
 }
 function tmCmd(cmd){ const sl=curSlide(), def=((sl&&sl.type==="task"?parseFloat(sl.minutes):0)||3)*60; if(cmd==="go") gtCmd("go",def); else if(cmd==="pause") gtCmd("pause"); else gtCmd("reset"); }
-function beep(){ try{ const c=S.audio; if(!c) return; [0,0.4,0.8].forEach(t=>{ const o=c.createOscillator(), g=c.createGain(); o.frequency.value=880; o.connect(g); g.connect(c.destination); const T=c.currentTime+t; g.gain.setValueAtTime(0.0001,T); g.gain.exponentialRampToValueAtTime(0.4,T+0.03); g.gain.exponentialRampToValueAtTime(0.0001,T+0.32); o.start(T); o.stop(T+0.34); }); }catch(e){} }
+function beep(){ try{ const c=S.audio; if(!c) return; if(c.state==="suspended") c.resume(); [[0,880],[0.18,1320]].forEach(([t,f])=>{ const o=c.createOscillator(), g=c.createGain(); o.type="sine"; o.frequency.value=f; o.connect(g); g.connect(c.destination); const T=c.currentTime+t; g.gain.setValueAtTime(0.0001,T); g.gain.exponentialRampToValueAtTime(0.35,T+0.02); g.gain.exponentialRampToValueAtTime(0.0001,T+0.45); o.start(T); o.stop(T+0.5); }); }catch(e){} }
 function tickTmr(){
   const on=gtOn(), sl=curSlide(), sec=on?gtSecs():((sl&&sl.type==="task")?(parseFloat(sl.minutes)||3)*60:0);
   if(on && S.gtm.run && sec<=0 && !S.gtDone){ S.gtDone=true; S.gtm={...S.gtm,run:false,sec:0}; S.gtEnd=null; beep(); gtRefresh(); return; }
   const done=on && sec<=0;
   document.querySelectorAll(".tmr-txt").forEach(el=>{ el.textContent=fmtT(sec); el.classList.toggle("done",done); });
 }
-document.addEventListener("pointerdown",()=>{ try{ if(!S.audio){ const A=window.AudioContext||window.webkitAudioContext; if(A) S.audio=new A(); } if(S.audio && S.audio.state==="suspended") S.audio.resume(); }catch(e){} },{capture:true,passive:true});
+function unlockAudio(){ try{ if(!S.audio){ const A=window.AudioContext||window.webkitAudioContext; if(A) S.audio=new A(); } if(S.audio && S.audio.state==="suspended") S.audio.resume(); }catch(e){} }
+["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
 /* ===== 지문분석기에서 가져오기 ===== */
 function fromAnalyzer(it, unitId, order){
   const d=it.data||{};
@@ -802,7 +817,6 @@ function reviewHTML(P,o){
   if(o.structure && st){
     h+=`<h2>구조도</h2><table>`+(st.blocks||[]).map(b=>`<tr><th>${esc(b.label||"")}</th><td>${inline(b.ko||"")}${b.en?`<div class="kw">${inline(b.en)}</div>`:""}</td></tr>`).join("");
     if(st.sub) h+=`<tr><th class="sm">소재</th><td>${inline(st.sub)}</td></tr>`;
-    if(st.theme) h+=`<tr><th class="sm">주제</th><td>${inline(st.theme)}</td></tr>`;
     h+=`</table>`;
     if(thI!=null){ const ss=txt?passageSentences(txt.paras||[]):[]; if(ss[thI]) h+=`<div class="th"><b>주제문</b> ${inline(ss[thI].trim())}</div>`; }
   }
@@ -891,16 +905,17 @@ function balanceSents(p){
 function passageSentences(paras){ return paras.flatMap(balanceSents); }
 function parseSpan(sp){ const m=String(sp||"").match(/(\d+)\s*(?:[~\-–]\s*(\d+))?/); if(!m) return null; const a=+m[1], b=m[2]?+m[2]:+m[1]; return [Math.min(a,b),Math.max(a,b)]; }
 function czMarks(t){ return (String(t||"").match(/\[\[.+?\]\]/g)||[]).length; }
-function czCount(sl){ let n=0; (sl.blocks||[]).forEach(b=>n+=czMarks(b.ko)); if(sl.sub) n+=Math.max(1,czMarks(sl.sub)); n+=czMarks(sl.theme); return n; }
+function czCount(sl){ let n=0; (sl.blocks||[]).forEach(b=>n+=czMarks(b.ko)); if(sl.sub) n+=Math.max(1,czMarks(sl.sub)); return n; }
 function stepInfo(p, sl){
   if(!sl) return null;
+  if(sl.type==="vocab" && !S.reveal.vlist){ const n=(sl.items||[]).length; return n?{key:"vq",min:0,max:2*n-1}:null; }
   if(sl.type==="textmap"){ const st=(p.slides||[]).find(x=>x.type==="structure"); return {key:"step",min:0,max:(st?.blocks||[]).length}; }
   if(sl.type==="structure" && sl.blank){ const n=czCount(sl); return n?{key:"sbk",min:0,max:n}:null; }
   if(sl.type==="reading"){ const txt=(p.slides||[]).find(x=>x.type==="text"); const n=txt?passageSentences(txt.paras||[]).length:0; return {key:"sent",min:0,max:Math.max(0,n-1)}; }
   return null;
 }
 function stepPatch(si,v){ return si.key==="sent"?{sent:v,ko:false,vc:false,gm:false}:{[si.key]:v}; }
-const FIT_TYPES = ["text","textmap","structure","reading","task","free"];
+const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab"];
 function renderSlide(sl, ctx){
   // ctx: {reveal, live:boolean (interactive board)}
   const R = ctx.reveal||{};
@@ -938,7 +953,7 @@ function renderSlide(sl, ctx){
           <div class="body"><div class="ko">${cz(b.ko||"　")}</div>${b.en?`<div class="k en">${inline(b.en)}</div>`:""}</div></div>`; }).join("");
       const subTxt=sl.sub?(czMarks(sl.sub)?sl.sub:"[["+sl.sub+"]]"):"";
       const sum=(lab,txt,cls)=>`<div class="blk sum ${cls}"><div class="lab">${lab}</div><div class="body"><div class="ko">${cz(txt)}</div></div></div>`;
-      const sums=(sl.sub?sum("소재",subTxt,"bc3"):"")+(sl.theme?sum("주제",sl.theme,"bc4"):"");
+      const sums=sl.sub?sum("소재",subTxt,"bc3"):"";
       const thOn=!blank || sb>=total;
       const th = thEn ? `<div class="thesis-line${thOn?"":" blank"}"><span class="en">${inline(thEn)}</span>${thKo?`<span class="ko">${inline(thKo)}</span>`:""}</div>`:"";
       return `<div class="fit-box"><div class="flow">${blocks}</div>${sums?`<div class="flow sums">${sums}</div>`:""}${th}</div>`;
@@ -958,13 +973,16 @@ function renderSlide(sl, ctx){
       return `<div class="drawwrap">${sl.body?`<div class="dguide">${inline(sl.body)}</div>`:""}</div>`;
     }
     case "vocab": {
-      const hide = !!R.cover;
-      const opened = R.open||[];
-      const items = (sl.items||[]).map((v,i)=>`
-        <button class="vc${hide && !opened.includes(i)?" cover":""}" data-vocab="${i}">
-          <div class="w en">${esc(v.w)}</div><div class="m">${esc(v.m||"")}</div>${v.x?`<div class="x en">${inline(v.x)}</div>`:""}
-        </button>`).join("");
-      return head + `<div class="vgrid">${items}</div>`;
+      const items=sl.items||[], n=items.length;
+      if(!n) return `<div class="fit-box free"><div class="fb">어휘가 없습니다. 편집 화면에서 단어를 넣어 주세요.</div></div>`;
+      if(R.vlist){
+        const hide=!!R.cover, opened=R.open||[];
+        return `<div class="fit-box"><div class="vgrid">${items.map((v,i)=>`<button class="vc${hide && !opened.includes(i)?" cover":""}" data-vocab="${i}"><div class="w en">${esc(v.w)}</div><div class="m">${esc(v.m||"")}</div>${v.x?`<div class="x en">${inline(v.x)}</div>`:""}</button>`).join("")}</div></div>`;
+      }
+      const ord=(Array.isArray(R.ord)&&R.ord.length===n)?R.ord:items.map((_,i)=>i);
+      const q=Math.max(0,Math.min(R.vq||0,2*n-1)), v=items[ord[Math.floor(q/2)]], shown=q%2===1, ke=R.dir==="ke";
+      const W=`<div class="vq-w en">${esc(v.w)}</div>`, M=`<div class="vq-m">${esc(v.m||"")}</div>`;
+      return `<div class="fit-box vq" data-act="vq-flip"><div class="vq-n">${Math.floor(q/2)+1} / ${n}</div>${ke?M:W}<div class="vq-back${shown?" on":""}">${ke?W:M}${v.x?`<div class="vq-x en">${inline(v.x)}</div>`:""}</div></div>`;
     }
     case "sentence": {
       const used = new Set(); (sl.items||[]).forEach(it=>{ (it.en||"").replace(/\[(S|V|O|IO|DO|C|OC|M|X):/g,(m,t)=>used.add(t)); });
@@ -1044,7 +1062,7 @@ function arrive(d){
   if(si){ S.reveal=stepPatch(si,si.max); pushLive(); render(); }
 }
 function setReveal(patch){ S.reveal = {...S.reveal, ...patch}; pushLive(); render(); }
-function setScale(v){ S.scale = Math.max(.7, Math.min(1.8, Math.round(v*10)/10)); try{localStorage.setItem("sb_scale",S.scale)}catch(e){} pushLive(); render(); }
+function setScale(v){ S.scale = Math.max(.7, Math.min(1.8, Math.round(v*10)/10)); try{localStorage.setItem("sb_scale",S.scale)}catch(e){} pushLive(); render(); toast(L("글자 크기 ","Text size ")+Math.round(S.scale*100)+"%"); }
 
 /* ================= auth ================= */
 function setLastMode(m){ try{ localStorage.setItem("cb_mode",m); }catch(e){} }
@@ -1164,6 +1182,7 @@ function renderClass(){
   const si = stepInfo(p, sl), atStart = !si || (S.reveal[si.key]??si.min)<=si.min;
   const tools = !sl ? "" : sl.type==="reading" ? `<div class="tools"><button class="tg${S.reveal.ko?" on":""}" data-rv="ko">${L("해석","Korean")}</button><button class="tg${S.reveal.vc?" on":""}" data-rv="vc">${L("어휘","Words")}</button><button class="tg${S.reveal.gm?" on":""}" data-rv="gm">${L("어법","Grammar")}</button></div>`
     : (sl.type==="structure" && sl.blank) ? `<div class="tools"><button class="tg${S.reveal.hint?" on":""}" data-rv="hint">${L("힌트","Hint")}</button><button class="tg" data-act="sbk-reset">${L("다시 가리기","Hide all")}</button></div>`
+    : sl.type==="vocab" ? `<div class="tools">${S.reveal.vlist?`<button class="tg${S.reveal.cover?" on":""}" data-rv="cover">${L("뜻 가리기","Hide meanings")}</button>`:`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?L("한→영","KO→EN"):L("영→한","EN→KO")}</button><button class="tg" data-act="vq-shuf">${L("섞기","Shuffle")}</button>`}<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">${L("목록으로","List")}</button></div>`
     : sl.type==="question" ? `<div class="tools"><button class="tg${S.reveal.tally?" on":""}" data-rv="tally">${L("손 들기 집계","Hand count")}</button><button class="tg" data-act="tl-reset">${L("0으로","Zero")}</button><button class="tg${S.reveal.answer?" on":""}" data-rv="answer">${L("정답","Answer")}</button></div>`
     : sl.type==="task" ? `<div class="tools"><button class="tg" data-act="tm-go">${L("시작","Start")}</button><button class="tg" data-act="tm-pause">${L("멈춤","Pause")}</button><button class="tg" data-act="tm-reset">${L("처음으로","Reset")}</button></div>` : "";
   app.innerHTML = `
@@ -1207,7 +1226,8 @@ function fitAll(){
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
   const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); let lo=min, hi=small?30:78, best=min;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
-  box.style.fontSize=best+"px";
+  box.style.fontSize=(best*S.scale)+"px";
+  if(S.scale>1){ const cu=$(".rs.cur"); if(cu) cu.scrollIntoView({block:"center"}); }
 }
 window.addEventListener("resize",()=>{ clearTimeout(fitT); fitT=setTimeout(()=>{ fitAll(); placePanel(); initAnn(); },120); });
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>fitAll());
@@ -1329,8 +1349,8 @@ function renderSlideList(){
   const el=$("#slist"); if(!el) return; const d=S.draft;
   if(!d){ el.innerHTML=`<p class="help">왼쪽에서 지문을 고르세요.</p>`; return; }
   el.innerHTML = `<h4>슬라이드 (${(d.slides||[]).length})</h4>
-  ${(d.slides||[]).map((s,i)=>`<div style="display:flex;align-items:center"><button class="li${i===S.editIdx?" on":""}" data-sel="${i}"><span class="ty">${esc(TYPES[s.type]?.name||s.type)}</span><span class="t">${esc(s.title||"")}${s.hidden?" (숨김)":""}</span></button>
-     <button class="mini" data-smove="${i}|-1" aria-label="위로">↑</button><button class="mini" data-smove="${i}|1" aria-label="아래로">↓</button></div>`).join("")}
+  ${(d.slides||[]).map((s,i)=>`<div style="display:flex;align-items:center${s.hidden?";opacity:.55":""}"><button class="li${i===S.editIdx?" on":""}" data-sel="${i}"><span class="ty">${esc(TYPES[s.type]?.name||s.type)}</span><span class="t">${esc(s.title||"")}</span></button>
+     <button class="mini inc${s.hidden?"":" on"}" data-sinc="${i}" title="칠판에 넣기 / 빼기">${s.hidden?"빠짐":"넣음"}</button><button class="mini" data-smove="${i}|-1" aria-label="위로">↑</button><button class="mini" data-smove="${i}|1" aria-label="아래로">↓</button></div>`).join("")}
   <h4 style="margin-top:14px">새 슬라이드</h4>
   <div class="addtypes">${Object.entries(TYPES).map(([k,v])=>`<button class="btn sm" data-addslide="${k}">+ ${v.name}</button>`).join("")}</div>`;
 }
@@ -1368,7 +1388,7 @@ function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
      <div class="field"><label>슬라이드 제목 (비우면 종류 이름)</label>${H.in("title",sl.title)}</div>
-     <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 숨기기 (폰 리모컨에서만 열 수 있음)</label>`;
+     <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기 (지워지지 않아요. 슬라이드 목록의 ‘넣음/빠짐’ 버튼으로 언제든 다시 넣을 수 있어요)</label>`;
   const note = `<div class="field"><label>수업 메모 (리모컨·관리자에서만 보임: 발문, 판서 포인트 등)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
   const mk = `<div class="help">강조 <code>**주제문**</code> · 밑줄 <code>__단어__</code> · 기울임 <code>*제목*</code></div>`;
   let body="";
@@ -1378,7 +1398,7 @@ function slideForm(sl){
       body = `<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작 (수업 마지막에 아이들과 맞추기 — ‘다음’을 누를 때마다 빈칸이 하나씩 열립니다)</label>
       <p class="help" style="margin:-4px 0 12px">빈칸으로 만들 말은 <code>[[ ]]</code>로 감싸세요. 예: <code>[[월식]]은 지구가 태양과 달 사이에 들어가 생긴다</code> → 칠판에는 <code>(　　)은 지구가 …</code>로 보여요. 소재는 통째로 빈칸이 되고, 주제는 [[ ]] 부분만 빈칸이 돼요.</p>
       <div class="field"><label>글의 소재 (명사구로, 예: 월식 때 붉게 보이는 달)</label>${H.in("sub",sl.sub)}</div>
-      <div class="field"><label>글의 주제 (한 문장으로)</label>${H.ta("theme",sl.theme,"",2)}</div>
+      <div class="field"><label>글의 주제 (칠판·복습지에는 안 나오고 폰 메모에만 참고로 보여요)</label>${H.ta("theme",sl.theme,"",2)}</div>
       <div class="field"><label>주제문 — 뚜렷한 문장이 있을 때만 고르세요 (없으면 ‘표시 안 함’)</label><select class="inp" data-f="thesisN"><option value="">주제문 표시 안 함</option>${ss0.map((t,i)=>`<option value="${i+1}"${sl.thesisN===i+1?" selected":""}>${i+1}. ${esc(t.replace(/[*_]/g,"").trim().slice(0,60))}</option>`).join("")}</select></div>
       <details style="margin-bottom:10px"><summary class="help">주제문 직접 입력 (원문에 없는 경우에만)</summary>
       <div class="field"><label>주제문 (영어)</label>${H.ta("thesis",sl.thesis,"",2)}</div>
@@ -1475,6 +1495,7 @@ async function saveDraft(){
   try{
     await API.put("passages", id, JSON.parse(JSON.stringify(body)));
     S.dirty=false; if($("#savest")) $("#savest").textContent="저장됨"; toast("저장했습니다");
+    const ix=S.passages.findIndex(p=>p.id===id), copy=JSON.parse(JSON.stringify({id,...body})); if(ix>=0) S.passages[ix]=copy; else S.passages.push(copy);
   }catch(e){
     if($("#savest")) $("#savest").textContent="저장 실패";
     if(e.status===401){ toast("로그인이 끝났습니다. 다시 로그인한 뒤 저장하세요 (수정 내용은 화면에 남아 있습니다)"); S.sheet="login"; renderAdmin(); return void(S.saving=false); }
@@ -1498,7 +1519,7 @@ function renderRemote(){
   <div class="r-card"><h5>타이머 (칠판 어디서든 보임)</h5><div class="r-toggles"><span class="tm tmr-txt" style="font-size:34px;font-weight:700;margin-right:8px">${fmtT(gtOn()?gtSecs():0)}</span>${[1,3,5,10].map(m=>`<button class="tg" data-gt="${m*60}">${m}분</button>`).join("")}<button class="tg" data-act="gt-go">▶</button><button class="tg" data-act="gt-pause">⏸</button><button class="tg" data-act="gt-reset">↺</button></div></div>
   ${sl?`<div class="r-card"><h5>칠판 조작</h5><div class="r-toggles">
     ${sl.type==="question"?tg("answer","정답 공개",S.reveal.answer)+tg("tally","손 들기 집계",S.reveal.tally)+`<button class="tg" data-act="tl-reset">집계 0으로</button>`:""}
-    ${sl.type==="vocab"?tg("cover","뜻 가리기",S.reveal.cover):""}
+    ${sl.type==="vocab"?(S.reveal.vlist?tg("cover","뜻 가리기",S.reveal.cover):`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?"한→영":"영→한"}</button><button class="tg" data-act="vq-shuf">섞기</button>`)+`<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">목록으로</button>`:""}
     ${sl.type==="translate"?tg("cover","해석 가리기",S.reveal.cover):""}
     ${(sl.type==="structure"&&sl.blank)?tg("hint","힌트 띄우기",S.reveal.hint)+`<button class="tg" data-act="sbk-reset">다시 가리기</button>`:""}
     ${sl.type==="reading"?tg("ko","해석 띄우기",S.reveal.ko)+tg("vc","어휘 띄우기",S.reveal.vc)+tg("gm","어법 띄우기",S.reveal.gm):""}
@@ -1513,10 +1534,11 @@ function renderRemote(){
     ${row("해석",esc(inf.ko||"(없음)"))}${inf.block?row("흐름",esc(inf.block.label||"")+" — "+esc(inf.block.ko||"")):""}
     ${inf.vocab.length?row("어휘",inf.vocab.map(v=>esc(v.w)+" "+esc(v.m||"")).join(" · ")):""}
     ${inf.points.length?row("어법",inf.points.map(t=>inline(t)).join(" / ")):""}${inf.memo?row("메모",esc(inf.memo)):""}</div>`; })():""}
-  ${sl&&(sl.type==="textmap"||sl.type==="structure")?(()=>{ const st=sl.type==="structure"?sl:(p.slides||[]).find(x=>x.type==="structure"), bl=st?.blocks||[], cs=(sl.type==="structure"?(S.reveal.sbk||0):(S.reveal.step||0)); return `<div class="r-card"><h5>구조 메모·정답 (칠판엔 안 보임) — 「」가 빈칸, 다음을 누를 때마다 하나씩 열려요</h5>${(sl.type==="structure"&&(sl.sub||sl.theme))?`<div class="note" style="margin-bottom:8px"><b>소재</b> ${esc(String(sl.sub||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}<br><b>주제</b> ${esc(String(sl.theme||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}</div>`:""}${bl.map((b,i)=>`<div class="note" style="margin-bottom:6px;${i===cs-1?"font-weight:700;color:var(--navy)":""}">${i+1}. ${esc(b.label||"")} — ${esc(String(b.ko||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}</div>`).join("")}</div>`; })():""}
+  ${sl&&(sl.type==="textmap"||sl.type==="structure")?(()=>{ const st=sl.type==="structure"?sl:(p.slides||[]).find(x=>x.type==="structure"), bl=st?.blocks||[], cs=(sl.type==="structure"?(S.reveal.sbk||0):(S.reveal.step||0)); return `<div class="r-card"><h5>구조 메모·정답 (칠판엔 안 보임) — 「」가 빈칸, 다음을 누를 때마다 하나씩 열려요</h5>${(sl.type==="structure"&&(sl.sub||sl.theme))?`<div class="note" style="margin-bottom:8px"><b>소재</b> ${esc(String(sl.sub||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}<br><b>주제(참고·칠판엔 안 보임)</b> ${esc(String(sl.theme||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}</div>`:""}${bl.map((b,i)=>`<div class="note" style="margin-bottom:6px;${i===cs-1?"font-weight:700;color:var(--navy)":""}">${i+1}. ${esc(b.label||"")} — ${esc(String(b.ko||"").replace(/\[\[(.+?)\]\]/g,"「$1」"))}</div>`).join("")}</div>`; })():""}
   ${sl?`<div class="r-card"><h5>수업 메모</h5><div class="note">${sl.note?esc(sl.note):'<span class="help">메모 없음 — 자료 편집에서 슬라이드마다 적어 둘 수 있습니다.</span>'}</div>
     ${sl.type==="question"&&Number.isInteger(sl.answer)?`<p class="help" style="margin-bottom:0">정답 ${CIRC[sl.answer]} ${sl.explain?"— "+esc(sl.explain):""}</p>`:""}</div>`:""}
-  <div class="r-card"><h5>슬라이드로 바로 가기</h5><div class="r-sl">${slides.map((s,i)=>`<button class="${i===S.cur.idx?"on":""}" data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button>`).join("")}</div></div>
+  <div class="r-card"><h5>칠판에 나오는 슬라이드 (− 눌러 빼기)</h5><div class="r-sl">${slides.map((s,i)=>s.hidden?"":`<div class="r-sli"><button class="${i===S.cur.idx?"on":""}" data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button><button class="r-x" data-pinc="${i}|0" aria-label="빼기">−</button></div>`).join("")}</div>
+    ${slides.some(s=>s.hidden)?`<h5 style="margin-top:12px">빠진 슬라이드 (+ 눌러 넣기)</h5><div class="r-sl">${slides.map((s,i)=>!s.hidden?"":`<div class="r-sli out"><button data-go="${i}"><span class="help">${i+1}</span> ${esc(slideTitle(s))}</button><button class="r-x" data-pinc="${i}|1" aria-label="넣기">+</button></div>`).join("")}</div>`:""}</div>
   <div class="r-card"><h5>칠판 잠금 해제</h5>
     <p class="help" style="margin-top:0">칠판의 ‘YE → 폰으로 잠금 풀기’에 나온 4자리 번호를 넣으세요.</p>
     <div class="code-in"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="0000"><button class="btn pri" data-act="unlock">해제</button></div></div>
@@ -1544,7 +1566,7 @@ function renderSettings(){
 }
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
-  const t = e.target.closest("[data-act],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
+  const t = e.target.closest("[data-act],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
@@ -1557,6 +1579,10 @@ document.addEventListener("click", async e=>{
   if(ds.atool){ ANN.tool=ds.atool; annUI(); return; }
   if(ds.asize!=null){ ANN.size=+ds.asize; annUI(); return; }
   if(ds.acolor){ if(ANN.tool==="pen") ANN.pen=ds.acolor; else ANN.hl=ds.acolor; annUI(); return; }
+  if(ds.sinc!=null && S.draft){ const sl=S.draft.slides[+ds.sinc]; sl.hidden=!sl.hidden; S.dirty=true; renderSlideList(); renderEditor(); return; }
+  if(ds.pinc!=null){ const [pi,pv]=ds.pinc.split("|").map(Number), P=getP(S.cur.pid); if(!P) return; P.slides[pi].hidden=!pv;
+    if(S.draft && S.draft.id===P.id && S.draft.slides[pi]) S.draft.slides[pi].hidden=!pv;
+    const {id:pid,...body}=P; try{ await API.put("passages",pid,JSON.parse(JSON.stringify(body))); toast(pv?"칠판에 넣었어요":"칠판에서 뺐어요"); }catch(x){ toast("저장하지 못했습니다"); } return renderRemote(); }
   if(ds.cz!=null && S.mode==="class"){ const key="c"+ds.cz, o=new Set(S.reveal.bo||[]); o.has(key)?o.delete(key):o.add(key); return setReveal({bo:[...o]}); }
   if(ds.bk!=null && S.mode==="class"){ const key=/^\d+$/.test(ds.bk)?+ds.bk:ds.bk, o=new Set(S.reveal.bo||[]); o.has(key)?o.delete(key):o.add(key); return setReveal({bo:[...o]}); }
   if(ds.pick){ S.drawer=false; return go(ds.pick,0); }
@@ -1591,6 +1617,10 @@ document.addEventListener("click", async e=>{
     case "drawer": S.drawer=true; return render();
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
+    case "vq-flip": { const q=S.reveal.vq||0; return setReveal({vq: q%2?q-1:q+1}); }
+    case "vq-dir": { const q=S.reveal.vq||0; return setReveal({dir: S.reveal.dir==="ke"?"ek":"ke", vq: Math.floor(q/2)*2}); }
+    case "vq-shuf": { const n=(curSlide()?.items||[]).length, o=[...Array(n).keys()]; for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [o[i],o[j]]=[o[j],o[i]]; } toast("단어 순서를 섞었어요"); return setReveal({ord:o, vq:0}); }
+    case "vq-list": return setReveal({vlist:!S.reveal.vlist, vq:0, open:[]});
     case "picker": S.sheet="picker"; return render();
     case "paste": S.sheet="paste"; render(); setTimeout(()=>{ const b=$("#pastebox"); if(b) b.focus(); },60); return;
     case "paste-go": return importPaste();
