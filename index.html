@@ -1434,7 +1434,10 @@ function renderSlideList(){
 function markDirty(){ S.dirty=true; const st=$("#savest"); if(st) st.textContent="저장 안 됨"; refreshPreview(); }
 function refreshPreview(){
   const pv=$("#pv"); const sl=S.draft?.slides?.[S.editIdx];
-  if(pv && sl) pv.innerHTML = `<div class="slide">${renderSlide(sl,{reveal:{answer:true,step:99,sbk:99}, passage:S.draft})}</div>`;
+  if(!pv||!sl) return;
+  // text/reading 슬라이드는 sent=-1 (전체 표시) 상태로 미리보기
+  const R=sl.type==="text"||sl.type==="reading"?{sent:-1,reveal:{answer:true,step:99,sbk:99}}:{reveal:{answer:true,step:99,sbk:99}};
+  pv.innerHTML=`<div class="slide">${renderSlide(sl,{...R,passage:S.draft})}</div>`;
 }
 function renderEditor(){
   const el=$("#ed"); if(!el) return; const d=S.draft;
