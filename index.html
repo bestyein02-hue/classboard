@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>수업 보드</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" type="image/png" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="https://bestyein02-hue.github.io/classboard/manifest.webmanifest" crossorigin="anonymous">
+<link rel="icon" type="image/png" href="https://bestyein02-hue.github.io/classboard/icon-192.png">
+<link rel="apple-touch-icon" href="https://bestyein02-hue.github.io/classboard/apple-touch-icon.png">
 <meta name="theme-color" content="#E0601F">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2017,7 +2017,6 @@ document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ if(!asl
 window.addEventListener("beforeunload",e=>{ if(S.dirty){ e.preventDefault(); e.returnValue=""; } });
 
 /* 앱 설치 */
-if("serviceWorker" in navigator && location.protocol==="https:" && !/github\.io$/.test(location.hostname)){ navigator.serviceWorker.register("/sw.js").catch(()=>{}); }
 window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); S.installEvt=e; });
 window.addEventListener("appinstalled",()=>{ S.installEvt=null; toast("수업 보드 앱을 설치했어요"); });
 function isAppMode(){ return matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone===true; }
