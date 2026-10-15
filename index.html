@@ -667,6 +667,15 @@ body.ann-on .stage{padding-right:92px}
 .dragging{background:#FFF1E6;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.15);position:relative;z-index:2}
 body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 .mini.inc{white-space:nowrap;flex:none}
+
+/* 필기 도구: 손이 닿기 쉽게 아래쪽에 붙이고, 접기 버튼은 맨 아래 주황색으로 */
+.atools{top:auto!important;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:none;max-height:calc(100vh - 200px)}
+.atools .at.amin{background:var(--ink);border-color:var(--ink);color:#fff;min-height:58px;margin-top:4px}
+.atools .at.amin small{color:#fff;font-size:11px;font-weight:700}
+.atools.min{padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.atools.min .at{background:var(--ink);border-color:var(--ink);color:#fff;width:64px;min-height:64px}
+.atools.min .at small{color:#fff;font-weight:700}
+@media (max-height:820px){ .atools{bottom:calc(78px + env(safe-area-inset-bottom,0px));max-height:calc(100vh - 170px)} }
 </style>
 </head>
 <body>
@@ -985,12 +994,13 @@ function annToolsHTML(){
   const canUndo=annStrokes().length>0 || !!S.drawBackup[annKey()];
   const T=(k,ic,lb)=>`<button class="at${ANN.tool===k?" on":""}" data-atool="${k}" aria-label="${lb}"><span>${ic}</span><small>${lb}</small></button>`;
   const pal = ANN.tool==="pen"?PEN_COLORS:(ANN.tool==="hl"?HL_COLORS:null), cur = ANN.tool==="pen"?ANN.pen:ANN.hl;
-  return `<button class="at amin" data-act="a-min" aria-label="접고 잠시 멈추기"><span>»</span><small>${L("접기","Pause")}</small></button>`+T("pen","✎",L("펜","Pen"))+T("hl","▰",L("형광펜","Marker"))+T("eraser","◌",L("지우개","Eraser"))
+  return T("pen","✎",L("펜","Pen"))+T("hl","▰",L("형광펜","Marker"))+T("eraser","◌",L("지우개","Eraser"))
     +`<div class="asz">${[0,1,2].map(i=>`<button class="${ANN.size===i?"on":""}" data-asize="${i}" aria-label="굵기 ${i+1}"><i style="width:${8+i*7}px;height:${8+i*7}px"></i></button>`).join("")}</div>`
     +(pal?`<div class="acol">${pal.map(c=>`<button class="${c===cur?"on":""}" data-acolor="${c}" style="background:${c}" aria-label="색"></button>`).join("")}</div>`:`<div class="ahint">${L("문지른 곳만 지워져요","Erases only what you rub")}</div>`)
     +`<button class="at" data-act="a-undo"${canUndo?"":" disabled"}><span>↶</span><small>${L("뒤로","Undo")}</small></button>`
     +`<button class="at warn" data-act="a-clear"><span>⌫</span><small>${L("이 쪽","This page")}</small></button>`+`<button class="at warn" data-act="a-clearall"><span>⌫⌫</span><small>${L("모든 쪽","All pages")}</small></button>`
-    +((curSlide()||{}).type==="draw"?"":`<button class="at" data-act="a-off"><span>✓</span><small>${L("필기 끄기","Done")}</small></button>`);
+    +((curSlide()||{}).type==="draw"?"":`<button class="at" data-act="a-off"><span>✓</span><small>${L("필기 끄기","Done")}</small></button>`)
+    +`<button class="at amin" data-act="a-min" aria-label="접고 잠시 멈추기"><span>»</span><small>${L("접기","Hide")}</small></button>`;
 }
 function annUI(){ const el=$(".atools"); if(el) el.innerHTML=annToolsHTML(); }
 function annRedraw(){
