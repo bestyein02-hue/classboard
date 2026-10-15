@@ -614,6 +614,15 @@ body.ann-on .stage{padding-right:92px}
 .pm.done{color:#1E8A5A}.pm.part{color:var(--orange-dk)}.pm.next{color:var(--orange)}
 .mini.pdn{font-size:18px;width:36px;height:36px;flex:none}
 .mini.pdn.on{color:#1E8A5A}
+
+.ugrp{margin:0 0 4px;border-radius:10px}
+.ugrp>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px;padding:10px 12px;border-radius:10px;font-weight:700;font-size:18px}
+.ugrp>summary::-webkit-details-marker{display:none}
+.ugrp>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+.ugrp[open]>summary::before{transform:rotate(90deg)}
+.ugrp>summary small{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
+.ugrp>summary:hover{background:#F3F1EA}
+.ugrp[open]{padding-bottom:6px}
 </style>
 </head>
 <body>
@@ -737,6 +746,7 @@ function orphanPassages(){ const ids=new Set(S.units.map(u=>u.id)); return S.pas
 function allPassagesOrdered(){
   const out=[]; sortedUnits().forEach(u=>out.push(...passagesOf(u.id))); out.push(...orphanPassages()); return out;
 }
+function unitList(p){ return S.units.some(u=>u.id===p.unitId)?passagesOf(p.unitId):orphanPassages(); }
 function getP(pid){ return S.passages.find(p=>p.id===pid); }
 function unitName(id){ return (S.units.find(u=>u.id===id)||{}).title||"분류 없음"; }
 const UIEN=(()=>{ try{ return localStorage.getItem("cb_ui")==="en"; }catch(e){ return false; } })();
@@ -1116,7 +1126,7 @@ function progRecord(){
     g.last={pid:p.id, idx:S.cur.idx, at:now}; }
   g.at=now; S.doneP={}; progSave(); return true;
 }
-function progDesc(n){ if(!n) return "지문 없음"; if(n.all) return "모두 끝났어요"; const p=getP(n.pid), x=(p.slides||[])[n.idx]; return esc(p.title)+(n.partial&&x?` · <b>${esc(uiName(x))}</b>부터`:""); }
+function progDesc(n){ if(!n) return "지문 없음"; if(n.all) return "모두 끝났어요"; const p=getP(n.pid), x=(p.slides||[])[n.idx]; return esc(unitName(p.unitId))+" · "+esc(p.title)+(n.partial&&x?` · <b>${esc(uiName(x))}</b>부터`:""); }
 function progHTML(){
   const cl=progClasses(), cur=S.cls?nextFor(S.cls):null;
   return `<div class="clsrow">${cl.map(c=>`<button class="cls${c===S.cls?" on":""}" data-cls="${esc(c)}">${esc(c)}</button>`).join("")}</div>
@@ -1153,7 +1163,8 @@ function step(d){
   if(si){ const cur=S.reveal[si.key]??si.min; if(d>0 && cur<si.max) return setReveal(stepPatch(si,cur+1)); if(d<0 && cur>si.min) return setReveal(stepPatch(si,cur-1)); }
   let i = S.cur.idx+d; while(i>=0 && i<slides.length && slides[i].hidden) i+=d;
   if(i>=0 && i<slides.length){ go(p.id,i); return arrive(d); }
-  const tl2=S.today.map(getP).filter(Boolean), list = (tl2.length && tl2.some(x=>x.id===p.id)) ? tl2 : allPassagesOrdered(), k = list.findIndex(x=>x.id===p.id), nx = list[k+d]; if(d>0) S.doneP[p.id]=true; if(!nx) return;
+  const list = unitList(p), k = list.findIndex(x=>x.id===p.id), nx = list[k+d]; if(d>0) S.doneP[p.id]=true;
+  if(!nx){ if(d>0) toast(L("이번 차시 끝이에요. 다음 차시는 목차에서 고르세요","End of this lesson")); return; }
   const ns = nx.slides||[]; let j = d>0?0:ns.length-1; while(j>=0 && j<ns.length && ns[j].hidden) j+=d; if(j<0||j>=ns.length) j=0;
   go(nx.id,j); arrive(d);
 }
@@ -1272,7 +1283,7 @@ async function pollLive(){
       if(S.endSeen===undefined) S.endSeen=d.endAt||0;
       else if(d.endAt && d.endAt!==S.endSeen){ S.endSeen=d.endAt; S.drawData={}; S.drawBackup={}; const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })(); if(!remembered && S.mode==="class"){ polling=false; return lockDevice(); } }
       if(d.pid && getP(d.pid)) S.cur={pid:d.pid, idx:d.idx||0};
-      S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); } if(Array.isArray(d.today)) S.today=d.today; if("cls" in d) setCls(d.cls||null,true);
+      S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); }  if("cls" in d) setCls(d.cls||null,true);
       S.remoteSeen=Date.now(); softRender();
     }
   }catch(e){}
@@ -1335,7 +1346,7 @@ function renderClass(){
   ${p?`<canvas id="ann"></canvas>`:""}
   ${p&&annActive()?`<div class="atools${S.annMin?" min":""}">${annToolsHTML()}</div>`:""}
   ${p?`<footer class="foot">
-    <button class="nav" data-act="prev" ${(vis[0]===S.cur.idx && atStart && allPassagesOrdered()[0]?.id===p.id)?"disabled":""}>${L("‹ 이전","‹ Prev")}</button>
+    <button class="nav" data-act="prev" ${(vis[0]===S.cur.idx && atStart && unitList(p)[0]?.id===p.id)?"disabled":""}>${L("‹ 이전","‹ Prev")}</button>
     ${tools || `<div class="dots">${vis.map((i,n)=>`<button class="dot${i===S.cur.idx?" on":""}" data-go="${i}" aria-label="${n+1}번 슬라이드"></button>`).join("")}</div>`}
     <span class="count">${vis.indexOf(S.cur.idx)+1} / ${vis.length}</span>
     <span class="navpair"><button class="nav nav-back" data-act="prev" aria-label="이전">‹</button><button class="nav" data-act="next">${L("다음 ›","Next ›")}</button></span>
@@ -1363,12 +1374,11 @@ function renderDrawer(){
   const g=S.cls?progOf(S.cls):null, nx=S.cls?nextFor(S.cls):null;
   const mark=p=>{ if(!g) return ""; if(g.done[p.id]) return `<span class="pm done">✓ ${md(g.done[p.id])}</span>`; if(nx&&nx.pid===p.id) return `<span class="pm ${nx.partial?"part":"next"}">${nx.partial?"◐ 이어서":"▶ 차례"}</span>`; return `<span class="pm"></span>`; };
   const row=(p,lab)=>`<div class="pirow"><button class="pi${p.id===S.cur.pid?" on":""}" data-pick="${p.id}">${mark(p)}${lab}${p.topic?`<small>${esc(p.topic)}</small>`:""}</button>${g?`<button class="mini pdn${g.done[p.id]?" on":""}" data-pdone="${p.id}" title="${esc(S.cls)} 끝남 표시 / 취소">${g.done[p.id]?"✓":"○"}</button>`:""}</div>`;
-  const block=(title,list)=>list.length?`<h3>${esc(title)}</h3>${list.map(p=>row(p,esc(p.title))).join("")}`:"";
-  const tl=S.today.map(getP).filter(Boolean);
+  const block=(title,list)=>list.length?`<details class="ugrp"><summary>${esc(title)}<small>${list.length}개${g?` · ✓ ${list.filter(p=>g.done[p.id]).length}`:""}</small></summary>${list.map(p=>row(p,esc(p.title))).join("")}</details>`:"";
   return `<div class="scrim" data-act="close"></div><aside class="drawer" aria-label="목차">
     <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:19px">${L("목차","Contents")}</b><button class="btn sm" data-act="close">${L("닫기","Close")}</button></div>
     <h3>${L("반별 진도","Progress by class")}</h3>${progHTML()}
-    ${tl.length?`<h3>${L("오늘의 수업","Today")}</h3>${tl.map((p,i)=>row(p,(S.doneP[p.id]?"✓ ":"")+(i+1)+". "+esc(p.title))).join("")}`:""}${sortedUnits().map(u=>block(u.title, passagesOf(u.id))).join("")}${block("분류 없음", orphanPassages())}
+    ${nx&&nx.pid?(()=>{ const up=getP(nx.pid), ul=S.units.some(u=>u.id===up.unitId)?passagesOf(up.unitId):[up]; return `<h3>${esc(S.cls)} 이번 차례 — ${esc(unitName(up.unitId))}</h3>${ul.map(p=>row(p,esc(p.title))).join("")}`; })():""}<h3>${L("차시 목록","All lessons")}</h3>${sortedUnits().map(u=>block(u.title, passagesOf(u.id))).join("")}${block("분류 없음", orphanPassages())}
   </aside>`;
 }
 function renderSheet(){
@@ -1470,7 +1480,7 @@ function renderAdminSide(full){
 function renderTree(){
   const el=$("#tree"); if(!el) return;
   const pItem = p=>`<div style="display:flex;align-items:center"><button class="li${p.id===S.editPid?" on":""}" data-edit="${p.id}"><span class="t">${esc(p.title||"(제목 없음)")}</span></button>
-      <button class="mini" data-pmove="${p.id}|-1" aria-label="위로">↑</button><button class="mini" data-pmove="${p.id}|1" aria-label="아래로">↓</button><button class="mini" data-today="${p.id}" aria-label="오늘 수업" title="오늘의 수업에 넣기">${S.today.includes(p.id)?"★":"☆"}</button></div>`;
+      <button class="mini" data-pmove="${p.id}|-1" aria-label="위로">↑</button><button class="mini" data-pmove="${p.id}|1" aria-label="아래로">↓</button></div>`;
   el.innerHTML = `<h4>목차 <span><button class="btn sm" data-act="paste">붙여넣기</button> <button class="btn sm" data-act="addunit">+ 단원</button></span></h4>
   ${sortedUnits().map(u=>`<div class="unit"><div class="unit-h"><span>${esc(u.title)}</span>
      <button class="mini" data-umove="${u.id}|-1" aria-label="단원 위로">↑</button><button class="mini" data-umove="${u.id}|1" aria-label="단원 아래로">↓</button>
@@ -1660,9 +1670,6 @@ function renderRemote(){
     <button class="tg" data-act="blank-board">잠깐 가리기</button><button class="tg" data-act="end-class">수업 끝내기</button><button class="tg" data-act="a-clearall">모든 필기 지우기</button></div>
     <p class="help" style="margin:8px 0 0">${S.blank?`<b>지금 칠판이 비어 있어요.</b> <button class="btn pri sm" data-act="unblank">다시 띄우기</button>`:"잠깐 가리기: 화면만 잠시 숨겨요(다시 띄우기 가능). 수업 끝내기: 칠판을 비우고 필기를 모두 지우고 칠판을 잠가요."}</p></div>
   <div class="r-card"><h5>반별 진도 (칠판 목차에도 나와요)</h5>${progHTML()}</div>
-  <div class="r-card"><h5>오늘의 수업 (칠판 목차 맨 위에 나오고, 지문이 끝나면 다음 지문으로 이어집니다)</h5>
-    ${S.today.map(getP).filter(Boolean).map((q,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="flex:1">${i+1}. ${esc(q.title)}</span><button class="mini" data-tmove="${i}|-1">↑</button><button class="mini" data-tmove="${i}|1">↓</button><button class="mini" data-today="${q.id}">✕</button></div>`).join("")||'<p class="help" style="margin:0 0 8px">아직 없어요. 아래에서 지문을 골라 추가하세요.</p>'}
-    <div class="code-in"><select class="inp" id="todaysel">${allPassagesOrdered().filter(q=>!S.today.includes(q.id)).map(q=>`<option value="${q.id}">${esc(q.title)}</option>`).join("")}</select><button class="btn pri" data-act="today-add">추가</button></div></div>
   <div class="r-card"><h5>타이머 (칠판 어디서든 보임)</h5><div class="r-toggles"><span class="tm tmr-txt" style="font-size:34px;font-weight:700;margin-right:8px">${fmtT(gtOn()?gtSecs():0)}</span>${[1,2,3,5,10].map(m=>`<button class="tg" data-gt="${m*60}">${m}분</button>`).join("")}<button class="tg" data-act="gt-go">▶</button><button class="tg" data-act="gt-pause">⏸</button><button class="tg" data-act="gt-reset">↺</button></div></div>
   ${sl?`<div class="r-card"><h5>칠판 조작</h5><div class="r-toggles">
     ${sl.type==="question"?tg("answer","정답 공개",S.reveal.answer)+tg("tally","손 들기 집계",S.reveal.tally)+`<button class="tg" data-act="tl-reset">집계 0으로</button>`:""}
