@@ -595,6 +595,25 @@ body.ann-on .stage{padding-right:92px}
 .atools .at.on{border-color:var(--orange)}
 .blk .body{display:flex;flex-direction:column;justify-content:center}
 .blk .lab{font-size:1.1em}
+
+/* 반별 진도 */
+.clsrow{display:flex;flex-wrap:wrap;gap:6px;margin:4px 6px 10px}
+.cls{min-width:58px;min-height:44px;border:1.5px solid var(--line);background:#fff;border-radius:10px;font-weight:700;font-size:17px;color:var(--ink)}
+.cls.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.nextup{margin:0 6px 10px;padding:10px 12px;background:#FFF6C2;border-radius:10px;font-size:16px;line-height:1.5}
+.plist{margin:0 0 6px}
+.prow{display:flex;gap:10px;align-items:baseline;width:100%;text-align:left;border:0;background:transparent;padding:7px 10px;border-radius:8px;font-size:15px;color:var(--ink)}
+.prow b{min-width:2.8em;flex:none}
+.prow span{flex:1;min-width:0}
+.prow small{color:var(--muted);flex:none}
+.prow.on{background:var(--blue-soft)}
+.prow:hover{background:#F3F1EA}
+.pirow{display:flex;align-items:center;gap:4px}
+.pirow .pi{flex:1;min-width:0}
+.pm{display:inline-block;min-width:3.6em;margin-right:.5em;font-size:13px;color:var(--muted);font-family:var(--f-ui);font-weight:700}
+.pm.done{color:#1E8A5A}.pm.part{color:var(--orange-dk)}.pm.next{color:var(--orange)}
+.mini.pdn{font-size:18px;width:36px;height:36px;flex:none}
+.mini.pdn.on{color:#1E8A5A}
 </style>
 </head>
 <body>
@@ -672,6 +691,7 @@ const S = {
   drawer:false, sheet:null
 };
 try{ const sc = parseFloat(localStorage.getItem("sb_scale")); if(sc) S.scale = sc; }catch(e){}
+try{ S.cls=localStorage.getItem("cb_cls")||null; }catch(e){}
 
 /* ================= helpers ================= */
 const $ = (sel,root=document)=>root.querySelector(sel);
@@ -1072,13 +1092,47 @@ function renderSlide(sl, ctx){
   }
 }
 
+/* ================= 반별 진도 ================= */
+const DEF_CLASSES=["1반","2반","3반","4반","5반","6반","7반","8반","9반"];
+function progClasses(){ const c=S.prog&&S.prog.classes; return (Array.isArray(c)&&c.length)?c:DEF_CLASSES; }
+function progOf(cls){ S.prog=S.prog||{}; S.prog.by=S.prog.by||{}; const g=S.prog.by[cls]||(S.prog.by[cls]={done:{},last:null}); g.done=g.done||{}; return g; }
+function firstVis(p){ const i=(p.slides||[]).findIndex(x=>!x.hidden); return i<0?0:i; }
+function md(t){ const d=new Date(t); return (d.getMonth()+1)+"/"+d.getDate(); }
+function nextFor(cls){
+  const g=progOf(cls), list=allPassagesOrdered(); if(!list.length) return null;
+  if(g.last && getP(g.last.pid) && !g.done[g.last.pid]) return {pid:g.last.pid, idx:g.last.idx||0, partial:true};
+  let k=-1; list.forEach((p,i)=>{ if(g.done[p.id]) k=i; });
+  const nx=list.slice(k+1).find(p=>!g.done[p.id]) || list.find(p=>!g.done[p.id]);
+  return nx?{pid:nx.id, idx:firstVis(nx), partial:false}:{all:true};
+}
+function setCls(c,quiet){ S.cls=c||null; try{ c?localStorage.setItem("cb_cls",c):localStorage.removeItem("cb_cls"); }catch(e){} if(!quiet) pushLive(); }
+async function progSave(){ try{ const {id,...b}=S.prog||{}; await API.put("passages","_prog",{...b,title:"_prog",slides:[]}); }catch(e){ toast("진도를 저장하지 못했습니다"); } }
+function progRecord(){
+  const cls=S.cls; if(!cls) return false; const g=progOf(cls), now=Date.now();
+  Object.keys(S.doneP).forEach(pid=>{ if(!g.done[pid]) g.done[pid]=now; });
+  const p=getP(S.cur.pid);
+  if(p){ const vis=(p.slides||[]).map((x,i)=>i).filter(i=>!p.slides[i].hidden), lastV=vis[vis.length-1];
+    if(S.cur.idx>=lastV && !g.done[p.id]) g.done[p.id]=now;
+    g.last={pid:p.id, idx:S.cur.idx, at:now}; }
+  g.at=now; S.doneP={}; progSave(); return true;
+}
+function progDesc(n){ if(!n) return "지문 없음"; if(n.all) return "모두 끝났어요"; const p=getP(n.pid), x=(p.slides||[])[n.idx]; return esc(p.title)+(n.partial&&x?` · <b>${esc(uiName(x))}</b>부터`:""); }
+function progHTML(){
+  const cl=progClasses(), cur=S.cls?nextFor(S.cls):null;
+  return `<div class="clsrow">${cl.map(c=>`<button class="cls${c===S.cls?" on":""}" data-cls="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+  ${S.cls?`<div class="nextup"><div><b>${esc(S.cls)}</b> 다음 차례 — ${progDesc(cur)}</div><div class="row-btns" style="margin-top:8px">${cur&&cur.pid?`<button class="btn pri sm" data-act="prog-go">여기로 가기</button>`:""}<button class="btn sm" data-act="prog-here">지금 화면까지 했음</button></div></div>`
+    :`<p class="help" style="margin:0 6px 10px">수업 시작 때 반을 고르세요. ‘수업 끝’을 누르면 그 반이 어디까지 했는지 자동으로 기록돼요.</p>`}
+  <div class="plist">${cl.map(c=>{ const g=progOf(c); return `<button class="prow${c===S.cls?" on":""}" data-clsgo="${esc(c)}"><b>${esc(c)}</b><span>${progDesc(nextFor(c))}</span><small>${g.at?md(g.at):""}</small></button>`; }).join("")}</div>`;
+}
+function rerenderHere(){ if(S.mode==="admin"){ return S.adminTab==="remote"?renderRemote():(S.adminTab==="settings"?renderSettings():render()); } render(); }
+
 /* ================= live sync (board ⇄ phone) ================= */
 let liveQueue = Promise.resolve(), liveTimer=null;
 function pushLive(){
   if(!S.isAdmin) return;
   clearTimeout(liveTimer);
   liveTimer = setTimeout(()=>{
-    const body = {pid:S.cur.pid, idx:S.cur.idx, reveal:S.reveal, scale:S.scale, gt:S.gtm||null, today:S.today, blank:!!S.blank, endAt:S.endAt||0, ts:Date.now(), by:S.session};
+    const body = {pid:S.cur.pid, idx:S.cur.idx, reveal:S.reveal, scale:S.scale, gt:S.gtm||null, today:S.today, cls:S.cls||null, blank:!!S.blank, endAt:S.endAt||0, ts:Date.now(), by:S.session};
     S.lastLiveTs = body.ts;
     liveQueue = liveQueue.then(()=>API.req("POST","/api/live",body)).catch(()=>{});
   },120);
@@ -1155,7 +1209,7 @@ async function startPair(){
 /* ================= data loading ================= */
 async function loadData(){
   const d = await API.req("GET","/api/data");
-  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
+  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.prog=(({id,...b})=>b)(ps.find(x=>x.id==="_prog")||{id:0}); S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
 }
 async function boot(){
   render();
@@ -1186,10 +1240,11 @@ async function lockDevice(){
   S.isAdmin=false; S.mode="class"; S.sheet=null; S.drawer=false; S.units=[]; S.passages=[]; render();
 }
 function endClass(){
+  const rec=progRecord()?S.cls:null; setCls(null,true);
   S.blank=true; S.endAt=Date.now(); S.drawData={}; S.drawBackup={}; S.reveal={}; pushLive();
   const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })();
-  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,700); toast("수업을 끝냈어요. 칠판을 잠갔습니다"); }
-  else { toast("수업을 끝냈어요. 칠판을 비우고 잠갔습니다"); render(); }
+  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,700); toast((rec?rec+" 진도를 기록하고 ":"")+"수업을 끝냈어요. 칠판을 잠갔습니다"); }
+  else { toast((rec?rec+" 진도를 기록하고 ":"")+"수업을 끝냈어요. 칠판을 비우고 잠갔습니다"); render(); }
 }
 function fastMode(){ return S.isAdmin; }
 function pollLoop(){
@@ -1217,7 +1272,7 @@ async function pollLive(){
       if(S.endSeen===undefined) S.endSeen=d.endAt||0;
       else if(d.endAt && d.endAt!==S.endSeen){ S.endSeen=d.endAt; S.drawData={}; S.drawBackup={}; const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })(); if(!remembered && S.mode==="class"){ polling=false; return lockDevice(); } }
       if(d.pid && getP(d.pid)) S.cur={pid:d.pid, idx:d.idx||0};
-      S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); } if(Array.isArray(d.today)) S.today=d.today;
+      S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); } if(Array.isArray(d.today)) S.today=d.today; if("cls" in d) setCls(d.cls||null,true);
       S.remoteSeen=Date.now(); softRender();
     }
   }catch(e){}
@@ -1263,7 +1318,7 @@ function renderClass(){
   app.innerHTML = `
   <header class="bar">
     <button class="ib" data-act="drawer" aria-label="Contents">${L("목차","Contents")}</button>
-    <div class="ttl"><small>${p?esc(unitName(p.unitId)):""}</small><b>${p?esc(p.title):"수업 보드"}</b></div>
+    <div class="ttl"><small>${S.cls?esc(S.cls)+" · ":""}${p?esc(unitName(p.unitId)):""}</small><b>${p?esc(p.title):"수업 보드"}</b></div>
     ${live?`<span class="live"><i></i>${L("리모컨 연결됨","Remote connected")}</span>`:""}
     ${window.PointerEvent?`<button class="ib${S.annOn?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
@@ -1305,10 +1360,15 @@ function fitAll(){
 window.addEventListener("resize",()=>{ clearTimeout(fitT); fitT=setTimeout(()=>{ fitAll(); placePanel(); initAnn(); },120); });
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>fitAll());
 function renderDrawer(){
-  const block = (title, list)=> list.length?`<h3>${esc(title)}</h3>${list.map(p=>`<button class="pi${p.id===S.cur.pid?" on":""}" data-pick="${p.id}">${esc(p.title)}${p.topic?`<small>${esc(p.topic)}</small>`:""}</button>`).join("")}`:"";
+  const g=S.cls?progOf(S.cls):null, nx=S.cls?nextFor(S.cls):null;
+  const mark=p=>{ if(!g) return ""; if(g.done[p.id]) return `<span class="pm done">✓ ${md(g.done[p.id])}</span>`; if(nx&&nx.pid===p.id) return `<span class="pm ${nx.partial?"part":"next"}">${nx.partial?"◐ 이어서":"▶ 차례"}</span>`; return `<span class="pm"></span>`; };
+  const row=(p,lab)=>`<div class="pirow"><button class="pi${p.id===S.cur.pid?" on":""}" data-pick="${p.id}">${mark(p)}${lab}${p.topic?`<small>${esc(p.topic)}</small>`:""}</button>${g?`<button class="mini pdn${g.done[p.id]?" on":""}" data-pdone="${p.id}" title="${esc(S.cls)} 끝남 표시 / 취소">${g.done[p.id]?"✓":"○"}</button>`:""}</div>`;
+  const block=(title,list)=>list.length?`<h3>${esc(title)}</h3>${list.map(p=>row(p,esc(p.title))).join("")}`:"";
+  const tl=S.today.map(getP).filter(Boolean);
   return `<div class="scrim" data-act="close"></div><aside class="drawer" aria-label="목차">
     <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:19px">${L("목차","Contents")}</b><button class="btn sm" data-act="close">${L("닫기","Close")}</button></div>
-    ${S.today.map(getP).filter(Boolean).length?`<h3>${L("오늘의 수업","Today")}</h3>${S.today.map(getP).filter(Boolean).map((p,i)=>`<button class="pi${p.id===S.cur.pid?" on":""}" data-pick="${p.id}">${S.doneP[p.id]?"✓ ":""}${i+1}. ${esc(p.title)}</button>`).join("")}`:""}${sortedUnits().map(u=>block(u.title, passagesOf(u.id))).join("")}${block("분류 없음", orphanPassages())}
+    <h3>${L("반별 진도","Progress by class")}</h3>${progHTML()}
+    ${tl.length?`<h3>${L("오늘의 수업","Today")}</h3>${tl.map((p,i)=>row(p,(S.doneP[p.id]?"✓ ":"")+(i+1)+". "+esc(p.title))).join("")}`:""}${sortedUnits().map(u=>block(u.title, passagesOf(u.id))).join("")}${block("분류 없음", orphanPassages())}
   </aside>`;
 }
 function renderSheet(){
@@ -1599,6 +1659,7 @@ function renderRemote(){
   <div class="r-card"><h5>칠판</h5><div class="r-tools">
     <button class="tg" data-act="blank-board">잠깐 가리기</button><button class="tg" data-act="end-class">수업 끝내기</button><button class="tg" data-act="a-clearall">모든 필기 지우기</button></div>
     <p class="help" style="margin:8px 0 0">${S.blank?`<b>지금 칠판이 비어 있어요.</b> <button class="btn pri sm" data-act="unblank">다시 띄우기</button>`:"잠깐 가리기: 화면만 잠시 숨겨요(다시 띄우기 가능). 수업 끝내기: 칠판을 비우고 필기를 모두 지우고 칠판을 잠가요."}</p></div>
+  <div class="r-card"><h5>반별 진도 (칠판 목차에도 나와요)</h5>${progHTML()}</div>
   <div class="r-card"><h5>오늘의 수업 (칠판 목차 맨 위에 나오고, 지문이 끝나면 다음 지문으로 이어집니다)</h5>
     ${S.today.map(getP).filter(Boolean).map((q,i)=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><span style="flex:1">${i+1}. ${esc(q.title)}</span><button class="mini" data-tmove="${i}|-1">↑</button><button class="mini" data-tmove="${i}|1">↓</button><button class="mini" data-today="${q.id}">✕</button></div>`).join("")||'<p class="help" style="margin:0 0 8px">아직 없어요. 아래에서 지문을 골라 추가하세요.</p>'}
     <div class="code-in"><select class="inp" id="todaysel">${allPassagesOrdered().filter(q=>!S.today.includes(q.id)).map(q=>`<option value="${q.id}">${esc(q.title)}</option>`).join("")}</select><button class="btn pri" data-act="today-add">추가</button></div></div>
@@ -1636,6 +1697,10 @@ function renderSettings(){
     <p class="help" style="margin-top:0">단원·지문 전체를 JSON 파일로 저장하거나, 저장한 파일로 되돌립니다. 이미지는 서버에 그대로 남고 파일에는 이미지 번호만 담깁니다.</p>
     <div class="row-btns"><button class="btn pri" data-act="export">백업 저장</button><label class="btn" style="display:inline-flex;align-items:center">백업 불러오기<input type="file" id="importfile" accept=".json,application/json" hidden></label></div>
     <p class="help">불러오기는 지금 있는 단원·지문을 모두 지우고 파일 내용으로 바꿉니다.</p></div>
+  <div class="r-card"><h5>내가 들어가는 반</h5>
+    <p class="help" style="margin-top:0">쉼표로 나눠 적으세요. 목차의 ‘반별 진도’에 이 순서대로 나와요.</p>
+    <div class="code-in"><input class="inp" id="clsset" value="${esc(progClasses().join(", "))}" style="font-size:16px;letter-spacing:0;text-align:left"><button class="btn pri" data-act="cls-save">저장</button></div>
+    <button class="btn sm warn" data-act="prog-clear" style="margin-top:8px">진도 기록 모두 지우기</button></div>
   <div class="r-card"><h5>비밀번호</h5><p class="help" style="margin-top:0">비밀번호는 Cloudflare 대시보드 → 이 Worker → Settings → Variables and Secrets의 <b>ADMIN_PASSWORD</b>에서 바꿉니다.</p></div>
   <div class="r-card"><h5>관리자 화면 번호</h5>
     <p class="help" style="margin-top:0">칠판(수업 화면)에서 YE → 관리자 화면으로 들어갈 때 이 번호를 물어요. ${S.cfg&&S.cfg.pinHash?"<b>지금 번호가 정해져 있어요.</b>":"지금은 번호가 없어서 비밀번호를 다시 물어요."}</p>
@@ -1655,10 +1720,13 @@ function renderSettings(){
 }
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
-  const t = e.target.closest("[data-act],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
+  const t = e.target.closest("[data-act],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
+  if(ds.cls){ setCls(S.cls===ds.cls?null:ds.cls); S.doneP={}; return rerenderHere(); }
+  if(ds.clsgo){ setCls(ds.clsgo,true); S.doneP={}; const n=nextFor(ds.clsgo); S.drawer=false; if(n&&n.pid) return go(n.pid,n.idx); pushLive(); return rerenderHere(); }
+  if(ds.pdone && S.cls){ const g=progOf(S.cls); if(g.done[ds.pdone]) delete g.done[ds.pdone]; else g.done[ds.pdone]=Date.now(); progSave(); return rerenderHere(); }
   if(ds.tl!=null){ const [ti,td]=ds.tl.split("|").map(Number), tl=[...(S.reveal.tl||[])]; for(let k=0;k<6;k++) tl[k]=tl[k]||0; tl[ti]=Math.max(0,tl[ti]+td); return setReveal({tl}); }
   if(ds.today){ const k=S.today.indexOf(ds.today); k>=0?S.today.splice(k,1):S.today.push(ds.today); pushLive(); if(S.mode==="admin"){ S.adminTab==="edit"?renderTree():renderRemote(); } return; }
   if(ds.tmove){ const [ti,td]=ds.tmove.split("|").map(Number), tj=ti+td; if(tj<0||tj>=S.today.length) return; [S.today[ti],S.today[tj]]=[S.today[tj],S.today[ti]]; pushLive(); return renderRemote(); }
@@ -1704,6 +1772,10 @@ document.addEventListener("click", async e=>{
 
   switch(ds.act){
     case "drawer": S.drawer=true; return render();
+    case "prog-go": { const n=S.cls&&nextFor(S.cls); if(n&&n.pid){ S.drawer=false; return go(n.pid,n.idx); } return; }
+    case "prog-here": { if(!S.cls) return; progRecord(); const p=getP(S.cur.pid), x=p&&(p.slides||[])[S.cur.idx]; toast(S.cls+" 진도: "+(p?p.title:"")+(x?" · "+uiName(x):"")+"까지 기록했어요"); return rerenderHere(); }
+    case "cls-save": { const v=($("#clsset")?.value||"").split(/[,，\n]/).map(x=>x.trim()).filter(Boolean); if(!v.length){ toast("반을 하나 이상 적어 주세요"); return; } S.prog=S.prog||{}; S.prog.classes=v; await progSave(); toast("반 목록을 저장했어요"); return renderSettings(); }
+    case "prog-clear": if(!confirm("모든 반의 진도 기록을 지울까요? 되돌릴 수 없어요.")) return; S.prog={classes:(S.prog||{}).classes}; await progSave(); toast("진도 기록을 지웠어요"); return renderSettings();
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
     case "admin": S.sheet="gate"; render(); setTimeout(()=>$("#gpw")?.focus(),60); return;
@@ -1712,7 +1784,7 @@ document.addEventListener("click", async e=>{
     case "pin-clear": try{ await API.put("passages","_cfg",{title:"_cfg",slides:[]}); S.cfg={}; toast("번호를 없앴어요. 이제 비밀번호로 확인해요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return;
     case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
     case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 잠깐 가렸어요. 다시 띄우려면 YE → 칠판 다시 띄우기 (또는 클리커 버튼)"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
-    case "end-class": if(!confirm("수업을 끝낼까요?\n칠판을 비우고, 모든 필기를 지우고, 칠판을 다시 잠가요.")) return; S.sheet=null; return endClass();
+    case "end-class": if(!confirm("수업을 끝낼까요?\n칠판을 비우고, 모든 필기를 지우고, 칠판을 다시 잠가요."+(S.cls?"\n"+S.cls+" 진도(지금 보던 곳)도 기록해요.":"\n(반을 고르지 않아서 진도는 기록되지 않아요)"))) return; S.sheet=null; return endClass();
     case "a-clearall": S.drawData={}; S.drawBackup={}; S.sheet=null; render(); toast("모든 쪽의 필기를 지웠어요"); return;
     case "sound": S.sheet=null; render(); unlockAudio(); beep(); toast("‘띵-동’이 들리면 정상이에요. 안 들리면 칠판 볼륨을 확인하세요"); return;
     case "closewin": try{ if(document.fullscreenElement) await document.exitFullscreen(); }catch(x){} window.close(); setTimeout(()=>toast("브라우저가 창 닫기를 막았어요. 화면 맨 위 오른쪽 X를 누르거나 키보드 Alt+F4를 누르세요"),400); return;
