@@ -576,7 +576,9 @@ mark.key{background:none;color:inherit;text-decoration:underline;text-decoration
 body.ann-on .stage{padding-right:92px}
 @media (max-height:820px){ .atools .at{min-height:40px} .atools .at small{font-size:10px} }
 @media (max-width:760px){ .atools{width:62px} .atools .at{width:52px} body.ann-on .stage{padding-right:70px} }
-.ib.endc{border-color:#FFD6C2}
+.ib.endc{background:#1B1B1B;border-color:#1B1B1B;color:#fff;padding:7px 18px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.ib.endc::before{content:"";display:inline-block;width:.6em;height:.6em;background:#FF8A5B;border-radius:2px;margin-right:.45em;vertical-align:.05em}
+.ib.endc:hover{background:#000}
 .lock-t{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink)}
 .lock-t small{font-family:var(--f-hand);font-weight:700;font-size:34px;color:var(--muted);letter-spacing:.08em}
 .lock-t b{font-family:Fredoka,"Gamja Flower",var(--f-ui);font-weight:600;font-size:min(16vw,160px);line-height:1;letter-spacing:.04em;color:var(--orange);transform:rotate(-2deg)}
