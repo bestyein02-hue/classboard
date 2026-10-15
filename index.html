@@ -651,6 +651,14 @@ body.ann-on .stage{padding-right:92px}
 .stage{background-color:#FBF8F1}
 .imgwrap img{max-height:64vh}
 .imgwrap p{font-family:var(--f-hand);font-weight:700;font-size:clamp(22px,2.4vw,40px);color:var(--ink);margin:.5em 0 0}
+
+.psort{display:flex;align-items:center}
+.dh{flex:none;width:18px;text-align:center;color:#B9B5AB;font-size:16px;cursor:grab;touch-action:none;user-select:none}
+.srow,.psort,.unit-h{cursor:grab}
+.srow .li,.psort .li{cursor:grab}
+.dragging{background:#FFF1E6;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.15);position:relative;z-index:2}
+body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
+.mini.inc{white-space:nowrap;flex:none}
 </style>
 </head>
 <body>
@@ -1518,11 +1526,9 @@ function renderAdminSide(full){
 }
 function renderTree(){
   const el=$("#tree"); if(!el) return;
-  const pItem = p=>`<div style="display:flex;align-items:center"><button class="li${p.id===S.editPid?" on":""}" data-edit="${p.id}"><span class="t">${esc(p.title||"(제목 없음)")}</span></button>
-      <button class="mini" data-pmove="${p.id}|-1" aria-label="위로">↑</button><button class="mini" data-pmove="${p.id}|1" aria-label="아래로">↓</button></div>`;
+  const pItem = p=>`<div class="psort" data-pid="${p.id}"><span class="dh" aria-hidden="true">⠿</span><button class="li${p.id===S.editPid?" on":""}" data-edit="${p.id}"><span class="t">${esc(p.title||"(제목 없음)")}</span></button></div>`;
   el.innerHTML = `<h4>목차 <span><button class="btn sm" data-act="paste">붙여넣기</button> <button class="btn sm" data-act="addunit">+ 단원</button></span></h4>
-  ${sortedUnits().map(u=>`<div class="unit"><div class="unit-h"><span>${esc(u.title)}</span>
-     <button class="mini" data-umove="${u.id}|-1" aria-label="단원 위로">↑</button><button class="mini" data-umove="${u.id}|1" aria-label="단원 아래로">↓</button>
+  ${sortedUnits().map(u=>`<div class="unit usort" data-uid="${u.id}"><div class="unit-h"><span class="dh" aria-hidden="true">⠿</span><span>${esc(u.title)}</span>
      <button class="mini" data-uren="${u.id}" aria-label="단원 이름 바꾸기">✎</button><button class="mini" data-udel="${u.id}" aria-label="단원 삭제">✕</button></div>
      ${passagesOf(u.id).map(pItem).join("")}
      <button class="li" data-addp="${u.id}" style="color:var(--blue)">+ 지문 추가</button></div>`).join("")}
@@ -1536,9 +1542,9 @@ function loadDraft(pid){
 function renderSlideList(){
   const el=$("#slist"); if(!el) return; const d=S.draft;
   if(!d){ el.innerHTML=`<p class="help">왼쪽에서 지문을 고르세요.</p>`; return; }
-  el.innerHTML = `<h4>슬라이드 (${(d.slides||[]).length})</h4>
-  ${(d.slides||[]).map((s,i)=>`<div style="display:flex;align-items:center${s.hidden?";opacity:.55":""}"><button class="li${i===S.editIdx?" on":""}" data-sel="${i}"><span class="ty">${esc(TYPES[s.type]?.name||s.type)}</span><span class="t">${esc(s.title||"")}</span></button>
-     <button class="mini inc${s.hidden?"":" on"}" data-sinc="${i}" title="칠판에 넣기 / 빼기">${s.hidden?"빠짐":"넣음"}</button><button class="mini" data-smove="${i}|-1" aria-label="위로">↑</button><button class="mini" data-smove="${i}|1" aria-label="아래로">↓</button></div>`).join("")}
+  el.innerHTML = `<h4>슬라이드 (${(d.slides||[]).length}) <span class="help" style="font-weight:400">끌어서 순서 바꾸기</span></h4>
+  ${(d.slides||[]).map((s,i)=>`<div class="srow" data-k="${i}" style="display:flex;align-items:center${s.hidden?";opacity:.55":""}"><span class="dh" aria-hidden="true">⠿</span><button class="li${i===S.editIdx?" on":""}" data-sel="${i}"><span class="ty">${esc(TYPES[s.type]?.name||s.type)}</span><span class="t">${esc(s.title||"")}</span></button>
+     <button class="mini inc${s.hidden?"":" on"}" data-sinc="${i}" title="칠판에 넣기 / 빼기">${s.hidden?"빠짐":"넣음"}</button></div>`).join("")}
   <h4 style="margin-top:14px">새 슬라이드</h4>
   <div class="addtypes">${Object.entries(TYPES).map(([k,v])=>`<button class="btn sm" data-addslide="${k}">+ ${v.name}</button>`).join("")}</div>`;
 }
@@ -1766,6 +1772,7 @@ function renderSettings(){
 }
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
+  if(S.justDragged && Date.now()-S.justDragged<350){ e.preventDefault(); return; }
   const t = e.target.closest("[data-act],[data-lockcls],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
@@ -1958,6 +1965,35 @@ async function shrinkImage(file){
   for(const q of [0.85,0.75,0.6]){ const b=await new Promise(r=>c.toBlob(r,"image/jpeg",q)); if(b.size<1800000) return b; }
   throw new Error("이미지가 너무 큽니다");
 }
+
+/* ===== 끌어서 순서 바꾸기 (관리자 화면) ===== */
+const SORTS=[
+  {sel:".srow", key:"k", done:(order,moved)=>{ const d=S.draft; if(!d) return; const old=d.slides, cur=old[S.editIdx]; d.slides=order.map(i=>old[+i]); S.editIdx=Math.max(0,d.slides.indexOf(cur)); S.dirty=true; renderSlideList(); renderEditor(); toast("순서를 바꿨어요. 저장을 눌러 주세요"); }},
+  {sel:".psort", key:"pid", done:async order=>{ for(let k=0;k<order.length;k++){ const p=getP(order[k]); if(p && p.order!==k){ p.order=k; const {id:pid2,...b}=p; try{ await API.put("passages",pid2,b); }catch(x){ toast("순서를 저장하지 못했습니다"); } if(S.draft && S.draft.id===pid2) S.draft.order=k; } } renderTree(); }},
+  {sel:".usort", key:"uid", handle:".unit-h", done:async order=>{ for(let k=0;k<order.length;k++){ const u=S.units.find(x=>x.id===order[k]); if(u && u.order!==k){ u.order=k; const {id:uid2,...b}=u; try{ await API.put("units",uid2,b); }catch(x){ toast("순서를 저장하지 못했습니다"); } } } renderTree(); }}
+];
+document.addEventListener("pointerdown", e=>{
+  if(S.mode!=="admin" || e.button) return;
+  if(e.target.closest("input,textarea,select,.mini")) return;
+  let cfg=null, it=null;
+  for(const c of SORTS){ const x=e.target.closest(c.sel); if(x && (!c.handle || e.target.closest(c.handle))){ cfg=c; it=x; break; } }
+  if(!cfg) return;
+  if(e.pointerType!=="mouse" && !e.target.closest(".dh")) return;
+  const sy=e.clientY, parent=it.parentElement; let drag=false;
+  const mv=ev=>{
+    if(!drag){ if(Math.abs(ev.clientY-sy)<6) return; drag=true; it.classList.add("dragging"); document.body.classList.add("sorting"); }
+    ev.preventDefault();
+    const sibs=[...parent.children].filter(x=>x!==it && x.matches(cfg.sel));
+    let before=null; for(const x of sibs){ const r=x.getBoundingClientRect(); if(ev.clientY < r.top+r.height/2){ before=x; break; } }
+    if(before){ if(it.nextElementSibling!==before) parent.insertBefore(it,before); }
+    else if(sibs.length){ const last=sibs[sibs.length-1]; if(last.nextElementSibling!==it) last.after(it); }
+  };
+  const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
+    if(!drag) return; it.classList.remove("dragging"); document.body.classList.remove("sorting"); S.justDragged=Date.now();
+    const order=[...parent.children].filter(x=>x.matches(cfg.sel)).map(x=>x.dataset[cfg.key]);
+    cfg.done(order); };
+  addEventListener("pointermove",mv,{passive:false}); addEventListener("pointerup",up); addEventListener("pointercancel",up);
+});
 /* swipe on board */
 let tx=null;
 document.addEventListener("touchstart",e=>{ if(S.mode==="class" && e.target.closest(".stage") && !e.target.closest("canvas")) tx=e.touches[0].clientX; },{passive:true});
