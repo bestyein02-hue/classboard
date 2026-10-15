@@ -680,7 +680,7 @@ function readingPanel(info,R){
   if(R.ko) h+=`<div class="pk">${info.ko?inline(info.ko):L("(해석이 없습니다 — 해석 슬라이드에 입력하세요)","(No translation yet)")}</div>`;
   if(R.vc) h+= info.vocab.length ? `<div class="pv">${info.vocab.map(v=>`<span class="chip"><b class="en">${esc(v.w)}</b> ${esc(v.m||"")}</span>`).join("")}</div>` : `<div class="pe">${L("이 문장에서 짚을 어휘가 없습니다.","No vocabulary to flag in this sentence.")}</div>`;
   if(R.gm){
-    if(info.analysis) h+=`<div class="pa en">${segs(info.analysis.en)}</div>`;
+    if(info.analysis && /\[(S|V|O|IO|DO|C|OC|M|X):/.test(info.analysis.en)) h+=`<div class="pa en">${segs(info.analysis.en)}</div>`;
     h+= info.points.length ? `<ul class="pp">${info.points.map(t=>`<li>${inline(t)}</li>`).join("")}</ul>` : (info.analysis?"":`<div class="pe">${L("이 문장에 준비된 어법 포인트가 없습니다.","No grammar notes for this sentence.")}</div>`);
   }
   return `<div class="rpanel" id="rpanel">${h}</div>`;
@@ -1181,7 +1181,7 @@ let fitT=null;
 function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
-  const small=innerWidth<760, min=(small||innerHeight<820)?15:22; let lo=min, hi=small?30:78, best=min;
+  const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); let lo=min, hi=small?30:78, best=min;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=best+"px";
 }
