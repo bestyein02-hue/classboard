@@ -1135,7 +1135,7 @@ async function startPair(){
 /* ================= data loading ================= */
 async function loadData(){
   const d = await API.req("GET","/api/data");
-  S.units=d.units||[]; S.passages=d.passages||[]; S.ver=d.ver||0;
+  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
 }
 async function boot(){
   render();
@@ -1153,6 +1153,13 @@ async function afterLogin(to){
   if(!pollLoop.started){ pollLoop.started=true; pollLoop(); }
   if(to==="admin"){ enterAdmin(); approvePending(); }
   else { S.mode="class"; S.sheet=null; setLastMode("class"); render(); }
+}
+async function pinHash(pin){ const b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode("classboard:"+pin)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+async function gateGo(){
+  const v=($("#gpw")?.value||"").trim(), err=$("#gerr"); if(!v){ if(err) err.textContent="입력해 주세요."; return; }
+  if(S.cfg && S.cfg.pinHash){ if(await pinHash(v)===S.cfg.pinHash){ S.sheet=null; return enterAdmin(); } if(err) err.textContent="번호가 맞지 않습니다."; return; }
+  try{ await API.req("POST","/api/login",{password:v, remember:false}); S.sheet=null; enterAdmin(); }
+  catch(x){ if(err) err.textContent = x.status===401 ? "비밀번호가 맞지 않습니다." : (x.message||"확인하지 못했습니다."); }
 }
 async function lockDevice(){
   API.req("POST","/api/logout").catch(()=>{}); API.setToken("");
@@ -1285,6 +1292,12 @@ function renderDrawer(){
   </aside>`;
 }
 function renderSheet(){
+  if(S.sheet==="gate"){ const pin=!!(S.cfg&&S.cfg.pinHash);
+    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="관리자 화면 확인" style="width:min(420px,92vw)">
+    <h3>관리자 화면</h3><p>${pin?"관리자 화면 번호를 넣으세요.":"비밀번호를 한 번 더 넣으세요."}</p>
+    <div class="field"><input class="inp" id="gpw" type="password" ${pin?'inputmode="numeric" autocomplete="off" placeholder="번호"':'autocomplete="current-password" placeholder="비밀번호"'}></div>
+    <div class="err" id="gerr"></div>
+    <div class="row-btns"><button class="btn pri" data-act="gate-go">들어가기</button><button class="btn" data-act="close">취소</button></div></div>`; }
   if(S.sheet==="paste"){
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="분석기에서 가져오기" style="width:min(640px,94vw)">
     <h3>지문분석기에서 가져오기</h3>
@@ -1601,6 +1614,10 @@ function renderSettings(){
     <div class="row-btns"><button class="btn pri" data-act="export">백업 저장</button><label class="btn" style="display:inline-flex;align-items:center">백업 불러오기<input type="file" id="importfile" accept=".json,application/json" hidden></label></div>
     <p class="help">불러오기는 지금 있는 단원·지문을 모두 지우고 파일 내용으로 바꿉니다.</p></div>
   <div class="r-card"><h5>비밀번호</h5><p class="help" style="margin-top:0">비밀번호는 Cloudflare 대시보드 → 이 Worker → Settings → Variables and Secrets의 <b>ADMIN_PASSWORD</b>에서 바꿉니다.</p></div>
+  <div class="r-card"><h5>관리자 화면 번호</h5>
+    <p class="help" style="margin-top:0">칠판(수업 화면)에서 YE → 관리자 화면으로 들어갈 때 이 번호를 물어요. ${S.cfg&&S.cfg.pinHash?"<b>지금 번호가 정해져 있어요.</b>":"지금은 번호가 없어서 비밀번호를 다시 물어요."}</p>
+    <div class="code-in"><input class="inp" id="pinset" type="password" inputmode="numeric" placeholder="숫자 4~8자리" autocomplete="new-password"><button class="btn pri" data-act="pin-save">정하기</button></div>
+    ${S.cfg&&S.cfg.pinHash?'<button class="btn sm" data-act="pin-clear" style="margin-top:8px">번호 없애기</button>':""}</div>
   <div class="r-card"><h5>학생 접속 막기</h5>
     <p class="help" style="margin-top:0">주소를 알아도 로그인하지 않은 기기에는 아무것도 보이지 않아요. 전자칠판은 수업 때마다 <b>YE → 폰으로 칠판 열기</b>로 열고, 끝나면 <b>수업 끝내기</b>를 누르면 다시 잠겨요.</p></div>
   <div class="r-card"><h5>이 기기</h5><p class="help" style="margin-top:0">‘30일 기억하기’로 로그인했다면 여기서 로그아웃하세요. 전자칠판에서는 기억하기를 켜지 마세요.</p>
@@ -1666,7 +1683,10 @@ document.addEventListener("click", async e=>{
     case "drawer": S.drawer=true; return render();
     case "wake": return wake();
     case "timer": S.sheet="timer"; return render();
-    case "admin": S.sheet=null; return enterAdmin();
+    case "admin": S.sheet="gate"; render(); setTimeout(()=>$("#gpw")?.focus(),60); return;
+    case "gate-go": return gateGo();
+    case "pin-save": { const v=($("#pinset")?.value||"").trim(); if(!/^\d{4,8}$/.test(v)){ toast("숫자 4~8자리로 넣어 주세요"); return; } const h=await pinHash(v); try{ await API.put("passages","_cfg",{title:"_cfg",slides:[],pinHash:h}); S.cfg={pinHash:h}; toast("관리자 화면 번호를 정했어요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return; }
+    case "pin-clear": try{ await API.put("passages","_cfg",{title:"_cfg",slides:[]}); S.cfg={}; toast("번호를 없앴어요. 이제 비밀번호로 확인해요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return;
     case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
     case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 잠깐 가렸어요. 다시 띄우려면 YE → 칠판 다시 띄우기 (또는 클리커 버튼)"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
     case "end-class": if(!confirm("수업을 끝낼까요?\n칠판을 비우고, 모든 필기를 지우고, 칠판을 다시 잠가요.")) return; S.sheet=null; return endClass();
@@ -1784,7 +1804,7 @@ document.addEventListener("keydown", e=>{
     if(kk==="t"){ S.sheet="timer"; render(); } }
   if(e.key==="Escape"){ S.drawer=false; render(); }
 });
-document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="pw") $("[data-act=dologin]")?.click(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="pw") $("[data-act=dologin]")?.click(); if(e.key==="Enter" && e.target.id==="gpw") $("[data-act=gate-go]")?.click(); });
 async function shrinkImage(file){
   if(file.size<900000 && /^image\/(png|jpeg|gif|webp)$/.test(file.type)) return file;
   const img=await createImageBitmap(file); const max=1800; const k=Math.min(1,max/Math.max(img.width,img.height));
