@@ -694,9 +694,11 @@ function segs(s){
   return out + inline(s.slice(last));
 }
 function splitSentences(p){
-  // keep markup intact; split on . ? ! followed by space+capital/quote
-  const parts = p.match(/[^.!?]+(?:[.!?]+["”’)*_]*|$)(\s+|$)/g);
-  return parts ? parts.filter(x=>x.trim()) : [p];
+  const PH="\x01";
+  let t=p.replace(/\b(Mr|Mrs|Ms|Dr|Prof|Jr|Sr|St|vs|etc|approx|no|No|pp|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Fig|vol|dept|est)\./g,(_,a)=>a+PH);
+  t=t.replace(/\b([A-Z])\./g,(_,a)=>a+PH);
+  const parts=t.match(/[^.!?]+(?:[.!?]+[\u201c\u201d')*_]*|$)(\\s+|$)/g);
+  return parts?parts.map(x=>x.replace(new RegExp(PH,"g"),".")).filter(x=>x.trim()):[p];
 }
 function toast(msg){
   const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
