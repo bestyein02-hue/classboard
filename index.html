@@ -649,6 +649,8 @@ body.ann-on .stage{padding-right:92px}
 
 /* 수업 화면: 크림색 종이 바탕 (눈부심 줄이기) */
 .stage{background-color:#FBF8F1}
+.imgwrap img{max-height:64vh}
+.imgwrap p{font-family:var(--f-hand);font-weight:700;font-size:clamp(22px,2.4vw,40px);color:var(--ink);margin:.5em 0 0}
 </style>
 </head>
 <body>
@@ -860,6 +862,11 @@ function tickTmr(){
 function unlockAudio(){ try{ if(!S.audio){ const A=window.AudioContext||window.webkitAudioContext; if(A) S.audio=new A(); } if(S.audio && S.audio.state==="suspended") S.audio.resume(); }catch(e){} }
 ["pointerdown","keydown","touchstart"].forEach(ev=>document.addEventListener(ev,unlockAudio,{capture:true,passive:true}));
 /* ===== 지문분석기에서 가져오기 ===== */
+function imgSlide(kind){
+  return kind==="pre"
+    ? {id:uid(),type:"image",title:"예측해 볼까요",hidden:true,caption:"",note:"문제 풀기 전 — 글자 없는 그림으로 배경지식 깨우기. 결론이 드러나는 그림은 피하기.\n설명 칸에 질문을 적으면 그림 아래 크게 나와요 (예: 이 사람들은 왜 무서운 걸 즐길까?)"}
+    : {id:uid(),type:"image",title:"한 장 정리",hidden:true,caption:"",note:"구조도 다음 — 글 전체를 한 장으로 정리하는 요약 그림. 그림 속 영어 표기를 한 번 확인하기."};
+}
 function fromAnalyzer(it, unitId, order){
   const d=it.data||{};
   const paras=String(it.passage||"").split(/\n\s*\n/).map(x=>x.replace(/\s*\n\s*/g," ").trim()).filter(Boolean);
@@ -867,10 +874,12 @@ function fromAnalyzer(it, unitId, order){
   const te=(d.topic_sentence&&d.topic_sentence.en)||"";
   const blocks=(d.structure||[]).map(b=>({label:b.role||"", span:String(b.sents||b.span||"").replace(/\s*-\s*/g,"~"), ko:b.kr||"", en:b.en_key||"", thesis:false}));
   const slides=[
+    imgSlide("pre"),
     {id:uid(),type:"task",title:"문제를 풀어 보세요",body:"",minutes:2,note:""},
     {id:uid(),type:"text",title:"원문",paras,note:it.source?("출처: "+it.source):""},
     {id:uid(),type:"structure",title:"구조도",blank:true,blocks,sub:d.subject||"",theme:d.theme||"",thesis:"",thesisKo:"",
       note:"지문 분석 마지막에 아이들과 정리 (블록 → 소재 → 주제)"+(te?("\n분석기 주제문 후보(칠판엔 표시 안 함): "+te):"")+(d.flow_type?("\n전개 방식: "+d.flow_type):"")},
+    imgSlide("post"),
     {id:uid(),type:"textmap",title:"구조 표시",hidden:true,note:""}
   ];
   if((d.vocab||[]).length) slides.push({id:uid(),type:"vocab",title:"",hidden:true,items:d.vocab.map(v=>({w:v.w||"",m:v.m||"",x:""})),note:""});
@@ -1614,7 +1623,7 @@ function slideForm(sl){
     case "background": body = `<div class="field"><label>배경지식 (한 줄에 하나)</label>${H.ta("bgText",(sl.items||[]).join("\n"),"",8)}</div>`; break;
     case "image": body = `<div class="field"><label>이미지</label>
       <input type="file" accept="image/*" id="imgfile" class="inp">
-      <div class="help">${sl.imgId?"올린 이미지가 있습니다. 새로 고르면 바뀝니다.":"사진·도표·그림을 올리세요. 큰 사진은 자동으로 줄여서 올립니다."}</div></div>
+      <div class="help">${sl.imgId?"올린 이미지가 있습니다. 새로 고르면 바뀝니다.":"사진·도표·그림을 올리세요. 큰 사진은 자동으로 줄여서 올립니다. 그림을 올리면 칠판에 자동으로 들어가요(빠짐 → 넣음)."}</div></div>
       <div class="field"><label>설명</label>${H.in("caption",sl.caption)}</div>`; break;
     case "reading": { const txt=(S.draft.slides||[]).find(x=>x.type==="text"); const ss=txt?passageSentences(txt.paras||[]):[];
       body = `<p class="help">칠판에는 지금 읽는 문장만 진하게, 나머지는 흐리게 보입니다. ‘다음’을 누를 때마다 다음 문장으로 넘어가고, 해석·어휘·어법은 버튼으로 띄웁니다. 해석·어휘·어법은 이 지문의 해석/어휘/문장 분석 슬라이드에서 자동으로 가져옵니다. 아래에는 문장마다 따로 적고 싶은 것만 쓰세요.</p>
@@ -1799,7 +1808,7 @@ document.addEventListener("click", async e=>{
   if(ds.radd){ const sl=S.draft.slides[S.editIdx]; sl[ds.radd]=sl[ds.radd]||[]; sl[ds.radd].push(ds.radd==="items"?{en:"",ko:"",points:[]}:{}); S.dirty=true; $("#form").innerHTML=slideForm(sl); refreshPreview(); return; }
   if(ds.rdel){ const [l,i]=ds.rdel.split("|"); const sl=S.draft.slides[S.editIdx]; sl[l].splice(+i,1); S.dirty=true; $("#form").innerHTML=slideForm(sl); refreshPreview(); return; }
   if(ds.rmove){ const [l,i,d]=ds.rmove.split("|"); const a=S.draft.slides[S.editIdx][l]; const x=+i, y=x+(+d); if(y<0||y>=a.length) return; [a[x],a[y]]=[a[y],a[x]]; S.dirty=true; $("#form").innerHTML=slideForm(S.draft.slides[S.editIdx]); refreshPreview(); return; }
-  if(ds.addp){ const id=uid(); const order=passagesOf(ds.addp).length; const body={unitId:ds.addp, title:"새 지문", topic:"", order, slides:[newSlide("task"),newSlide("text"),{...newSlide("structure"),blank:true,blocks:[],sub:"",theme:"",thesis:"",thesisKo:""}]};
+  if(ds.addp){ const id=uid(); const order=passagesOf(ds.addp).length; const body={unitId:ds.addp, title:"새 지문", topic:"", order, slides:[imgSlide("pre"),newSlide("task"),newSlide("text"),{...newSlide("structure"),blank:true,blocks:[],sub:"",theme:"",thesis:"",thesisKo:""},imgSlide("post")]};
     try{ await API.put("passages",id,body); S.passages.push({id,...body}); loadDraft(id); renderAdminSide(true); }catch(err){ toast("지문을 만들지 못했습니다"); } return; }
   if(ds.uren){ const u=S.units.find(x=>x.id===ds.uren); const v=prompt("단원 이름",u.title); if(v&&v.trim()){ const {id:_i,...b}=u; try{ await API.put("units",u.id,{...b, title:v.trim()}); u.title=v.trim(); renderTree(); }catch(x){ toast("바꾸지 못했습니다"); } } return; }
   if(ds.udel){ const u=S.units.find(x=>x.id===ds.udel); if(passagesOf(u.id).length){ toast("지문이 남아 있는 단원은 지울 수 없습니다"); return; } if(confirm(`‘${u.title}’ 단원을 지울까요?`)){ await API.del("units",u.id); S.units=S.units.filter(x=>x.id!==u.id); renderTree(); } return; }
@@ -1921,7 +1930,7 @@ document.addEventListener("change", async e=>{
   }
   if(t.id==="imgfile" && t.files[0]){
     toast("이미지 올리는 중…");
-    try{ const blob=await shrinkImage(t.files[0]); const r=await API.req("POST","/api/img",blob,true); const sl=S.draft.slides[S.editIdx]; sl.imgId=r.id; delete sl.src; markDirty(); $("#form").innerHTML=slideForm(sl); refreshPreview(); toast("올렸습니다. 저장을 눌러 주세요"); }
+    try{ const blob=await shrinkImage(t.files[0]); const r=await API.req("POST","/api/img",blob,true); const sl=S.draft.slides[S.editIdx]; sl.imgId=r.id; delete sl.src; const wasOut=!!sl.hidden; sl.hidden=false; markDirty(); renderSlideList(); $("#form").innerHTML=slideForm(sl); refreshPreview(); toast(wasOut?"올렸습니다. 칠판에도 넣었어요. 저장을 눌러 주세요":"올렸습니다. 저장을 눌러 주세요"); }
     catch(err){ toast(err.message||"이미지를 올리지 못했습니다"); }
   }
 });
