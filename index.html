@@ -712,6 +712,16 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 @keyframes ballbounce{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(-14px) rotate(180deg)}}
 @media (prefers-reduced-motion: reduce){.home-ball,.cv-bot .lock-cls .cls.num.home.on::after{animation:none}}
 .cv-bot{gap:30px}
+
+/* 담임 반: 대기 화면에서 항상 축구공이 통통 */
+.cv-bot .lock-cls .cls.num.home::after{content:"⚽";position:absolute;top:-16px;right:-20px;font-size:28px;line-height:1;background:none;box-shadow:none;width:auto;height:auto;color:inherit;animation:ballbounce .7s cubic-bezier(.3,0,.6,1) infinite alternate;pointer-events:none}
+.cv-bot .lock-cls .cls.num.home{background:#FFF6C2}
+@media (prefers-reduced-motion: reduce){.cv-bot .lock-cls .cls.num.home::after{animation:none}}
+.cv-bot .lock-cls.other-picked .cls.num.home::after{display:none}
+.cv-bot .lock-cls.other-picked .cls.num.home{background:#fff}
+/* 5반은 눌렀을 때만 노랑 + 축구공 */
+.cv-bot .lock-cls .cls.num.home:not(.on)::after{display:none}
+.cv-bot .lock-cls .cls.num.home:not(.on){background:#fff}
 </style>
 </head>
 <body>
@@ -1453,7 +1463,7 @@ function renderClass(){
   if(!S.isAdmin || S.blank){
     const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
     const mark=`<svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg>`;
-    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}</div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls">${cl.map(c=>`<button class="cls num${c===HOME_CLS?" home":""}${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}</div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls${S.pendCls&&S.pendCls!==HOME_CLS?" other-picked":""}">${cl.map(c=>`<button class="cls num${c===HOME_CLS?" home":""}${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
   }
   const p=getP(S.cur.pid);
