@@ -696,6 +696,22 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 .sheet.smini .field{margin-bottom:8px}
 .sheet.smini .inp{text-align:center;font-size:20px}
 .remem{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--muted);margin:2px 0 6px}
+
+/* 담임 반(5반): 누르면 노란 동그라미 + 하트 */
+.cv-bot .lock-cls .cls.num{position:relative}
+.cv-bot .lock-cls .cls.num.home.on{background:#FFE45C;color:var(--ink);animation:homepop .45s ease-out}
+.cv-bot .lock-cls .cls.num.home.on::after{content:"♥";position:absolute;top:-10px;right:-8px;width:30px;height:30px;border-radius:50%;background:#fff;color:#E0601F;font-size:18px;line-height:30px;text-align:center;box-shadow:0 3px 8px rgba(0,0,0,.18);animation:heartbeat 1.4s ease-in-out .45s infinite}
+.home-heart{color:#E0601F;font-size:.8em;display:inline-block;animation:heartbeat 1.4s ease-in-out infinite}
+@keyframes homepop{0%{transform:scale(1)}40%{transform:scale(1.18) rotate(-6deg)}100%{transform:scale(1)}}
+@keyframes heartbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.25)}30%{transform:scale(1)}45%{transform:scale(1.15)}}
+@media (prefers-reduced-motion: reduce){.cv-bot .lock-cls .cls.num.home.on,.cv-bot .lock-cls .cls.num.home.on::after,.home-heart{animation:none}}
+
+/* 담임 반 축구공 */
+.cv-bot .lock-cls .cls.num.home.on::after{content:"⚽";background:none;box-shadow:none;width:auto;height:auto;font-size:28px;line-height:1;top:-16px;right:-20px;animation:ballbounce .7s cubic-bezier(.3,0,.6,1) .45s infinite alternate}
+.home-ball{display:inline-block;font-size:.85em;animation:ballbounce .7s cubic-bezier(.3,0,.6,1) infinite alternate}
+@keyframes ballbounce{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(-14px) rotate(180deg)}}
+@media (prefers-reduced-motion: reduce){.home-ball,.cv-bot .lock-cls .cls.num.home.on::after{animation:none}}
+.cv-bot{gap:30px}
 </style>
 </head>
 <body>
@@ -1222,6 +1238,7 @@ function renderSlide(sl, ctx){
 }
 
 /* ================= 반별 진도 ================= */
+const HOME_CLS="5반"; /* 담임 반 */
 const DEF_CLASSES=["1반","2반","3반","4반","5반","6반","7반","8반","9반"];
 function cachedClasses(){ try{ const c=JSON.parse(localStorage.getItem("cb_classes")||"null"); if(Array.isArray(c)&&c.length) return c; }catch(e){} return DEF_CLASSES; }
 function progClasses(){ const c=S.prog&&S.prog.classes; return (Array.isArray(c)&&c.length)?c:DEF_CLASSES; }
@@ -1436,7 +1453,7 @@ function renderClass(){
   if(!S.isAdmin || S.blank){
     const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
     const mark=`<svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg>`;
-    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}</div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls">${cl.map(c=>`<button class="cls num${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}</div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls">${cl.map(c=>`<button class="cls num${c===HOME_CLS?" home":""}${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
   }
   const p=getP(S.cur.pid);
@@ -1558,7 +1575,7 @@ function renderSheet(){
       ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
 `
       : `<button class="btn pri big" data-act="pair">수업 시작</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
-    if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls):"ENGLISH"}</h3>${body}</div>`;
+    if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls)+(S.pendCls===HOME_CLS?` <span class="home-ball">⚽</span>`:""):"ENGLISH"}</h3>${body}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
   }
   if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="QR로 입장">
