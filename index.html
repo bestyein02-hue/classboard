@@ -685,6 +685,17 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 .cv-bot{flex-direction:column;gap:18px}
 .cv-cls-lab{font-family:Fredoka,var(--f-ui);font-weight:600;color:#fff;font-size:clamp(18px,1.8vw,26px);letter-spacing:.45em;padding-left:.45em;opacity:.95}
 .cv-bot .lock-cls .cls.num{min-width:0;width:clamp(56px,6vw,84px);height:clamp(56px,6vw,84px);min-height:0;padding:0;border-radius:50%;font-family:Fredoka,var(--f-ui);font-weight:600;font-size:clamp(26px,2.8vw,40px);line-height:1}
+
+.sheet.smini{width:min(360px,90vw);text-align:center;padding:26px 26px 22px}
+.sheet.smini .mini-t{font-family:Fredoka,var(--f-hand);font-weight:600;font-size:34px;margin:0 0 16px;letter-spacing:.04em}
+.btn.big{width:100%;min-height:62px;font-size:24px;font-family:var(--f-hand);font-weight:700}
+.linkbtn{display:block;margin:14px auto 0;background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:15px;padding:6px}
+.sheet.smini .qr{margin:4px 0 8px}
+.sheet.smini .qr img{width:220px;height:220px}
+.sheet.smini .code{font-size:44px;margin:0}
+.sheet.smini .field{margin-bottom:8px}
+.sheet.smini .inp{text-align:center;font-size:20px}
+.remem{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--muted);margin:2px 0 6px}
 </style>
 </head>
 <body>
@@ -1364,8 +1375,8 @@ function endClass(){
   const rec=progRecord()?S.cls:null; setCls(null,true);
   S.blank=true; S.endAt=Date.now(); S.drawData={}; S.drawBackup={}; S.reveal={}; pushLive();
   const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })();
-  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,700); toast((rec?rec+" 진도를 기록하고 ":"")+"수업을 끝냈어요. 칠판을 잠갔습니다"); }
-  else { toast((rec?rec+" 진도를 기록하고 ":"")+"수업을 끝냈어요. 칠판을 비우고 잠갔습니다"); render(); }
+  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,700); toast((rec?rec+" 진도 기록 · ":"")+"수업 끝"); }
+  else { toast((rec?rec+" 진도 기록 · ":"")+"수업 끝"); render(); }
 }
 function fastMode(){ return S.isAdmin; }
 function pollLoop(){
@@ -1500,11 +1511,11 @@ function renderDrawer(){
 }
 function renderSheet(){
   if(S.sheet==="gate"){ const pin=!!(S.cfg&&S.cfg.pinHash);
-    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="관리자 화면 확인" style="width:min(420px,92vw)">
-    <h3>관리자 화면</h3><p>${pin?"관리자 화면 번호를 넣으세요.":"비밀번호를 한 번 더 넣으세요."}</p>
+    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="관리자 화면 확인" style="width:min(380px,90vw)">
+    <h3>관리자</h3>
     <div class="field"><input class="inp" id="gpw" type="password" ${pin?'inputmode="numeric" autocomplete="off" placeholder="번호"':'autocomplete="current-password" placeholder="비밀번호"'}></div>
     <div class="err" id="gerr"></div>
-    <div class="row-btns"><button class="btn pri" data-act="gate-go">들어가기</button><button class="btn" data-act="close">취소</button></div></div>`; }
+    <div class="row-btns"><button class="btn pri big" data-act="gate-go">들어가기</button></div></div>`; }
   if(S.sheet==="install"){ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="앱으로 설치" style="width:min(480px,92vw)">
     <h3>앱으로 설치하기</h3>
@@ -1514,7 +1525,6 @@ function renderSheet(){
   if(S.sheet==="paste"){
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="분석기에서 가져오기" style="width:min(640px,94vw)">
     <h3>지문분석기에서 가져오기</h3>
-    <p>지문분석기에서 분석한 뒤 <b>‘수업 보드용 복사’</b>를 누르고, 아래 칸에 붙여 넣으세요(Ctrl+V). 파일로 저장됐다면 파일을 고르면 됩니다. 원문(문장 읽기 포함)·문제 풀이·구조도(빈칸)가 자동으로 만들어져요.</p>
     <div class="field"><label>넣을 단원</label><select class="inp" id="pasteunit">${sortedUnits().map(u=>`<option value="${u.id}">${esc(u.title)}</option>`).join("")||'<option value="">새 단원 ‘가져온 지문’</option>'}</select></div>
     <div class="field"><textarea class="inp" id="pastebox" rows="7" placeholder="여기에 붙여 넣기"></textarea></div>
     <div class="field"><input class="inp" type="file" id="pastefile" accept=".json,application/json,text/plain"></div>
@@ -1530,7 +1540,6 @@ function renderSheet(){
   if(S.sheet==="review"){ const o=S.rv, cb=(k,lab)=>`<label class="rvo"><input type="checkbox" data-rvopt="${k}"${o[k]?" checked":""}> ${lab}</label>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="${L("복습 자료 저장","Save for review")}">
     <h3>${L("복습 자료로 저장","Save for review")}</h3>
-    <p>${L("수업이 끝난 뒤 리로스쿨에 올릴 자료를 만들어요.","Make a handout to share after class.")}</p>
     <div class="rvopts">${cb("text",L("원문","Passage"))}${cb("structure",L("구조도 정답 (소재·주제 포함)","Structure answers"))}${cb("trans",L("문장별 해석","Translation"))}${cb("vocab",L("어휘","Vocabulary"))}</div>
     <div class="row-btns"><button class="btn pri" data-act="rv-print">${L("복습지 열기 (인쇄·PDF)","Open handout (print / PDF)")}</button></div>
     <div class="row-btns"><button class="btn" data-act="rv-png">${L("지금 화면을 이미지로 저장 (필기 포함)","Save this screen as image (with pen)")}</button><button class="btn" data-act="close">${L("닫기","Close")}</button></div></div>`; }
@@ -1541,30 +1550,28 @@ function renderSheet(){
     <div class="row-btns" style="justify-content:center">${[1,2,3,5,10].map(m=>`<button class="btn" data-gt="${m*60}">${m}${L("분"," min")}</button>`).join("")}</div>
     <div class="row-btns" style="justify-content:center"><button class="btn" data-gtadd="-60">${L("−1분","−1 min")}</button><button class="btn" data-gtadd="60">${L("+1분","+1 min")}</button><button class="btn" data-gtadd="10">${L("+10초","+10 sec")}</button></div>
     <div class="row-btns" style="justify-content:center"><button class="btn pri" data-act="gt-go">${running?L("가는 중","Running"):L("시작","Start")}</button><button class="btn" data-act="gt-pause">${L("멈춤","Pause")}</button><button class="btn warn" data-act="gt-reset">${L("처음으로","Reset")}</button></div>
-    <div class="row-btns" style="justify-content:center"><button class="btn" data-act="close">${L("닫기 (타이머는 계속 갑니다)","Close (timer keeps running)")}</button></div></div>`; }
+    <div class="row-btns" style="justify-content:center"><button class="btn" data-act="close">${L("닫기","Close")}</button></div></div>`; }
   if(S.sheet==="teacher"){
     const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
     const fs=!!document.fullscreenElement;
     const body = S.isAdmin
       ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
 `
-      : `${S.pendCls?`<p><b>${esc(S.pendCls)}</b> 수업으로 열어요. 그 반이 멈춘 곳에서 바로 시작해요.</p>`:`<p>이 화면은 선생님이 열어야 볼 수 있어요.</p>`}<div class="row-btns" style="flex-direction:column">${B("pair","폰으로 칠판 열기 (QR)",1)}${B("pwopen","비밀번호로 열기")}${B("close","닫기")}</div>`;
+      : `<button class="btn pri big" data-act="pair">수업 시작</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
+    if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls):"ENGLISH"}</h3>${body}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
   }
-  if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="폰으로 칠판 열기">
-    <h3>폰으로 칠판 열기</h3>
-    <p>폰 카메라로 QR을 찍으세요. 폰에서 로그인해 두었다면 바로, 아니면 비밀번호를 넣으면 이 칠판에 수업 화면이 열려요. 폰은 리모컨이 되고, 칠판은 수업 화면 그대로예요. 번호는 5분 동안만 유효해요.</p>
-    <div class="code">${esc(S.pairCode)}</div>
+  if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="QR로 입장">
+    ${S.pendCls?`<h3 class="mini-t">${esc(S.pendCls)}</h3>`:""}
     <div class="qr" id="qr"></div>
-    <p style="text-align:center;font-size:13px">QR이 안 되면 폰 리모컨 맨 아래 ‘칠판 잠금 해제’에 위 번호를 넣으세요.</p>
-    <div class="row-btns"><button class="btn" data-act="pair">번호 새로 받기</button><button class="btn" data-act="close">닫기</button></div></div>`;
-  if(S.sheet==="login") return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="관리자 로그인">
-    <h3>관리자 로그인</h3>
-    ${S.pendingPair?`<p><b>칠판 열기</b> — 비밀번호를 넣으면 칠판(번호 ${esc(S.pendingPair)})에 수업 화면이 열리고, 이 폰은 리모컨이 돼요. ‘30일 기억하기’를 켜 두면 다음부터는 QR만 찍으면 됩니다.</p>`:`<p>비밀번호를 입력하세요. 학생들이 보는 칠판에서는 ‘폰으로 잠금 풀기’를 쓰세요.</p>`}
+    <div class="code">${esc(S.pairCode)}</div>
+    <button class="linkbtn" data-act="pair">새 번호</button></div>`;
+  if(S.sheet==="login") return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="비밀번호">
+    <h3 class="mini-t">${S.pendCls?esc(S.pendCls):(S.pendingPair?"입장":"ENGLISH")}</h3>
     <div class="field"><input class="inp" id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"></div>
-    <label style="display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)"><input type="checkbox" id="remember"${innerWidth<760?" checked":""}> 이 기기 30일 동안 기억하기 (내 폰·내 PC에서만, 전자칠판은 끄기)</label>
+    <label class="remem"><input type="checkbox" id="remember"${innerWidth<760?" checked":""}> 30일 기억</label>
     <div class="err" id="pwerr"></div>
-    <div class="row-btns"><button class="btn pri" data-act="dologin">들어가기</button><button class="btn" data-act="close">취소</button></div></div>`;
+    <button class="btn pri big" data-act="dologin">입장</button></div>`;
   return "";
 }
 function drawQR(){
@@ -1918,7 +1925,7 @@ document.addEventListener("click", async e=>{
     case "pin-save": { const v=($("#pinset")?.value||"").trim(); if(!/^\d{4,8}$/.test(v)){ toast("숫자 4~8자리로 넣어 주세요"); return; } const h=await pinHash(v); try{ await API.put("passages","_cfg",{title:"_cfg",slides:[],pinHash:h}); S.cfg={pinHash:h}; toast("관리자 화면 번호를 정했어요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return; }
     case "pin-clear": try{ await API.put("passages","_cfg",{title:"_cfg",slides:[]}); S.cfg={}; toast("번호를 없앴어요. 이제 비밀번호로 확인해요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return;
     case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
-    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("칠판을 잠깐 가렸어요. 다시 띄우려면 YE → 칠판 다시 띄우기 (또는 클리커 버튼)"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
+    case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("잠깐 가렸어요"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
     case "end-class": if(!confirm("수업을 끝낼까요?\n칠판을 비우고, 모든 필기를 지우고, 칠판을 다시 잠가요."+(S.cls?"\n"+S.cls+" 진도(지금 보던 곳)도 기록해요.":"\n(반을 고르지 않아서 진도는 기록되지 않아요)"))) return; S.sheet=null; return endClass();
     case "a-clearall": S.drawData={}; S.drawBackup={}; S.sheet=null; render(); toast("모든 쪽의 필기를 지웠어요"); return;
     case "sound": S.sheet=null; render(); unlockAudio(); beep(); toast("‘띵-동’이 들리면 정상이에요. 안 들리면 칠판 볼륨을 확인하세요"); return;
@@ -1949,7 +1956,7 @@ document.addEventListener("click", async e=>{
     case "a-undo": return annUndo();
     case "sbk-reset": return setReveal({sbk:0,bo:[],hint:false});
     case "a-clear": return annClear();
-    case "a-min": S.annMin=!S.annMin; toast(S.annMin?"필기를 잠시 멈췄어요. 화면을 눌러 쓸 수 있어요 (쓴 글씨는 그대로)":"다시 쓸 수 있어요"); return render();
+    case "a-min": S.annMin=!S.annMin; toast(S.annMin?"필기 멈춤":"필기 켜짐"); return render();
     case "setboard": try{ localStorage.setItem("cb_board","1"); }catch(x){} toast("칠판으로 지정했습니다. 새로고침하면 적용됩니다"); return;
     case "unboard": try{ localStorage.removeItem("cb_board"); }catch(x){} toast("지정을 풀었습니다. 새로고침하면 적용됩니다"); return;
     case "close": S.drawer=false; S.sheet=null; stopPairPoll(); return render();
