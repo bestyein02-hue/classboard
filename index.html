@@ -676,6 +676,9 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 .atools.min .at{background:var(--ink);border-color:var(--ink);color:#fff;width:64px;min-height:64px}
 .atools.min .at small{color:#fff;font-weight:700}
 @media (max-height:820px){ .atools{bottom:calc(78px + env(safe-area-inset-bottom,0px));max-height:calc(100vh - 170px)} }
+
+.ib.fsb{min-width:52px;padding:4px 10px;font-family:var(--f-ui);font-size:24px;line-height:1}
+.lock-fs{position:fixed;right:96px;top:16px;z-index:5;background:#fff;color:var(--orange-dk);border:2px solid #fff;min-height:46px}
 </style>
 </head>
 <body>
@@ -1029,39 +1032,43 @@ function initAnn(){
   annRedraw();
   const on=annActive() && !S.annMin; cv.style.pointerEvents=on?"auto":"none"; if(!on) return;
   let down=false, cur=null, raf=0, t0=0, x0=0, y0=0, far=0, bk=null, ptype="mouse";
-  const pts=new Map(); let scrollMode=false, lastY=0;
-  const avgY=()=>{ let t=0; pts.forEach(v=>t+=v.y); return t/Math.max(1,pts.size); };
+  /* 손가락 하나·펜 = 필기 / 두 손가락 톡 = 문장 고르기 / 두 손가락 끌기 = 스크롤 / 마우스 짧은 클릭 = 누르기 */
+  const pts=new Map(); let multi=false, mT0=0, mX=0, mY=0, mFirst=null, mMoved=0, lastY=0;
+  const avg=()=>{ let x=0,y=0; pts.forEach(v=>{x+=v.x;y+=v.y;}); const n=Math.max(1,pts.size); return {x:x/n,y:y/n}; };
   const pt=e=>{ const b=cv.getBoundingClientRect(); return [(e.clientX-b.left)/b.width,(e.clientY-b.top+stage.scrollTop)/b.height]; };
   const TAP="[data-rs],[data-cz],[data-bk],[data-choice],[data-vocab],[data-tr],[data-tl],[data-act],button";
   const hit=(x,y)=>{ for(const dy of [0,-8,8,-16,16]){ const u=document.elementsFromPoint(x,y+dy).find(el=>el!==cv && el.closest && el.closest(".stage") && el.closest(TAP)); if(u) return u.closest(TAP); }
-    /* 줄 사이·문장 끝 빈자리를 눌러도 가장 가까운 문장 */
     let best=null, bd=1e9; document.querySelectorAll(".stage .rs").forEach(el=>{ for(const r of el.getClientRects()){ const dx=x<r.left?r.left-x:(x>r.right?x-r.right:0), dy=y<r.top?r.top-y:(y>r.bottom?y-r.bottom:0), d=Math.hypot(dx*.6,dy); if(d<bd){ bd=d; best=el; } } });
-    return bd<=40?best:null; };
+    return bd<=60?best:null; };
   const dropCur=()=>{ const st=annStrokes(), i=st.indexOf(cur); if(i>=0) st.splice(i,1); S.drawBackup[annKey()]=bk; };
   cv.onwheel=e=>{ stage.scrollTop+=e.deltaY; };
   stage.onscroll=()=>{ if(!raf) raf=requestAnimationFrame(()=>{ raf=0; annRedraw(); placePanel(); }); };
   cv.onpointerdown=e=>{
-    pts.set(e.pointerId,{y:e.clientY});
-    if(pts.size>=2){ /* 두 손가락: 본문 스크롤 */
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    try{ cv.setPointerCapture(e.pointerId); }catch(x){}
+    if(pts.size>=2){ /* 두 손가락: 지금 긋던 획은 지우고 고르기·스크롤 모드 */
       if(down){ dropCur(); down=false; S.drawing=false; annRedraw(); }
-      scrollMode=true; lastY=avgY(); try{ cv.setPointerCapture(e.pointerId); }catch(x){} return; }
-    if(scrollMode || !e.isPrimary) return;
-    down=true; S.drawing=true; ptype=e.pointerType||"mouse"; t0=Date.now(); x0=e.clientX; y0=e.clientY; far=0; bk=S.drawBackup[annKey()];
+      if(!multi){ multi=true; mT0=Date.now(); mMoved=0; mFirst=mFirst||{x:x0,y:y0}; }
+      const a=avg(); mX=a.x; mY=a.y; lastY=a.y; return; }
+    if(multi) return;
+    down=true; S.drawing=true; ptype=e.pointerType||"mouse"; t0=Date.now(); x0=e.clientX; y0=e.clientY; far=0; mFirst={x:e.clientX,y:e.clientY}; bk=S.drawBackup[annKey()];
     cur={t:ANN.tool,c:ANN.tool==="pen"?ANN.pen:ANN.hl,w:A_W[ANN.tool][ANN.size],p:[pt(e)]}; annStrokes().push(cur); S.drawBackup[annKey()]=null;
-    try{ cv.setPointerCapture(e.pointerId); }catch(x){} annRedraw(); };
+    annRedraw(); };
   cv.onpointermove=e=>{
-    if(pts.has(e.pointerId)) pts.set(e.pointerId,{y:e.clientY});
-    if(scrollMode){ const y=avgY(); stage.scrollTop-= (y-lastY); lastY=y; return; }
+    if(pts.has(e.pointerId)) pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(multi){ const a=avg(); mMoved=Math.max(mMoved,Math.hypot(a.x-mX,a.y-mY)); if(mMoved>18){ stage.scrollTop-=(a.y-lastY); } lastY=a.y; return; }
     if(!down || !e.isPrimary) return; far=Math.max(far,Math.hypot(e.clientX-x0,e.clientY-y0)); const p=pt(e), l=cur.p[cur.p.length-1]; if(Math.abs(p[0]-l[0])*cv.clientWidth+Math.abs(p[1]-l[1])*cv.clientHeight<1.5) return; cur.p.push(p); if(!raf) raf=requestAnimationFrame(()=>{ raf=0; annRedraw(); }); };
   const end=e=>{
-    pts.delete(e.pointerId);
-    if(scrollMode){ if(!pts.size) scrollMode=false; else lastY=avgY(); return; }
+    const was=pts.get(e.pointerId); pts.delete(e.pointerId);
+    if(multi){
+      if(pts.size) return;
+      multi=false; const quick=Date.now()-mT0<600 && mMoved<=18 && e.type==="pointerup";
+      if(quick){ const t=(mFirst&&hit(mFirst.x,mFirst.y)) || hit(mX,mY); mFirst=null; if(t){ S.drawing=false; t.click(); return; } }
+      mFirst=null; S.drawing=false; annUI(); return; }
     if(!down || !e.isPrimary) return; down=false; S.drawing=false;
-    /* 짧게 톡 누른 것은 필기가 아니라 화면 누르기로 처리 (문장 고르기·빈칸 열기 등). 손가락은 기준을 넉넉하게 */
-    const finger=ptype!=="mouse", tMax=finger?450:250, dMax=finger?18:6;
-    if(e.type==="pointerup" && Date.now()-t0<tMax && far<dMax){
-      const t=hit(e.clientX,e.clientY);
-      const onCur=t && t.matches("[data-rs]") && +t.dataset.rs===S.reveal.sent; /* 지금 문장 위의 톡은 점 필기 */
+    /* 마우스(PC)만 짧은 클릭을 '누르기'로 — 손가락·펜 한 개는 언제나 필기 */
+    if(ptype==="mouse" && e.type==="pointerup" && Date.now()-t0<250 && far<6){
+      const t=hit(e.clientX,e.clientY), onCur=t && t.matches("[data-rs]") && +t.dataset.rs===S.reveal.sent;
       if(t && !onCur){ dropCur(); annRedraw(); t.click(); return; }
     }
     annRedraw(); annUI(); };
@@ -1412,7 +1419,7 @@ function renderClass(){
   if(!S.isAdmin || S.blank){
     const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
     const mark=`<svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg>`;
-    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}<span class="cv-pub">DONGMYEONG BOOKS</span></div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">진주동명고</small></div><div class="cv-bot"><div class="lock-cls">${cl.map(c=>`<button class="cls${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}">${esc(c)}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}<span class="cv-pub">DONGMYEONG BOOKS</span></div><div class="cv-mid"><b class="cv-title">ENGLISH</b><span class="cv-rule"></span><small class="cv-by">진주동명고</small></div><div class="cv-bot"><div class="lock-cls">${cl.map(c=>`<button class="cls${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}">${esc(c)}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
   }
   const p=getP(S.cur.pid);
@@ -1435,6 +1442,7 @@ function renderClass(){
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
     <button class="ib" data-act="picker">${L("뽑기","Pick")}</button>
     <button class="ib endc" data-act="end-class">${L("수업 끝","End class")}</button>
+    ${document.fullscreenEnabled!==false?`<button class="ib fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}
     <button class="ib solid ye" data-act="teacher" title="Made by YE" aria-label="YE 메뉴">YE</button>
   </header>
   ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:""}
@@ -1840,7 +1848,7 @@ document.addEventListener("click", async e=>{
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
-  if(ds.lockcls){ const c=ds.lockcls;
+  if(ds.lockcls){ const c=ds.lockcls; try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(x){}
     if(!S.isAdmin){ S.pendCls=c; S.sheet="teacher"; return render(); }
     setCls(c,true); S.doneP={}; S.blank=false; const n=nextFor(c); toast(c+" 수업을 시작해요"); if(n&&n.pid) return go(n.pid,n.idx); pushLive(); return render(); }
   if(ds.cls){ setCls(S.cls===ds.cls?null:ds.cls); S.doneP={}; return rerenderHere(); }
@@ -1891,6 +1899,7 @@ document.addEventListener("click", async e=>{
 
   switch(ds.act){
     case "drawer": S.drawer=true; return render();
+    case "fs": try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }catch(x){ toast("이 브라우저에서는 전체화면을 쓸 수 없어요"); } return;
     case "install": return installApp();
     case "prog-go": { const n=S.cls&&nextFor(S.cls); if(n&&n.pid){ S.drawer=false; return go(n.pid,n.idx); } return; }
     case "prog-here": { if(!S.cls) return; progRecord(); const p=getP(S.cur.pid), x=p&&(p.slides||[])[S.cur.idx]; toast(S.cls+" 진도: "+(p?p.title:"")+(x?" · "+uiName(x):"")+"까지 기록했어요"); return rerenderHere(); }
@@ -2073,6 +2082,7 @@ async function installApp(){
   if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; S.sheet=null; render(); ev.prompt(); try{ await ev.userChoice; }catch(x){} return; }
   S.sheet="install"; render();
 }
+document.addEventListener("fullscreenchange",()=>{ document.querySelectorAll(".fsb").forEach(b=>b.textContent=document.fullscreenElement?"⤡":"⛶"); setTimeout(()=>{ fitAll(); placePanel(); initAnn(); },150); });
 setInterval(tickTmr,300);
 boot();
 </script>
