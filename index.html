@@ -1374,6 +1374,7 @@ function render(){
 /* ---------- class board ---------- */
 function renderClass(){
   const app=$("#app");
+  { const st0=$(".stage"), key=S.cur.pid+":"+S.cur.idx; S.keepScroll=(st0 && S.lastStageKey===key)?st0.scrollTop:null; S.lastStageKey=key; }
   if(!S.isAdmin || S.blank){
     const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
     const mark=`<svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg>`;
@@ -1431,7 +1432,10 @@ function fitAll(){
   const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); let lo=min, hi=small?30:(box.querySelector('.flow')?46:78), best=min;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=(best*S.scale)+"px";
-  if(S.scale>1){ const cu=$(".rs.cur"); if(cu) cu.scrollIntoView({block:"center"}); }
+  if(S.keepScroll!=null){ stage.scrollTop=S.keepScroll; S.keepScroll=null; }
+  const cu=$(".rs.cur");
+  if(cu){ const sr=stage.getBoundingClientRect(), rects=cu.getClientRects(); if(rects.length){ const top=rects[0].top, bot=rects[rects.length-1].bottom, pad=16;
+    if(top<sr.top+pad) stage.scrollTop-= (sr.top+pad-top); else if(bot>sr.bottom-pad) stage.scrollTop+= Math.min(bot-(sr.bottom-pad), top-(sr.top+pad)); } }
 }
 window.addEventListener("resize",()=>{ clearTimeout(fitT); fitT=setTimeout(()=>{ fitAll(); placePanel(); initAnn(); },120); });
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>fitAll());
