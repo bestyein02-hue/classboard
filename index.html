@@ -657,7 +657,7 @@ body.ann-on .stage{padding-right:92px}
 
 /* 수업 화면: 크림색 종이 바탕 (눈부심 줄이기) */
 .stage{background-color:#FBF8F1}
-.imgwrap img{max-height:64vh}
+.imgwrap img{max-height:72vh}
 .imgwrap p{font-family:var(--f-hand);font-weight:700;font-size:clamp(22px,2.4vw,40px);color:var(--ink);margin:.5em 0 0}
 
 .psort{display:flex;align-items:center}
@@ -988,7 +988,8 @@ const HL_COLORS=["#FFE14D","#FF9BBE","#7FE0C4","#FFB36B","#9CC8FF","#D6B8FF"];
 const A_W={pen:[.0028,.0055,.0100], hl:[.012,.020,.032], eraser:[.015,.035,.070]};
 function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && (sl.type==="reading"||sl.type==="text"))?":"+(S.reveal.sent??-1):""); }
 function annStrokes(){ const k=annKey(); return S.drawData[k]||(S.drawData[k]=[]); }
-function annActive(){ const sl=curSlide(); return !!S.annOn || !!(sl && sl.type==="draw"); }
+function annAlways(){ const sl=curSlide(); return !!(sl && ["draw","text","reading"].includes(sl.type)); }
+function annActive(){ return !!S.annOn || annAlways(); }
 function annToolsHTML(){
   if(S.annMin) return `<button class="at" data-act="a-min" aria-label="필기 다시 켜기"><span>✎</span><small>${L("필기 켜기","Pen on")}</small></button>`;
   const canUndo=annStrokes().length>0 || !!S.drawBackup[annKey()];
@@ -999,7 +1000,7 @@ function annToolsHTML(){
     +(pal?`<div class="acol">${pal.map(c=>`<button class="${c===cur?"on":""}" data-acolor="${c}" style="background:${c}" aria-label="색"></button>`).join("")}</div>`:`<div class="ahint">${L("문지른 곳만 지워져요","Erases only what you rub")}</div>`)
     +`<button class="at" data-act="a-undo"${canUndo?"":" disabled"}><span>↶</span><small>${L("뒤로","Undo")}</small></button>`
     +`<button class="at warn" data-act="a-clear"><span>⌫</span><small>${L("이 쪽","This page")}</small></button>`+`<button class="at warn" data-act="a-clearall"><span>⌫⌫</span><small>${L("모든 쪽","All pages")}</small></button>`
-    +((curSlide()||{}).type==="draw"?"":`<button class="at" data-act="a-off"><span>✓</span><small>${L("필기 끄기","Done")}</small></button>`)
+    +(annAlways()?"":`<button class="at" data-act="a-off"><span>✓</span><small>${L("필기 끄기","Done")}</small></button>`)
     +`<button class="at amin" data-act="a-min" aria-label="접고 잠시 멈추기"><span>»</span><small>${L("접기","Hide")}</small></button>`;
 }
 function annUI(){ const el=$(".atools"); if(el) el.innerHTML=annToolsHTML(); }
@@ -1164,7 +1165,7 @@ function renderSlide(sl, ctx){
     }
     case "image": {
       const src = sl.imgId ? "/img/"+sl.imgId : (sl.src||"");
-      return head + `<div class="imgwrap">${src?`<img src="${esc(src)}" alt="${esc(sl.caption||"")}">`:`<p>이미지가 아직 없습니다.</p>`}${sl.caption?`<p>${inline(sl.caption)}</p>`:""}</div>`;
+      return `<div class="imgwrap">${src?`<img src="${esc(src)}" alt="${esc(sl.caption||"")}">`:`<p>이미지가 아직 없습니다.</p>`}${sl.caption?`<p>${inline(sl.caption)}</p>`:""}</div>`;
     }
     case "free": default:
       return `<div class="fit-box free">${sl.title?`<div class="ft">${inline(sl.title)}</div>`:""}<div class="fb">${inline(sl.body||"")}</div></div>`;
@@ -1405,7 +1406,7 @@ function renderClass(){
     <button class="ib" data-act="drawer" aria-label="Contents">${L("목차","Contents")}</button>
     <div class="ttl"><small>${S.cls?esc(S.cls)+" · ":""}${p?esc(unitName(p.unitId)):""}</small><b>${p?esc(p.title):"English"}</b></div>
     ${live?`<span class="live"><i></i>${L("리모컨 연결됨","Remote connected")}</span>`:""}
-    ${window.PointerEvent?`<button class="ib${S.annOn?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
+    ${window.PointerEvent?`<button class="ib${annActive()&&!S.annMin?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
     <button class="ib" data-act="picker">${L("뽑기","Pick")}</button>
     <button class="ib endc" data-act="end-class">${L("수업 끝","End class")}</button>
@@ -1903,7 +1904,7 @@ document.addEventListener("click", async e=>{
     case "tm-go": return tmCmd("go");
     case "tm-pause": return tmCmd("pause");
     case "tm-reset": return tmCmd("reset");
-    case "a-toggle": S.annOn=!S.annOn; return render();
+    case "a-toggle": if(annAlways()){ S.annMin=!S.annMin; return render(); } S.annOn=!S.annOn; S.annMin=false; return render();
     case "a-off": S.annOn=false; return render();
     case "a-undo": return annUndo();
     case "sbk-reset": return setReveal({sbk:0,bo:[],hint:false});
