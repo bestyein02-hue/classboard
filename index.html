@@ -1026,11 +1026,19 @@ function initAnn(){
   const tl=$(".atools"); if(tl && innerWidth>=760) tl.style.top=(r.top+8)+"px";
   annRedraw();
   const on=annActive() && !S.annMin; cv.style.pointerEvents=on?"auto":"none"; if(!on) return;
-  let down=false, cur=null, raf=0;
+  let down=false, cur=null, raf=0, t0=0, x0=0, y0=0, far=0, bk=null;
   const pt=e=>{ const b=cv.getBoundingClientRect(); return [(e.clientX-b.left)/b.width,(e.clientY-b.top)/b.height]; };
-  cv.onpointerdown=e=>{ if(!e.isPrimary) return; down=true; S.drawing=true; cur={t:ANN.tool,c:ANN.tool==="pen"?ANN.pen:ANN.hl,w:A_W[ANN.tool][ANN.size],p:[pt(e)]}; annStrokes().push(cur); S.drawBackup[annKey()]=null; try{ cv.setPointerCapture(e.pointerId); }catch(x){} annRedraw(); };
-  cv.onpointermove=e=>{ if(!down) return; const p=pt(e), l=cur.p[cur.p.length-1]; if(Math.abs(p[0]-l[0])*cv.clientWidth+Math.abs(p[1]-l[1])*cv.clientHeight<1.5) return; cur.p.push(p); if(!raf) raf=requestAnimationFrame(()=>{ raf=0; annRedraw(); }); };
-  const end=()=>{ if(!down) return; down=false; S.drawing=false; annRedraw(); annUI(); };
+  const TAP="[data-rs],[data-cz],[data-bk],[data-choice],[data-vocab],[data-tr],[data-tl],[data-act],button";
+  cv.onpointerdown=e=>{ if(!e.isPrimary) return; down=true; S.drawing=true; t0=Date.now(); x0=e.clientX; y0=e.clientY; far=0; bk=S.drawBackup[annKey()]; cur={t:ANN.tool,c:ANN.tool==="pen"?ANN.pen:ANN.hl,w:A_W[ANN.tool][ANN.size],p:[pt(e)]}; annStrokes().push(cur); S.drawBackup[annKey()]=null; try{ cv.setPointerCapture(e.pointerId); }catch(x){} annRedraw(); };
+  cv.onpointermove=e=>{ if(!down) return; far=Math.max(far,Math.hypot(e.clientX-x0,e.clientY-y0)); const p=pt(e), l=cur.p[cur.p.length-1]; if(Math.abs(p[0]-l[0])*cv.clientWidth+Math.abs(p[1]-l[1])*cv.clientHeight<1.5) return; cur.p.push(p); if(!raf) raf=requestAnimationFrame(()=>{ raf=0; annRedraw(); }); };
+  const end=e=>{ if(!down) return; down=false; S.drawing=false;
+    /* 짧게 톡 누른 것은 필기가 아니라 화면 누르기로 처리 (문장 고르기·빈칸 열기 등) */
+    if(e && e.type==="pointerup" && Date.now()-t0<250 && far<5){
+      const under=document.elementsFromPoint(e.clientX,e.clientY).find(x=>x!==cv && x.closest && x.closest(".stage") && x.closest(TAP));
+      const onCur=under && under.closest("[data-rs]") && +under.closest("[data-rs]").dataset.rs===S.reveal.sent; /* 지금 문장 위의 톡은 점 필기 */
+      if(under && !onCur){ const st=annStrokes(), i=st.indexOf(cur); if(i>=0) st.splice(i,1); S.drawBackup[annKey()]=bk; annRedraw(); under.closest(TAP).click(); return; }
+    }
+    annRedraw(); annUI(); };
   cv.onpointerup=end; cv.onpointercancel=end;
 }
 function thesisIdx(P){ const st=(P.slides||[]).find(x=>x.type==="structure"); return (st && Number.isInteger(st.thesisN) && st.thesisN>0) ? st.thesisN-1 : null; }
