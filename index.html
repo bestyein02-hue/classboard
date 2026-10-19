@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="English">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Fredoka:wght@600&family=Noto+Sans+KR:wght@400;500;700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
@@ -924,6 +925,26 @@ body.mode-admin #app{background:#F7F4EE}
 .slide.sz-s{--dg:20}.slide.sz-m{--dg:32}.slide.sz-l{--dg:46}.slide.sz-xl{--dg:64}
 .preview .drawwrap{aspect-ratio:16/8.2;height:auto!important;container-type:inline-size;border:1px solid var(--card-line);border-radius:10px;background:#fff}
 .preview .drawwrap .dguide{font-size:calc(var(--dg) * 100cqw / 1700)!important;left:1.4cqw;top:1.1cqw}
+.rh-ko .rh-n{display:inline-block;min-width:1.6em;height:1.6em;line-height:1.6em;text-align:center;border-radius:50%;background:#fff;color:var(--orange-dk);font-weight:800;font-size:13px;margin-right:4px}
+.r-pad .nav{min-height:68px;font-size:22px}
+
+@media (max-width:760px){
+  .adm-top{flex-wrap:wrap;padding:8px 10px;gap:8px}
+  .adm-top .seg-t{order:2;flex:1 1 100%;display:flex}
+  .adm-top .seg-t button{flex:1;white-space:nowrap;padding:7px 4px;font-size:15px}
+  .adm-top .btn{margin-left:auto;padding:5px 12px;min-height:34px;font-size:14px;white-space:nowrap}
+  .adm-top .btn.bk-nag{margin-left:0}
+}
+
+/* 관리자·리모컨 글꼴: 프리텐다드 */
+body.mode-admin,body.mode-admin button,body.mode-admin input,body.mode-admin select,body.mode-admin textarea,body.mode-admin .tg,body.mode-admin .btn,body.mode-admin .li,body.mode-admin .mini,body.mode-admin .help,body.mode-admin label,body.mode-admin .r-chip,body.mode-admin .note{font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",system-ui,sans-serif;letter-spacing:-.01em}
+body.mode-admin .r-title,body.mode-admin .r-h b,body.mode-admin .unit-h>span:not(.dh){font-family:var(--f-hand);font-weight:700;letter-spacing:0}
+body.mode-admin .r-title{font-size:28px}
+body.mode-admin .unit-h>span:not(.dh){font-size:19px}
+body.mode-admin .r-h b{font-size:21px!important}
+body.mode-admin .tg,body.mode-admin .btn{font-weight:700}
+body.mode-admin .r-pad .nav{font-family:var(--f-hand);font-weight:700;font-size:26px}
+body.mode-admin .preview .slide,body.mode-admin .preview .slide *{letter-spacing:normal}
 </style>
 </head>
 <body>
@@ -2076,7 +2097,7 @@ function renderRemote(){
     if(sl.type==="reading"||sl.type==="text"){
       ctl=tg("ko","해석",S.reveal.ko)+tg("vc","어휘",S.reveal.vc)+tg("gm","어법",S.reveal.gm);
       const cur=Number.isInteger(S.reveal.sent)?S.reveal.sent:-1, inf=cur>=0?sentInfo(p,cur):null;
-      if(inf) help=`<div class="rh-n">${cur+1} / ${inf.n}</div><div class="rh-en en">${inline(inf.en)}</div>${inf.ko?`<div class="rh-ko">${esc(inf.ko)}</div>`:""}${inf.vocab.length?`<div class="rh-x">${inf.vocab.map(v=>`<b>${esc(v.w)}</b> ${esc(v.m||"")}`).join(" · ")}</div>`:""}${inf.points.length?`<div class="rh-x">${inf.points.map(t=>inline(t)).join(" / ")}</div>`:""}${inf.memo?`<div class="rh-memo">${esc(inf.memo)}</div>`:""}`;
+      if(inf && inf.ko) help=`<div class="rh-ko"><span class="rh-n">${cur+1}</span> ${esc(inf.ko)}</div>`;
     } else if(sl.type==="structure"||sl.type==="textmap"){
       const st=sl.type==="structure"?sl:(p.slides||[]).find(x=>x.type==="structure"), bl=st?.blocks||[], cs=sl.type==="structure"?(S.reveal.sbk||0):(S.reveal.step||0);
       if(sl.type==="structure"&&sl.blank) ctl=tg("hint","힌트",S.reveal.hint)+`<button class="tg" data-act="sbk-reset">다시 가리기</button>`;
@@ -2089,7 +2110,6 @@ function renderRemote(){
       ctl=(S.reveal.vlist?tg("cover","뜻 가리기",S.reveal.cover):`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?"한→영":"영→한"}</button><button class="tg" data-act="vq-shuf">섞기</button>`)+`<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">목록</button>`;
     } else if(sl.type==="translate"){ ctl=tg("cover","해석 가리기",S.reveal.cover); }
     else if(sl.type==="task"){ ctl=`<button class="tg" data-act="tm-go">▶</button><button class="tg" data-act="tm-pause">⏸</button><button class="tg" data-act="tm-reset">↺</button>`; }
-    if(sl.note) help+=`<div class="rh-memo">${esc(sl.note)}</div>`;
   }
   el.innerHTML = `
   ${S.blank?`<button class="btn pri r-unblank" data-act="unblank">칠판 다시 띄우기</button>`:""}
@@ -2100,14 +2120,9 @@ function renderRemote(){
     ${ctl?`<div class="r-ctl">${ctl}</div>`:""}
   </div>
   ${help?`<div class="r-card r-help">${help}</div>`:""}
-  <div class="r-card r-tm"><span class="tm tmr-txt">${fmtT(gtOn()?gtSecs():(sl&&sl.type==="task"?tmrSecs(sl):0))}</span>${[1,2,3,5].map(m=>`<button class="tg" data-gt="${m*60}">${m}분</button>`).join("")}<button class="tg" data-act="gt-go">▶</button><button class="tg" data-act="gt-pause">⏸</button><button class="tg" data-act="gt-reset">↺</button></div>
-  <details class="r-card r-more"><summary>반 · 지문</summary>${progHTML()}
-    <select class="inp" id="rpick" style="margin-top:8px">${allPassagesOrdered().map(x=>`<option value="${x.id}"${x.id===S.cur.pid?" selected":""}>${esc(unitName(x.unitId))} / ${esc(x.title)}</option>`).join("")}</select></details>
-  <details class="r-card r-more"><summary>칠판</summary><div class="r-toggles">
-    <button class="tg" data-act="blank-board">잠깐 가리기</button><button class="tg" data-act="end-class">수업 끝</button><button class="tg" data-act="a-clearall">필기 지우기</button>
-    <button class="tg" data-act="smaller">가−</button><button class="tg" data-act="bigger">가+</button>${sl&&sl.type==="text"?`<button class="tg" data-rv="clearlit">형광 지우기</button>`:""}</div></details>
-  <details class="r-card r-more"><summary>슬라이드 넣기·빼기</summary><div class="r-sl">${slides.map((x,i)=>`<div class="r-sli${x.hidden?" out":""}"><button${i===S.cur.idx?' class="on"':""} ${x.hidden?`data-pinc="${i}|1"`:`data-go="${i}"`}>${esc(slideTitle(x))}</button><button class="r-x" data-pinc="${i}|${x.hidden?1:0}" aria-label="${x.hidden?"넣기":"빼기"}">${x.hidden?"+":"−"}</button></div>`).join("")}</div></details>
-  <details class="r-card r-more"><summary>칠판 번호 입력</summary><div class="code-in"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="0000"><button class="btn pri" data-act="unlock">열기</button></div></details>
+  <details class="r-card r-more"${S.blank||S.moreOpen?" open":""} ontoggle="S.moreOpen=this.open"><summary>더보기</summary><div class="r-toggles">
+    ${S.blank?`<button class="tg on" data-act="unblank">다시 보이기</button>`:`<button class="tg" data-act="blank-board">잠깐 가리기</button>`}<button class="tg" data-act="end-class">수업 끝</button><button class="tg" data-act="a-clearall">필기 지우기</button></div>
+    <div class="code-in" style="margin-top:10px"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="칠판 번호"><button class="btn pri" data-act="unlock">열기</button></div></details>
   <div class="r-pad"><button class="nav" data-act="prev">‹ 이전</button><button class="nav" data-act="next">다음 ›</button></div>`;
 }
 function renderSettings(){
