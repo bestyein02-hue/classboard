@@ -794,6 +794,14 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
   .adm-top .btn{padding:4px 8px;font-size:13px;min-height:34px}
 }
 .adm-top .btn.bk-nag{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* 슬라이드별 글꼴 */
+.slide.f-hand .fit-box,.slide.f-hand .fit-box *:not(.cv-sticker),.slide.f-hand h2,.slide.f-hand .q-stem,.slide.f-hand .ch,.slide.f-hand .tr,.slide.f-hand .tr *{font-family:var(--f-hand)!important;font-weight:700}
+.slide.f-serif .fit-box,.slide.f-serif .fit-box *,.slide.f-serif .q-stem,.slide.f-serif .ch,.slide.f-serif .tr,.slide.f-serif .tr *{font-family:var(--f-serif)!important}
+.slide.f-sans .fit-box,.slide.f-sans .fit-box *,.slide.f-sans .q-stem,.slide.f-sans .ch,.slide.f-sans .tr,.slide.f-sans .tr *{font-family:var(--f-ui)!important}
+/* 꽉 채우지 않는 슬라이드(문제·해석 등)는 배율로 */
+.slide:not(.fit).sz-l{font-size:calc(clamp(19px, 1.85vw, 34px) * var(--fs) * 1.2)}
+.slide:not(.fit).sz-s{font-size:calc(clamp(19px, 1.85vw, 34px) * var(--fs) * .85)}
 </style>
 </head>
 <body>
@@ -1161,7 +1169,7 @@ function initAnn(){
   cv.onpointerdown=e=>{
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     try{ cv.setPointerCapture(e.pointerId); }catch(x){}
-    if(pts.size>=2 && down && far>18){ pts.delete(e.pointerId); return; } /* 이미 긋는 중에 닿은 손바닥 등은 무시 */
+    if(pts.size>=2 && down && (far>10 || Date.now()-t0>150)){ pts.delete(e.pointerId); return; } /* 쓰는 중에 닿은 손바닥·소매 등은 무시 → 획이 끊기지 않게 */
     if(pts.size>=2){ /* 두 손가락: 지금 긋던 획은 지우고 고르기·스크롤 모드 */
       if(down){ dropCur(); down=false; S.drawing=false; annRedraw(); }
       if(!multi){ multi=true; mT0=Date.now(); mMoved=0; mFirst=mFirst||{x:x0,y:y0}; }
@@ -1170,9 +1178,7 @@ function initAnn(){
     down=true; S.drawing=true; ptype=e.pointerType||"mouse"; t0=Date.now(); x0=e.clientX; y0=e.clientY; far=0; mFirst={x:e.clientX,y:e.clientY}; bk=S.drawBackup[annKey()];
     cur={t:ANN.tool,c:ANN.tool==="pen"?ANN.pen:ANN.hl,w:A_W[ANN.tool][ANN.size],p:[pt(e)]}; annStrokes().push(cur); S.drawBackup[annKey()]=null;
     annRedraw();
-    /* 바로 전 손가락 톡과 0.3초 안에 가까이 닿으면 → 두 손가락 톡(시간 차) */
-    if(ptype!=="mouse" && S.lastTap && Date.now()-S.lastTap.t<300 && Math.hypot(e.clientX-S.lastTap.x,e.clientY-S.lastTap.y)<160){ pairTap={x:(e.clientX+S.lastTap.x)/2,y:(e.clientY+S.lastTap.y)/2,fx:S.lastTap.x,fy:S.lastTap.y,prev:S.lastTap.stroke,key:S.lastTap.key}; } else pairTap=null;
-    S.lastTap=null; };
+    };
   cv.onpointermove=e=>{
     if(pts.has(e.pointerId)) pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(multi){ const a=avg(); mMoved=Math.max(mMoved,Math.hypot(a.x-mX,a.y-mY)); if(mMoved>18){ stage.scrollTop-=(a.y-lastY); } lastY=a.y; return; }
@@ -1187,11 +1193,7 @@ function initAnn(){
     if(!down || !e.isPrimary) return; down=false; S.drawing=false;
     const quickTap=Date.now()-t0<450 && far<18;
     if(ptype!=="mouse"){
-      if(pairTap && quickTap){ /* 시간 차 두 손가락 톡: 찍힌 점 둘 다 지우고 문장 고르기 */
-        dropCur(); const ps=S.drawData[pairTap.key]; if(ps){ const i=ps.indexOf(pairTap.prev); if(i>=0) ps.splice(i,1); }
-        const t=hit(pairTap.fx,pairTap.fy)||hit(pairTap.x,pairTap.y); pairTap=null; annRedraw(); if(t){ t.click(); return; } annUI(); return; }
-      pairTap=null;
-      if(quickTap) S.lastTap={t:Date.now(),x:x0,y:y0,stroke:cur,key:annKey()}; /* 한 손가락·펜은 언제나 필기 */
+      /* 한 손가락·펜은 언제나 필기 */
     } else if(e.type==="pointerup" && Date.now()-t0<250 && far<6){ /* PC 마우스: 짧은 클릭 = 누르기 */
       const t=hit(e.clientX,e.clientY), onCur=t && t.matches("[data-rs]") && +t.dataset.rs===S.reveal.sent;
       if(t && !onCur){ dropCur(); annRedraw(); t.click(); return; }
@@ -1224,6 +1226,13 @@ function stepInfo(p, sl){
 }
 function stepPatch(si,v){ return si.key==="sent"?{sent:v,ko:false,vc:false,gm:false}:{[si.key]:v}; }
 const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab"];
+
+/* 슬라이드별 글꼴·크기 */
+const FONT_OPTS={"":"기본",hand:"손글씨 (감자꽃)",serif:"명조",sans:"고딕"};
+const SIZE_OPTS={"":"자동 (화면에 꽉 차게)",l:"크게",m:"보통",s:"작게"};
+const SIZE_CAP={l:60,m:44,s:32};
+const SIZE_MUL={l:1.2,m:1,s:.85};
+function slideLook(sl){ if(!sl) return ""; let c=""; if(sl.font) c+=" f-"+sl.font; if(sl.size) c+=" sz-"+sl.size; return c; }
 function renderSlide(sl, ctx){
   // ctx: {reveal, live:boolean (interactive board)}
   const R = ctx.reveal||{};
@@ -1333,7 +1342,7 @@ function renderSlide(sl, ctx){
 /* ===== 계절·이벤트 꾸미기 (대기 화면) ===== */
 function needBackup(){ try{ const t=+localStorage.getItem("cb_lastbk")||0; return Date.now()-t>45*864e5; }catch(e){ return false; } }
 function evtCfg(){ if(S.evt) return S.evt; try{ return JSON.parse(localStorage.getItem("cb_evt")||"null")||{}; }catch(e){ return {}; } }
-const THEME_NAMES={auto:"자동 (계절·특별한 날)",spring:"봄 · 벚꽃",summer:"여름 · 수박",autumn:"가을 · 낙엽",winter:"겨울 · 눈",halloween:"할로윈",pepero:"빼빼로데이",xmas:"크리스마스",newyear:"새해",off:"끄기"};
+const THEME_NAMES={auto:"자동 (계절·특별한 날)",spring:"봄 · 벚꽃",summer:"여름 · 바다",autumn:"가을 · 낙엽",winter:"겨울 · 눈",halloween:"할로윈",off:"끄기"};
 const THEMES={
   spring:{fx:["🌸","🌸","🌸","💮"],dir:"fall",n:16},
   summer:{fx:["bubble"],dir:"rise",n:18},
@@ -1344,11 +1353,11 @@ const THEMES={
   xmas:{fx:["❄","❄","⭐","🎄"],dir:"fall",n:20,white:true},
   newyear:{fx:["✨","🎉","✨"],dir:"fall",n:16}
 };
-function curTheme(){ const t=(evtCfg().theme)||"auto"; if(t==="off") return null; if(t!=="auto") return THEMES[t]?t:null;
+function curTheme(){ const t=(evtCfg().theme)||"auto"; if(t==="off") return null; if(t!=="auto" && STICKER[t]) return t;
   const d=new Date(), m=d.getMonth()+1, md=m*100+d.getDate();
-  if(md>=1218&&md<=1225) return "xmas"; if(md>=1025&&md<=1031) return "halloween"; if(md===1111) return "pepero"; if(md>=101&&md<=107) return "newyear";
+  if(md>=1025&&md<=1031) return "halloween";
   return m>=3&&m<=5?"spring":m>=6&&m<=8?"summer":m>=9&&m<=11?"autumn":"winter"; }
-const STICKER={spring:"🌸",summer:"🍉",autumn:"🍁",winter:"⛄",halloween:"🎃",pepero:"🍫",xmas:"🎄",newyear:"🎉"};
+const STICKER={spring:"🌸",summer:"🌊",autumn:"🍁",winter:"⛄",halloween:"🎃"};
 function stickerHTML(){ const k=curTheme(); return k&&STICKER[k]?`<span class="cv-sticker" aria-hidden="true">${STICKER[k]}</span>`:""; }
 function fxHTML(){ const k=curTheme(), T=k&&THEMES[k]; if(!T) return "";
   let h=""; for(let i=0;i<T.n;i++){ const ic=T.fx[i%T.fx.length], left=Math.random()*100, dur=9+Math.random()*9, delay=-Math.random()*dur, size=16+Math.random()*20, sway=(Math.random()*80-40).toFixed(0);
@@ -1609,7 +1618,7 @@ function renderClass(){
   <main class="stage">${
     !p ? `<div class="empty"><b>아직 수업 자료가 없어요</b>오른쪽 위 ‘YE’에서 관리자 모드로 들어가 지문을 추가하세요.</div>`
     : (!sl || !vis.length) ? `<div class="empty"><b>칠판에 넣은 슬라이드가 없어요</b>편집 화면에서 슬라이드를 ‘넣음’으로 바꾸거나 새로 추가하세요.</div>`
-    : `<article class="slide${FIT_TYPES.includes(sl.type)?" fit":(sl.type==="draw"?" fit draw":"")}">${renderSlide(sl,{reveal:S.reveal, live:true, passage:p})}</article>`}
+    : `<article class="slide${FIT_TYPES.includes(sl.type)?" fit":(sl.type==="draw"?" fit draw":"")}${slideLook(sl)}">${renderSlide(sl,{reveal:S.reveal, live:true, passage:p})}</article>`}
   </main>
   ${p?`<canvas id="ann"></canvas>`:""}
   ${p&&annActive()?`<div class="atools${S.annMin?" min":""}">${annToolsHTML()}</div>`:""}
@@ -1631,7 +1640,7 @@ let fitT=null;
 function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
-  const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); let lo=min, hi=small?30:(box.querySelector('.flow')?46:78), best=min;
+  const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(hi<lo) lo=hi;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=(best*S.scale)+"px";
   if(S.keepScroll!=null){ stage.scrollTop=S.keepScroll; S.keepScroll=null; }
@@ -1780,7 +1789,7 @@ function refreshPreview(){
   if(!pv||!sl) return;
   // text/reading 슬라이드는 sent=-1 (전체 표시) 상태로 미리보기
   const R=sl.type==="text"||sl.type==="reading"?{sent:-1,reveal:{answer:true,step:99,sbk:99}}:{reveal:{answer:true,step:99,sbk:99}};
-  pv.innerHTML=`<div class="slide">${renderSlide(sl,{...R,passage:S.draft})}</div>`;
+  pv.innerHTML=`<div class="slide${slideLook(sl)}">${renderSlide(sl,{...R,passage:S.draft})}</div>`;
 }
 function renderEditor(){
   const el=$("#ed"); if(!el) return; const d=S.draft;
@@ -1812,6 +1821,8 @@ function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
      <div class="field"><label>슬라이드 제목 (비우면 종류 이름)</label>${H.in("title",sl.title)}</div>
+     <div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+     <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>
      <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기 (지워지지 않아요. 슬라이드 목록의 ‘넣음/빠짐’ 버튼으로 언제든 다시 넣을 수 있어요)</label>`;
   const note = `<div class="field"><label>수업 메모 (리모컨·관리자에서만 보임: 발문, 판서 포인트 등)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
   const mk = `<div class="help">강조 <code>**주제문**</code> · 밑줄 <code>__단어__</code> · 기울임 <code>*제목*</code></div>`;
