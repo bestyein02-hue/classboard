@@ -1515,6 +1515,14 @@ function ddayHTML(){ const ev=(evtCfg().events)||[]; const t0=new Date(); t0.set
   for(const e of ev){ if(!e||!e.date||!e.name) continue; const d=new Date(e.date+"T00:00:00"), n=Math.round((d-t0)/864e5); if(n>=0 && n<=30 && (!best||n<best.n)) best={n,name:e.name}; }
   if(!best) return ""; return `<div class="cv-dday">${esc(best.name)} <b>${best.n===0?"D-DAY":"D-"+best.n}</b>${best.n===0?" 화이팅!":""}</div>`; }
 async function evtSave(){ const c=S.evt||{}; try{ await API.put("passages","_events",{title:"_events",slides:[],theme:c.theme||"auto",events:c.events||[]}); localStorage.setItem("cb_evt",JSON.stringify({theme:c.theme||"auto",events:c.events||[]})); toast("저장했어요"); }catch(e){ toast("저장하지 못했습니다"); } }
+
+/* ===== 준비 모드: 선생님 개인 진도 (YE로 들어올 때) ===== */
+const ME_CLS="_me";
+function clsLabel(c){ return c===ME_CLS?"준비":c; }
+function prepTouch(pid, idx, now){ const g=progOf(ME_CLS); g.last={pid,idx,at:Date.now()}; g.at=Date.now(); clearTimeout(S.prepT); if(now) progSave(); else S.prepT=setTimeout(progSave,4000); }
+function startPrep(quiet){ setCls(ME_CLS,true); S.doneP={}; S.blank=false; const g=progOf(ME_CLS), p=g.last&&getP(g.last.pid);
+  if(p){ const n=(p.slides||[]).length; S.cur={pid:p.id,idx:Math.min(g.last.idx||0,Math.max(0,n-1))}; S.reveal={}; }
+  pushLive(); if(!quiet) render(); }
 /* ================= 반별 진도 ================= */
 const HOME_CLS="5반"; /* 담임 반 */
 const DEF_CLASSES=["1반","2반","3반","4반","5반","6반","7반","8반","9반"];
@@ -1533,7 +1541,8 @@ function nextFor(cls){
 function setCls(c,quiet){ S.cls=c||null; try{ c?localStorage.setItem("cb_cls",c):localStorage.removeItem("cb_cls"); }catch(e){} if(!quiet) pushLive(); }
 async function progSave(){ try{ const {id,...b}=S.prog||{}; await API.put("passages","_prog",{...b,title:"_prog",slides:[]}); }catch(e){ toast("진도를 저장하지 못했습니다"); } }
 function progRecord(){
-  const cls=S.cls; if(!cls) return false; const g=progOf(cls), now=Date.now();
+  const cls=S.cls; if(!cls) return false;
+  if(cls===ME_CLS){ prepTouch(S.cur.pid,S.cur.idx,true); return false; } const g=progOf(cls), now=Date.now();
   Object.keys(S.doneP).forEach(pid=>{ if(!g.done[pid]) g.done[pid]=now; });
   const p=getP(S.cur.pid);
   if(p){ const vis=(p.slides||[]).map((x,i)=>i).filter(i=>!p.slides[i].hidden), lastV=vis[vis.length-1];
@@ -1563,6 +1572,7 @@ function pushLive(){
 }
 function go(pid, idx, opts={}){
   const p = getP(pid); if(!p) return;
+  if(S.cls===ME_CLS) prepTouch(pid, idx);
   const n = (p.slides||[]).length;
   idx = Math.max(0, Math.min(idx, Math.max(0,n-1)));
   const changed = pid!==S.cur.pid || idx!==S.cur.idx;
@@ -1653,6 +1663,7 @@ async function afterLogin(to){
   if(to==="admin"){ enterAdmin(); approvePending(); }
   else { S.mode="class"; S.sheet=null; setLastMode("class");
     if(S.pendCls){ const c=S.pendCls; S.pendCls=null; setCls(c,true); S.doneP={}; const n=nextFor(c); if(n&&n.pid){ S.cur={pid:n.pid,idx:n.idx}; S.reveal={}; } S.blank=false; pushLive(); }
+    else if(!S.pendingPair){ startPrep(true); }
     render(); }
 }
 async function pinHash(pin){ const b=await crypto.subtle.digest("SHA-256", new TextEncoder().encode("classboard:"+pin)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
@@ -1752,7 +1763,7 @@ function renderClass(){
   app.innerHTML = `
   <header class="bar">
     <button class="ib" data-act="drawer" aria-label="Contents">${L("목차","Contents")}</button>
-    <div class="ttl"><small>${S.cls?esc(S.cls)+" · ":""}${p?esc(unitName(p.unitId)):""}</small><b>${p?esc(p.title):"English"}</b></div>
+    <div class="ttl"><small>${S.cls?esc(clsLabel(S.cls))+" · ":""}${p?esc(unitName(p.unitId)):""}</small><b>${p?esc(p.title):"English"}</b></div>
     ${live?`<span class="live"><i></i>${L("리모컨 연결됨","Remote connected")}</span>`:""}
     ${window.PointerEvent?`<button class="ib${annActive()&&!S.annMin?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
@@ -1854,7 +1865,7 @@ function renderSheet(){
     const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
     const fs=!!document.fullscreenElement;
     const body = S.isAdmin
-      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
+      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("prep","준비 화면",S.blank)}${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
 `
       : `<button class="btn pri big" data-act="pair">수업 시작</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
     if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls)+(S.pendCls===HOME_CLS?` <span class="home-ball">⚽</span>`:""):"ENGLISH"}</h3>${body}</div>`;
@@ -2114,7 +2125,7 @@ function renderRemote(){
   el.innerHTML = `
   ${S.blank?`<button class="btn pri r-unblank" data-act="unblank">칠판 다시 띄우기</button>`:""}
   <div class="r-card r-now-c">
-    <div class="r-unit">${S.cls?`<b>${esc(S.cls)}</b> · `:""}${p?esc(unitName(p.unitId)):""}</div>
+    <div class="r-unit">${S.cls?`<b>${esc(clsLabel(S.cls))}</b> · `:""}${p?esc(unitName(p.unitId)):""}</div>
     <div class="r-title">${p?esc(p.title):"지문 없음"}</div>
     <div class="r-chips">${vis.map(i=>`<button class="r-chip${i===S.cur.idx?" on":""}" data-go="${i}">${esc(slideTitle(slides[i]))}</button>`).join("")}</div>
     ${ctl?`<div class="r-ctl">${ctl}</div>`:""}
@@ -2208,6 +2219,7 @@ document.addEventListener("click", async e=>{
 
   switch(ds.act){
     case "drawer": S.drawer=true; return render();
+    case "prep": S.sheet=null; return startPrep();
     case "ev-add": S.evt=S.evt||{}; S.evt.events=S.evt.events||[]; S.evt.events.push({name:"",date:""}); return renderSettings();
     case "ev-save": return evtSave();
     case "fs": try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }catch(x){ toast("이 브라우저에서는 전체화면을 쓸 수 없어요"); } return;
