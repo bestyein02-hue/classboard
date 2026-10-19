@@ -1148,7 +1148,7 @@ function initAnn(){
   const on=annActive() && !S.annMin; cv.style.pointerEvents=on?"auto":"none"; if(!on) return;
   let down=false, cur=null, raf=0, t0=0, x0=0, y0=0, far=0, bk=null, ptype="mouse";
   /* 손가락 하나·펜 = 필기 / 두 손가락 톡 = 문장 고르기 / 두 손가락 끌기 = 스크롤 / 마우스 짧은 클릭 = 누르기 */
-  const pts=new Map(); let multi=false, mT0=0, mX=0, mY=0, mFirst=null, mMoved=0, lastY=0;
+  const pts=new Map(); let pairTap=null, multi=false, mT0=0, mX=0, mY=0, mFirst=null, mMoved=0, lastY=0;
   const avg=()=>{ let x=0,y=0; pts.forEach(v=>{x+=v.x;y+=v.y;}); const n=Math.max(1,pts.size); return {x:x/n,y:y/n}; };
   const pt=e=>{ const b=cv.getBoundingClientRect(); return [(e.clientX-b.left)/b.width,(e.clientY-b.top+stage.scrollTop)/b.height]; };
   const TAP="[data-rs],[data-cz],[data-bk],[data-choice],[data-vocab],[data-tr],[data-tl],[data-act],button";
@@ -1161,6 +1161,7 @@ function initAnn(){
   cv.onpointerdown=e=>{
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     try{ cv.setPointerCapture(e.pointerId); }catch(x){}
+    if(pts.size>=2 && down && far>18){ pts.delete(e.pointerId); return; } /* 이미 긋는 중에 닿은 손바닥 등은 무시 */
     if(pts.size>=2){ /* 두 손가락: 지금 긋던 획은 지우고 고르기·스크롤 모드 */
       if(down){ dropCur(); down=false; S.drawing=false; annRedraw(); }
       if(!multi){ multi=true; mT0=Date.now(); mMoved=0; mFirst=mFirst||{x:x0,y:y0}; }
@@ -1169,23 +1170,29 @@ function initAnn(){
     down=true; S.drawing=true; ptype=e.pointerType||"mouse"; t0=Date.now(); x0=e.clientX; y0=e.clientY; far=0; mFirst={x:e.clientX,y:e.clientY}; bk=S.drawBackup[annKey()];
     cur={t:ANN.tool,c:ANN.tool==="pen"?ANN.pen:ANN.hl,w:A_W[ANN.tool][ANN.size],p:[pt(e)]}; annStrokes().push(cur); S.drawBackup[annKey()]=null;
     annRedraw();
-    /* 손가락·펜으로 가만히 꾹(0.5초) 누르면 그 문장 고르기 */
-    clearTimeout(S.lpT); if(ptype!=="mouse"){ const sx=x0, sy=y0; S.lpT=setTimeout(()=>{ if(down && !multi && far<12){ const t=hit(sx,sy); if(t && t.matches("[data-rs]")){ dropCur(); down=false; S.drawing=false; annRedraw(); t.click(); } } },520); } };
+    /* 바로 전 손가락 톡과 0.3초 안에 가까이 닿으면 → 두 손가락 톡(시간 차) */
+    if(ptype!=="mouse" && S.lastTap && Date.now()-S.lastTap.t<300 && Math.hypot(e.clientX-S.lastTap.x,e.clientY-S.lastTap.y)<160){ pairTap={x:(e.clientX+S.lastTap.x)/2,y:(e.clientY+S.lastTap.y)/2,fx:S.lastTap.x,fy:S.lastTap.y,prev:S.lastTap.stroke,key:S.lastTap.key}; } else pairTap=null;
+    S.lastTap=null; };
   cv.onpointermove=e=>{
     if(pts.has(e.pointerId)) pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(multi){ const a=avg(); mMoved=Math.max(mMoved,Math.hypot(a.x-mX,a.y-mY)); if(mMoved>18){ stage.scrollTop-=(a.y-lastY); } lastY=a.y; return; }
     if(!down || !e.isPrimary) return; far=Math.max(far,Math.hypot(e.clientX-x0,e.clientY-y0)); const p=pt(e), l=cur.p[cur.p.length-1]; if(Math.abs(p[0]-l[0])*cv.clientWidth+Math.abs(p[1]-l[1])*cv.clientHeight<1.5) return; cur.p.push(p); if(!raf) raf=requestAnimationFrame(()=>{ raf=0; annRedraw(); }); };
   const end=e=>{
-    clearTimeout(S.lpT);
     const was=pts.get(e.pointerId); pts.delete(e.pointerId);
     if(multi){
       if(pts.size) return;
-      multi=false; const quick=Date.now()-mT0<600 && mMoved<=18 && e.type==="pointerup";
+      multi=false; const quick=Date.now()-mT0<700 && mMoved<=24;
       if(quick){ const t=(mFirst&&hit(mFirst.x,mFirst.y)) || hit(mX,mY); mFirst=null; if(t){ S.drawing=false; t.click(); return; } }
       mFirst=null; S.drawing=false; annUI(); return; }
     if(!down || !e.isPrimary) return; down=false; S.drawing=false;
-    /* 짧게 톡 = 다른 문장 고르기 (지금 문장 위의 톡은 점 필기) */
-    const fing=ptype!=="mouse"; if(e.type==="pointerup" && Date.now()-t0<(fing?450:250) && far<(fing?18:6)){
+    const quickTap=Date.now()-t0<450 && far<18;
+    if(ptype!=="mouse"){
+      if(pairTap && quickTap){ /* 시간 차 두 손가락 톡: 찍힌 점 둘 다 지우고 문장 고르기 */
+        dropCur(); const ps=S.drawData[pairTap.key]; if(ps){ const i=ps.indexOf(pairTap.prev); if(i>=0) ps.splice(i,1); }
+        const t=hit(pairTap.fx,pairTap.fy)||hit(pairTap.x,pairTap.y); pairTap=null; annRedraw(); if(t){ t.click(); return; } annUI(); return; }
+      pairTap=null;
+      if(quickTap) S.lastTap={t:Date.now(),x:x0,y:y0,stroke:cur,key:annKey()}; /* 한 손가락·펜은 언제나 필기 */
+    } else if(e.type==="pointerup" && Date.now()-t0<250 && far<6){ /* PC 마우스: 짧은 클릭 = 누르기 */
       const t=hit(e.clientX,e.clientY), onCur=t && t.matches("[data-rs]") && +t.dataset.rs===S.reveal.sent;
       if(t && !onCur){ dropCur(); annRedraw(); t.click(); return; }
     }
