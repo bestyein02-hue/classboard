@@ -811,6 +811,113 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 .slide.sz-m .dguide{font-size:32px}
 .slide.sz-l .dguide{font-size:46px;max-width:80%}
 .slide.sz-xl .dguide{font-size:64px;max-width:90%}
+.bk-list{display:flex;flex-direction:column;gap:6px}
+.bk-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700}
+
+/* ===== 관리자 화면 깔끔하게 ===== */
+body.mode-admin{background:#F6F3EC}
+body.mode-admin #app{background:#F6F3EC}
+.adm-top{background:#fff;color:var(--ink);border-bottom:1px solid #ECE7DC;padding:10px 20px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.adm-brand{display:flex;align-items:center;gap:8px;font-family:var(--f-hand);font-weight:700;font-size:24px;color:var(--ink)}
+.adm-brand svg{width:30px;height:auto}
+.adm-top .seg-t{background:#F3EFE6;border-radius:12px;padding:4px}
+.adm-top .seg-t button{color:var(--muted);font-weight:700;border-radius:9px;padding:7px 18px;font-size:15px}
+.adm-top .seg-t button.on{background:#fff;color:var(--orange-dk);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.adm-top .btn{background:#fff;color:var(--ink);border:1.5px solid #E3DED3;border-radius:10px;font-weight:700}
+.adm-top .btn.bk-nag{background:var(--orange);border-color:var(--orange);color:#fff}
+body.mode-admin .adm{gap:14px;padding:14px;grid-template-columns:250px 260px 1fr}
+body.mode-admin .col{background:#fff;border:0;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:14px}
+body.mode-admin .editor{background:#fff;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);padding:18px 22px 40px}
+body.mode-admin .col h4{font-size:12px;letter-spacing:.06em;color:#9A9488;font-weight:700;margin:2px 4px 10px}
+body.mode-admin .btn{border:1.5px solid #E3DED3;border-radius:10px;background:#fff;color:var(--ink);font-weight:700;box-shadow:none}
+body.mode-admin .btn:hover{border-color:var(--orange)}
+body.mode-admin .btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
+body.mode-admin .btn.warn{color:var(--red);border-color:#F2C7C0;background:#fff}
+body.mode-admin .li{border-radius:10px;padding:9px 10px;font-size:15px}
+body.mode-admin .li:hover{background:#FAF7F1}
+body.mode-admin .li.on{background:#FDEBDF;color:var(--orange-dk)}
+body.mode-admin .li .ty{background:#F3EFE6;color:#7A7468;font-weight:700;border-radius:6px}
+body.mode-admin .li.on .ty{background:#fff;color:var(--orange-dk)}
+body.mode-admin .unit-h{font-family:var(--f-hand);font-size:20px;color:var(--ink);padding:6px 4px}
+body.mode-admin .mini.inc{border:0;background:#F3EFE6;color:#9A9488;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700}
+body.mode-admin .mini.inc.on{background:#E6F4EC;color:#1E8A5A}
+body.mode-admin .addtypes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+body.mode-admin .addtypes .btn{border:1.5px dashed #E3DED3;color:#6B655A;font-weight:600;font-size:14px;min-height:38px;padding:4px 6px}
+body.mode-admin .addtypes .btn:hover{border-color:var(--orange);color:var(--orange-dk);background:#FFF8F2}
+body.mode-admin .savebar{position:sticky;top:-18px;z-index:3;background:#fff;margin:-18px -22px 14px;padding:14px 22px;border-bottom:1px solid #F0EBE1;border-radius:16px 16px 0 0}
+body.mode-admin .savebar .btn.pri{min-width:96px;min-height:44px;font-size:17px}
+body.mode-admin .savebar .st{font-weight:700}
+body.mode-admin .field label{font-size:12.5px;font-weight:700;color:#8A8478;letter-spacing:.02em}
+body.mode-admin .inp{background:#FCFBF8;border:1.5px solid #E8E3D8;border-radius:10px}
+body.mode-admin .inp:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(224,96,31,.15);background:#fff}
+body.mode-admin hr{border-top-color:#F0EBE1!important}
+body.mode-admin .rows .r{background:#FCFBF8;border:1.5px solid #EEE9DE;border-radius:12px}
+body.mode-admin .preview{background:#F6F3EC;border:0;border-radius:14px}
+body.mode-admin .preview-h{display:inline-block;background:#fff;color:#8A8478;font-weight:700;border-radius:999px;padding:3px 12px;margin-bottom:10px}
+body.mode-admin p.help{font-size:12px;color:#A8A296}
+body.mode-admin .r-card{background:#fff;border:0;border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+body.mode-admin .r-card h5{font-size:12px;letter-spacing:.06em;color:#9A9488}
+body.mode-admin .remote{background:transparent}
+body.mode-admin .dh{color:#D5CFC3}
+@media (max-width:1100px){ body.mode-admin .adm{grid-template-columns:220px 1fr} }
+@media (max-width:760px){ body.mode-admin .adm{display:block;padding:10px} body.mode-admin .col,body.mode-admin .editor{margin-bottom:10px} .adm-brand span{display:none} }
+
+/* ===== 관리자 화면 새 디자인 ===== */
+body.mode-admin{background:#F7F4EE}
+body.mode-admin #app{background:#F7F4EE}
+.adm-top{background:#fff;color:var(--ink);border-bottom:1px solid #ECE6DC;padding:10px 20px;gap:12px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.adm-brand{display:flex;align-items:center;gap:8px;font-family:Fredoka,var(--f-ui);font-weight:600;font-size:20px;letter-spacing:.06em;flex:1}
+.adm-brand small{font-family:var(--f-ui);font-size:13px;font-weight:700;letter-spacing:0;color:var(--muted);background:#F3EEE6;border-radius:999px;padding:2px 10px}
+.adm-dot{width:12px;height:12px;border-radius:50%;background:var(--orange)}
+.adm-top .seg-t{background:#F3EEE6;border-radius:12px;padding:4px}
+.adm-top .seg-t button{color:var(--muted);font-weight:700;border-radius:9px;padding:7px 18px}
+.adm-top .seg-t button.on{background:#fff;color:var(--orange-dk);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.adm-top .btn{background:#fff;color:var(--ink);border:1.5px solid #E2DBCF;border-radius:10px;font-weight:700}
+.adm-top .btn.bk-nag{background:var(--orange);border-color:var(--orange);color:#fff}
+.adm{gap:14px;padding:14px;background:#F7F4EE}
+.adm .col{background:#fff;border:1px solid #ECE6DC;border-radius:16px;padding:14px 12px;box-shadow:0 2px 10px rgba(60,40,20,.04)}
+.adm .editor{background:#fff;border:1px solid #ECE6DC;border-radius:16px;padding:20px 24px 40px;box-shadow:0 2px 10px rgba(60,40,20,.04)}
+.col h4{font-size:12px;letter-spacing:.04em;color:#8A847A;margin:2px 4px 10px}
+.unit-h{font-size:15px;color:var(--ink);padding:8px 6px;border-radius:10px}
+.unit-h:hover{background:#FAF7F2}
+.li{border-radius:10px;padding:9px 10px;font-size:15px;color:var(--ink)}
+.li:hover{background:#FAF7F2}
+.li.on{background:#FFF1E6;color:var(--orange-dk);box-shadow:inset 3px 0 0 var(--orange)}
+.li .ty{background:#F3EEE6;color:#7A7368;font-weight:700;border-radius:6px}
+.li.on .ty{background:#fff;color:var(--orange-dk)}
+.mini{color:#A39C90;border-radius:8px}
+.mini:hover{background:#F3EEE6;color:var(--ink)}
+.mini.inc{border:0;background:#F3EEE6;color:#8A847A;font-weight:700;border-radius:999px;padding:3px 9px}
+.mini.inc.on{background:#FFE9DC;color:var(--orange-dk)}
+.dh{color:#D3CCC0}
+.adm .btn,.editor .btn{border:1.5px solid #E2DBCF;background:#fff;color:var(--ink);border-radius:10px;font-weight:700;box-shadow:none}
+.adm .btn:hover,.editor .btn:hover{border-color:var(--orange)}
+.adm .btn.pri,.editor .btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
+.adm .btn.warn,.editor .btn.warn{color:var(--red);border-color:#F2C9C2}
+.addtypes .btn{background:#FAF7F2;border-color:#FAF7F2;font-size:13px;padding:5px 10px;min-height:32px;color:#5F5A52}
+.addtypes .btn:hover{background:#FFF1E6;border-color:#FFE0CC;color:var(--orange-dk)}
+.savebar{padding-bottom:14px;border-bottom:1px solid #F0EAE0;margin-bottom:16px}
+.savebar .btn.pri{min-width:96px;min-height:44px;font-size:17px}
+.savebar .st{font-weight:700}
+.editor hr{display:none}
+.field label{font-size:12.5px;font-weight:700;color:#8A847A;letter-spacing:.02em}
+.inp{background:#fff;border:1.5px solid #E6E0D6;border-radius:10px;padding:10px 12px}
+.inp:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(224,96,31,.15)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;margin-bottom:12px;color:var(--ink)}
+.chk input{width:18px;height:18px;accent-color:var(--orange)}
+.r-h b{font-size:17px!important}
+.rows .r{background:#FBF9F5;border:1px solid #EFE9DF;border-radius:12px}
+.preview{background:#FBF9F5;border:1px solid #EFE9DF;border-radius:14px}
+.preview-h{font-weight:700;color:#8A847A}
+.help{color:#9A9488}
+.help code{background:#FFF1E6;color:var(--orange-dk)}
+#settings .r-card,#remote .r-card{background:#fff;border:1px solid #ECE6DC;border-radius:16px;box-shadow:0 2px 10px rgba(60,40,20,.04)}
+#settings .r-card h5{font-size:13px;color:#8A847A;letter-spacing:.03em}
+
+.unit-h>span:not(.dh){flex:1;text-align:left;font-size:16px;font-weight:800}
+#settings .code-in input{font-size:16px;letter-spacing:normal;text-align:left}
+#settings{max-width:640px}
+.unit-h>span:not(.dh){min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -1349,6 +1456,10 @@ function renderSlide(sl, ctx){
 
 
 /* ===== 계절·이벤트 꾸미기 (대기 화면) ===== */
+async function loadBackups(){ const box=$("#bklist"); if(!box) return;
+  try{ const r=await API.req("GET","/api/backups"); const ds=r.days||[];
+    box.innerHTML = ds.length ? ds.map(d=>`<div class="bk-row"><span>${esc(d.day.slice(5).replace("-","월 "))}일</span><button class="btn sm" data-bkday="${esc(d.day)}">이날로 되돌리기</button></div>`).join("") : `<span class="help">아직 없어요. 자료를 고치면 그날 자동으로 생겨요.</span>`;
+  }catch(e){ box.innerHTML=`<span class="help">${e.status===404?"Worker를 새로 올리면 쓸 수 있어요.":"불러오지 못했어요."}</span>`; } }
 function needBackup(){ try{ const t=+localStorage.getItem("cb_lastbk")||0; return Date.now()-t>45*864e5; }catch(e){ return false; } }
 function evtCfg(){ if(S.evt) return S.evt; try{ return JSON.parse(localStorage.getItem("cb_evt")||"null")||{}; }catch(e){ return {}; } }
 const THEME_NAMES={auto:"자동 (계절·특별한 날)",spring:"봄 · 벚꽃",summer:"여름 · 바다",autumn:"가을 · 낙엽",winter:"겨울 · 눈",halloween:"할로윈",off:"끄기"};
@@ -1532,8 +1643,8 @@ function endClass(){
   const rec=progRecord()?S.cls:null; setCls(null,true);
   S.blank=true; S.endAt=Date.now(); S.drawData={}; S.drawBackup={}; S.reveal={}; pushLive();
   const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })();
-  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,700); toast((rec?rec+" 진도 기록 · ":"")+"수업 끝"); }
-  else { toast((rec?rec+" 진도 기록 · ":"")+"수업 끝"); render(); }
+  if(!remembered && S.mode==="class"){ setTimeout(lockDevice,300); }
+  else { void 0; render(); }
 }
 function fastMode(){ return S.isAdmin; }
 function pollLoop(){
@@ -1745,7 +1856,7 @@ function renderAdmin(){
   const app=$("#app");
   app.innerHTML = `
   <header class="adm-top">
-    <b>관리자 모드</b>
+    <b class="adm-brand"><svg viewBox="0 0 64 40" aria-hidden="true"><path fill="#E0601F" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#E0601F" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/></svg><span>관리자</span></b>
     <div class="seg-t" role="tablist">
       <button class="${S.adminTab==="edit"?"on":""}" data-tab="edit">자료 편집</button>
       <button class="${S.adminTab==="remote"?"on":""}" data-tab="remote">리모컨</button>
@@ -1786,7 +1897,7 @@ function loadDraft(pid){
 function renderSlideList(){
   const el=$("#slist"); if(!el) return; const d=S.draft;
   if(!d){ el.innerHTML=`<p class="help">왼쪽에서 지문을 고르세요.</p>`; return; }
-  el.innerHTML = `<h4>슬라이드 (${(d.slides||[]).length}) <span class="help" style="font-weight:400">끌어서 순서 바꾸기</span></h4>
+  el.innerHTML = `<h4>슬라이드 (${(d.slides||[]).length}) </h4>
   ${(d.slides||[]).map((s,i)=>`<div class="srow" data-k="${i}" style="display:flex;align-items:center${s.hidden?";opacity:.55":""}"><span class="dh" aria-hidden="true">⠿</span><button class="li${i===S.editIdx?" on":""}" data-sel="${i}"><span class="ty">${esc(TYPES[s.type]?.name||s.type)}</span><span class="t">${esc(s.title||"")}</span></button>
      <button class="mini inc${s.hidden?"":" on"}" data-sinc="${i}" title="칠판에 넣기 / 빼기">${s.hidden?"빠짐":"넣음"}</button></div>`).join("")}
   <h4 style="margin-top:14px">새 슬라이드</h4>
@@ -1807,18 +1918,16 @@ function renderEditor(){
   el.innerHTML = `
   <div class="savebar"><button class="btn pri" data-act="save">저장</button><span class="st" id="savest">${S.dirty?"저장 안 됨":"저장됨"}</span>
     <span style="flex:1"></span>
-    <button class="btn sm" data-act="showboard">이 지문 칠판에 띄우기</button>
-    <button class="btn sm" data-act="blank-board">칠판 잠깐 가리기</button>
     <button class="btn sm warn" data-act="delp">지문 삭제</button></div>
   <div class="two">
-    <div class="field"><label>지문 제목 (목차에 표시)</label><input class="inp" data-pf="title" value="${esc(d.title||"")}"></div>
+    <div class="field"><label>지문 제목</label><input class="inp" data-pf="title" value="${esc(d.title||"")}"></div>
     <div class="field"><label>단원</label><select class="inp" data-pf="unitId">${sortedUnits().map(u=>`<option value="${u.id}"${u.id===d.unitId?" selected":""}>${esc(u.title)}</option>`).join("")}</select></div>
   </div>
   <div class="field"><label>소재 한 줄</label><input class="inp" data-pf="topic" value="${esc(d.topic||"")}"></div>
   <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
   <div class="ed-grid">
     <div id="form">${sl?slideForm(sl):`<p class="help">가운데 열에서 ‘새 슬라이드’를 추가하세요.</p>`}</div>
-    <div class="preview"><div class="preview-h">미리보기 (정답 공개 상태)</div><div id="pv"></div></div>
+    <div class="preview"><div class="preview-h">미리보기</div><div id="pv"></div></div>
   </div>`;
   refreshPreview();
 }
@@ -1829,18 +1938,18 @@ const H = {
 function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
-     <div class="field"><label>슬라이드 제목 (비우면 종류 이름)</label>${H.in("title",sl.title)}</div>
+     <div class="field"><label>슬라이드 제목</label>${H.in("title",sl.title)}</div>
      ${sl.type==="draw"?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
      <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>`:""}
-     <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기 (지워지지 않아요. 슬라이드 목록의 ‘넣음/빠짐’ 버튼으로 언제든 다시 넣을 수 있어요)</label>`;
-  const note = `<div class="field"><label>수업 메모 (리모컨·관리자에서만 보임: 발문, 판서 포인트 등)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
+     <label class="chk"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기</label>`;
+  const note = `<div class="field"><label>수업 메모 (폰에만 보임)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
   const mk = `<div class="help">강조 <code>**주제문**</code> · 밑줄 <code>__단어__</code> · 기울임 <code>*제목*</code></div>`;
   let body="";
   switch(sl.type){
-    case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}<div class="help">수업 화면에서 문장을 누르면(또는 클리커 ▶) 그 문장만 형광펜, 나머지는 흐려지고 해석·어휘·어법 버튼이 나와요. 같은 문장을 다시 누르면 처음 상태로 돌아가요.</div></div>`; break;
+    case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}</div>`; break;
     case "structure": { const tx0=(S.draft.slides||[]).find(x=>x.type==="text"), ss0=tx0?passageSentences(tx0.paras||[]):[];
-      body = `<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작 (수업 마지막에 아이들과 맞추기 — ‘다음’을 누를 때마다 빈칸이 하나씩 열립니다)</label>
-      <p class="help" style="margin:-4px 0 12px">빈칸으로 만들 말은 <code>[[ ]]</code>로 감싸세요. 예: <code>[[월식]]은 지구가 태양과 달 사이에 들어가 생긴다</code> → 칠판에는 <code>(　　)은 지구가 …</code>로 보여요. 소재는 통째로 빈칸이 되고, 주제는 [[ ]] 부분만 빈칸이 돼요.</p>
+      body = `<label class="chk"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작</label>
+      <p class="help" style="margin:-4px 0 12px">빈칸: <code>[[단어]]</code></p>
       <div class="field"><label>글의 소재 (명사구로, 예: 월식 때 붉게 보이는 달)</label>${H.in("sub",sl.sub)}</div>
       <div class="field"><label>글의 주제 (칠판·복습지에는 안 나오고 폰 메모에만 참고로 보여요)</label>${H.ta("theme",sl.theme,"",2)}</div>
       <div class="field"><label>주제문 — 뚜렷한 문장이 있을 때만 고르세요 (없으면 ‘표시 안 함’)</label><select class="inp" data-f="thesisN"><option value="">주제문 표시 안 함</option>${ss0.map((t,i)=>`<option value="${i+1}"${sl.thesisN===i+1?" selected":""}>${i+1}. ${esc(t.replace(/[*_]/g,"").trim().slice(0,60))}</option>`).join("")}</select></div>
@@ -1855,7 +1964,7 @@ function slideForm(sl){
         <label style="font-size:13px;display:flex;gap:6px;margin-top:6px"><input type="checkbox" data-r="blocks|${i}|thesis"${b.thesis?" checked":""}> 주제 블록으로 강조 (주제문을 고르면 자동)</label></div>`).join("")}</div>
       <button class="btn sm" data-radd="blocks">+ 블록</button>`; break; }
     case "vocab": body = `<div class="field"><label>단어 (한 줄에 하나: 단어 | 뜻 | 예문·참고)</label>${H.ta("vocabText",(sl.items||[]).map(v=>[v.w,v.m,v.x].filter((x,i)=>i<2||x).join(" | ")).join("\n"),"incidence | 발생(률) | a lower incidence of disease",14)}
-      <div class="help">수업 화면에서 ‘뜻 가리기’를 켜면 카드를 하나씩 눌러 뜻을 열 수 있습니다.</div></div>`; break;
+      </div>`; break;
     case "sentence": body = `<div class="help" style="margin-bottom:8px">성분 표시: <code>[S:주어]</code> <code>[V:동사]</code> <code>[O:목적어]</code> <code>[C:보어]</code> <code>[OC:목적격보어]</code> <code>[M:수식어]</code> <code>[X:어법 포인트]</code></div>
       <div class="rows">${(sl.items||[]).map((it,i)=>`<div class="r"><div class="r-h">문장 ${i+1}<span><button class="mini" data-rdel="items|${i}">✕</button></span></div>
         <textarea class="inp" rows="3" data-r="items|${i}|en" placeholder="[S:This] [V:enabled] [O:him] [OC:to create …]">${esc(it.en||"")}</textarea>
@@ -1875,17 +1984,17 @@ function slideForm(sl){
     case "background": body = `<div class="field"><label>배경지식 (한 줄에 하나)</label>${H.ta("bgText",(sl.items||[]).join("\n"),"",8)}</div>`; break;
     case "image": body = `<div class="field"><label>이미지</label>
       <input type="file" accept="image/*" id="imgfile" class="inp">
-      <div class="help">${sl.imgId?"올린 이미지가 있습니다. 새로 고르면 바뀝니다.":"사진·도표·그림을 올리세요. 큰 사진은 자동으로 줄여서 올립니다. 그림을 올리면 칠판에 자동으로 들어가요(빠짐 → 넣음)."}</div></div>
+      <div class="help">${sl.imgId?"올린 이미지 있음":""}</div></div>
       <div class="field"><label>설명</label>${H.in("caption",sl.caption)}</div>`; break;
     case "reading": { const txt=(S.draft.slides||[]).find(x=>x.type==="text"); const ss=txt?passageSentences(txt.paras||[]):[];
-      body = `<p class="help">칠판에는 지금 읽는 문장만 진하게, 나머지는 흐리게 보입니다. ‘다음’을 누를 때마다 다음 문장으로 넘어가고, 해석·어휘·어법은 버튼으로 띄웁니다. 해석·어휘·어법은 이 지문의 해석/어휘/문장 분석 슬라이드에서 자동으로 가져옵니다. 아래에는 문장마다 따로 적고 싶은 것만 쓰세요.</p>
+      body = `
       <div class="rows">${ss.map((t,i)=>`<div class="r"><div class="r-h">문장 ${i+1}</div><div class="help en" style="margin:0 0 6px">${esc(t.replace(/[*_]/g,"").trim().slice(0,90))}</div>
         <textarea class="inp" rows="2" data-r="memos|${i}" placeholder="수업 메모 (폰에만 보임): 학생에게 할 질문, 흐름 설명">${esc((sl.memos||{})[i]||"")}</textarea>
         <textarea class="inp" style="margin-top:6px" rows="2" data-r="xpts|${i}" placeholder="칠판에 띄울 어법·표현 포인트 (한 줄에 하나, ‘어법’ 버튼에 나옴)">${esc(((sl.xpts||{})[i]||[]).join("\n"))}</textarea></div>`).join("")}</div>`; break; }
     case "task": body = `<div class="field"><label>풀이 시간 (분)</label><input class="inp" type="number" min="0.5" step="0.5" data-f="minutes" value="${esc(sl.minutes??3)}"></div>
       <div class="field"><label>안내 문구 (위의 ‘슬라이드 제목’이 큰 글씨로 나옵니다)</label>${H.ta("body",sl.body,"예) 교재 p.44 3번",3)}</div>`; break;
-    case "draw": body = `<div class="field"><label>그림판 위에 띄울 안내 문구 (선택)</label>${H.ta("body",sl.body,"예) 태양·지구·달의 위치를 그려 보자",3)}</div><p class="help">수업 화면에서 손가락이나 전자펜으로 그립니다. 그린 내용은 저장되지 않습니다.</p>`; break;
-    case "textmap": body = `<p class="help">‘구조도’ 슬라이드의 블록마다 적어 둔 <b>원문 문장 번호</b>(예: 3~6)에 따라 원문에 구획과 이름을 입힙니다. 칠판에서 ‘다음’을 누를 때마다 한 덩어리씩 나타납니다. 따로 입력할 것은 없습니다.</p>`; break;
+    case "draw": body = `<div class="field"><label>그림판 위에 띄울 안내 문구 (선택)</label>${H.ta("body",sl.body,"예) 태양·지구·달의 위치를 그려 보자",3)}</div>`; break;
+    case "textmap": body = `<p class="help">구조도 블록의 문장 번호대로 표시돼요.</p>`; break;
     default: body = `<div class="field"><label>본문</label>${H.ta("body",sl.body,"",8)}${mk}</div>`;
   }
   return top + body + note;
@@ -1996,44 +2105,33 @@ function renderRemote(){
   <div class="r-pad"><button class="nav" data-act="prev">‹ 이전</button><button class="nav" data-act="next">다음 ›</button></div>`;
 }
 function renderSettings(){
-  const el=$("#settings"); if(!el) return;
+  const el=$("#settings"); if(!el) return; setTimeout(loadBackups,0);
   el.innerHTML = `<div class="r-card"><h5>백업</h5>
-    <p class="help" style="margin-top:0">단원·지문 전체를 JSON 파일로 저장하거나, 저장한 파일로 되돌립니다. 이미지는 서버에 그대로 남고 파일에는 이미지 번호만 담깁니다.</p>
-    <div class="row-btns"><button class="btn pri" data-act="export">백업 저장</button><label class="btn" style="display:inline-flex;align-items:center">백업 불러오기<input type="file" id="importfile" accept=".json,application/json" hidden></label></div>
-    <p class="help">불러오기는 지금 있는 단원·지문을 모두 지우고 파일 내용으로 바꿉니다.</p></div>
+    <div class="row-btns"><button class="btn pri" data-act="export">백업 저장</button><label class="btn" style="display:inline-flex;align-items:center">백업 불러오기<input type="file" id="importfile" accept=".json,application/json" hidden></label></div></div>
   <div class="r-card"><h5>대기 화면 꾸미기</h5>
     <div class="field"><select class="inp" id="themesel">${Object.entries(THEME_NAMES).map(([k,v])=>`<option value="${k}"${((S.evt||{}).theme||"auto")===k?" selected":""}>${v}</option>`).join("")}</select></div>
     <div class="ev-list">${(((S.evt||{}).events)||[]).map((e,i)=>`<div class="ev-row"><input class="inp" data-ev="${i}|name" value="${esc(e.name||"")}" placeholder="행사 이름"><input class="inp" type="date" data-ev="${i}|date" value="${esc(e.date||"")}"><button class="mini" data-evdel="${i}" aria-label="삭제">✕</button></div>`).join("")}</div>
     <div class="row-btns"><button class="btn sm" data-act="ev-add">+ 행사 (D-day)</button><button class="btn pri sm" data-act="ev-save">저장</button></div></div>
   <div class="r-card"><h5>내가 들어가는 반</h5>
-    <p class="help" style="margin-top:0">쉼표로 나눠 적으세요. 목차의 ‘반별 진도’에 이 순서대로 나와요.</p>
     <div class="code-in"><input class="inp" id="clsset" value="${esc(progClasses().join(", "))}" style="font-size:16px;letter-spacing:0;text-align:left"><button class="btn pri" data-act="cls-save">저장</button></div>
     <button class="btn sm warn" data-act="prog-clear" style="margin-top:8px">진도 기록 모두 지우기</button></div>
-  <div class="r-card"><h5>비밀번호</h5><p class="help" style="margin-top:0">비밀번호는 Cloudflare 대시보드 → 이 Worker → Settings → Variables and Secrets의 <b>ADMIN_PASSWORD</b>에서 바꿉니다.</p></div>
   <div class="r-card"><h5>관리자 화면 번호</h5>
-    <p class="help" style="margin-top:0">칠판(수업 화면)에서 YE → 관리자 화면으로 들어갈 때 이 번호를 물어요. ${S.cfg&&S.cfg.pinHash?"<b>지금 번호가 정해져 있어요.</b>":"지금은 번호가 없어서 비밀번호를 다시 물어요."}</p>
     <div class="code-in"><input class="inp" id="pinset" type="password" inputmode="numeric" placeholder="숫자 4~8자리" autocomplete="new-password"><button class="btn pri" data-act="pin-save">정하기</button></div>
     ${S.cfg&&S.cfg.pinHash?'<button class="btn sm" data-act="pin-clear" style="margin-top:8px">번호 없애기</button>':""}</div>
-  <div class="r-card"><h5>학생 접속 막기</h5>
-    <p class="help" style="margin-top:0">주소를 알아도 로그인하지 않은 기기에는 아무것도 보이지 않아요. 전자칠판은 수업 때마다 <b>YE → 폰으로 칠판 열기</b>로 열고, 끝나면 <b>수업 끝내기</b>를 누르면 다시 잠겨요.</p></div>
-  <div class="r-card"><h5>이 기기</h5><p class="help" style="margin-top:0">‘30일 기억하기’로 로그인했다면 여기서 로그아웃하세요. 전자칠판에서는 기억하기를 켜지 마세요.</p>
+  <div class="r-card"><h5>이 기기</h5>
     <button class="btn" data-act="forget">이 기기 로그아웃</button></div>
-  <div class="r-card"><h5>모든 기기 로그아웃</h5><button class="btn warn" data-act="logoutall">모든 기기 로그아웃</button></div>
-  <div class="r-card"><h5>사용 방법</h5><div class="note">1. 전자칠판: 이 사이트 주소를 열면 수업 화면이 나옵니다. 로그인은 필요 없습니다.
-2. 폰: 같은 주소를 열고 ‘YE → 이 기기에서 비밀번호로 열기’로 들어가면 리모컨이 됩니다. 폰에서 넘기면 칠판도 1~2초 안에 따라 넘어갑니다.
-3. 칠판에서 편집이 필요하면 칠판의 ‘YE → 폰으로 잠금 풀기’ 번호를 폰 리모컨에 입력하세요.
-4. 칠판은 주소 끝에 #board를 붙여 한 번만 열어 두세요 (예: …workers.dev/#board). 그 브라우저는 계속 칠판으로 기억됩니다.
-5. 교실을 돌아다닐 때는 프레젠터(클리커)의 다음·이전 버튼으로 칠판을 넘길 수 있습니다. 문장 읽기 화면에서는 1·2·3 키가 해석·어휘·어법, T 키가 타이머입니다.
-6. ✏️ 필기 버튼을 누르면 어느 화면에서든 펜·형광펜·지우개로 쓸 수 있고, ‘뒤로’로 되돌립니다. 필기는 저장되지 않고 슬라이드별로 남아 있다가 새로고침하면 사라집니다.
-7. 수업이 끝나면 칠판에서 ‘수업 화면으로’를 눌러 관리자 모드를 닫으세요 (자동으로 로그아웃됩니다).</div></div>`;
+  <div class="r-card"><h5>자동 백업 (최근 14일)</h5><div id="bklist" class="bk-list"><span class="help">불러오는 중…</span></div></div>
+  <div class="r-card"><h5>모든 기기 로그아웃</h5><button class="btn warn" data-act="logoutall">모든 기기 로그아웃</button></div>`;
 }
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
   if(S.justDragged && Date.now()-S.justDragged<350){ e.preventDefault(); return; }
-  const t = e.target.closest("[data-act],[data-evdel],[data-lockcls],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
+  const t = e.target.closest("[data-act],[data-bkday],[data-evdel],[data-lockcls],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
+  if(ds.bkday){ const d=ds.bkday; if(!confirm(d+" 상태로 되돌릴까요?\n지금 자료는 오늘 날짜 백업으로 남아요.")) return;
+    try{ await API.req("POST","/api/backups/restore",{day:d}); await loadData(); S.draft=null; S.editPid=null; toast(d.slice(5).replace("-","월 ")+"일 상태로 되돌렸어요"); renderSettings(); }catch(x){ toast(x.message||"되돌리지 못했어요"); } return; }
   if(ds.evdel!=null){ S.evt=S.evt||{}; (S.evt.events||[]).splice(+ds.evdel,1); return renderSettings(); }
   if(ds.lockcls){ const c=ds.lockcls; try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(x){}
     const wait=c===HOME_CLS?1100:0; /* 담임 반은 공이 통통 튀는 걸 먼저 보여 주고 */
@@ -2105,7 +2203,7 @@ document.addEventListener("click", async e=>{
     case "pin-clear": try{ await API.put("passages","_cfg",{title:"_cfg",slides:[]}); S.cfg={}; toast("번호를 없앴어요. 이제 비밀번호로 확인해요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return;
     case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
     case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("잠깐 가렸어요"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
-    case "end-class": if(!confirm("수업을 끝낼까요?\n칠판을 비우고, 모든 필기를 지우고, 칠판을 다시 잠가요."+(S.cls?"\n"+S.cls+" 진도(지금 보던 곳)도 기록해요.":"\n(반을 고르지 않아서 진도는 기록되지 않아요)"))) return; S.sheet=null; return endClass();
+    case "end-class": if(!confirm("수업 끝?")) return; S.sheet=null; return endClass();
     case "a-clearall": S.drawData={}; S.drawBackup={}; S.sheet=null; render(); toast("모든 쪽의 필기를 지웠어요"); return;
     case "sound": S.sheet=null; render(); unlockAudio(); beep(); toast("‘띵-동’이 들리면 정상이에요. 안 들리면 칠판 볼륨을 확인하세요"); return;
     case "closewin": try{ if(document.fullscreenElement) await document.exitFullscreen(); }catch(x){} window.close(); setTimeout(()=>toast("브라우저가 창 닫기를 막았어요. 화면 맨 위 오른쪽 X를 누르거나 키보드 Alt+F4를 누르세요"),400); return;
