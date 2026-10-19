@@ -802,6 +802,15 @@ body.sorting,body.sorting *{cursor:grabbing!important;user-select:none}
 /* 꽉 채우지 않는 슬라이드(문제·해석 등)는 배율로 */
 .slide:not(.fit).sz-l{font-size:calc(clamp(19px, 1.85vw, 34px) * var(--fs) * 1.2)}
 .slide:not(.fit).sz-s{font-size:calc(clamp(19px, 1.85vw, 34px) * var(--fs) * .85)}
+
+/* 그림판 안내 문구: 글꼴·크기 */
+.slide.f-hand .dguide{font-family:var(--f-hand)!important;font-weight:700}
+.slide.f-serif .dguide{font-family:var(--f-serif)!important;font-weight:600}
+.slide.f-sans .dguide{font-family:var(--f-ui)!important;font-weight:700}
+.slide.sz-s .dguide{font-size:20px}
+.slide.sz-m .dguide{font-size:32px}
+.slide.sz-l .dguide{font-size:46px;max-width:80%}
+.slide.sz-xl .dguide{font-size:64px;max-width:90%}
 </style>
 </head>
 <body>
@@ -1229,7 +1238,7 @@ const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab"]
 
 /* 슬라이드별 글꼴·크기 */
 const FONT_OPTS={"":"기본",hand:"손글씨 (감자꽃)",serif:"명조",sans:"고딕"};
-const SIZE_OPTS={"":"자동 (화면에 꽉 차게)",l:"크게",m:"보통",s:"작게"};
+const SIZE_OPTS={"":"기본",s:"작게",m:"보통",l:"크게",xl:"아주 크게"};
 const SIZE_CAP={l:60,m:44,s:32};
 const SIZE_MUL={l:1.2,m:1,s:.85};
 function slideLook(sl){ if(!sl) return ""; let c=""; if(sl.font) c+=" f-"+sl.font; if(sl.size) c+=" sz-"+sl.size; return c; }
@@ -1821,8 +1830,8 @@ function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
      <div class="field"><label>슬라이드 제목 (비우면 종류 이름)</label>${H.in("title",sl.title)}</div>
-     <div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
-     <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>
+     ${sl.type==="draw"?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+     <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>`:""}
      <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:12px"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기 (지워지지 않아요. 슬라이드 목록의 ‘넣음/빠짐’ 버튼으로 언제든 다시 넣을 수 있어요)</label>`;
   const note = `<div class="field"><label>수업 메모 (리모컨·관리자에서만 보임: 발문, 판서 포인트 등)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
   const mk = `<div class="help">강조 <code>**주제문**</code> · 밑줄 <code>__단어__</code> · 기울임 <code>*제목*</code></div>`;
