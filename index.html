@@ -918,6 +918,12 @@ body.mode-admin #app{background:#F7F4EE}
 #settings .code-in input{font-size:16px;letter-spacing:normal;text-align:left}
 #settings{max-width:640px}
 .unit-h>span:not(.dh){min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 그림판 미리보기: 칠판과 같은 비율로, 글씨도 같은 비율로 줄여서 */
+.slide{--dg:24}
+.slide.sz-s{--dg:20}.slide.sz-m{--dg:32}.slide.sz-l{--dg:46}.slide.sz-xl{--dg:64}
+.preview .drawwrap{aspect-ratio:16/8.2;height:auto!important;container-type:inline-size;border:1px solid var(--card-line);border-radius:10px;background:#fff}
+.preview .drawwrap .dguide{font-size:calc(var(--dg) * 100cqw / 1700)!important;left:1.4cqw;top:1.1cqw}
 </style>
 </head>
 <body>
