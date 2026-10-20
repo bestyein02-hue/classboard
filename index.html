@@ -1418,7 +1418,8 @@ const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab",
 
 /* 슬라이드별 글꼴·크기 */
 const FONT_OPTS={"":"기본",nanum:"나눔고딕",gowun:"고운돋움",hand:"손글씨 (감자꽃)",serif:"명조",sans:"고딕"};
-const SIZE_OPTS={"":"기본",s:"작게",m:"보통",l:"크게",xl:"아주 크게"};
+const NOTE_SIZE={s:36,m:46,l:60,xl:76};
+const SIZE_OPTS={"":"기본 (자동)",s:"작게",m:"보통",l:"크게",xl:"아주 크게"};
 const SIZE_CAP={l:60,m:44,s:32};
 const SIZE_MUL={l:1.2,m:1,s:.85};
 function slideLook(sl){ if(!sl) return ""; let c=""; if(sl.font) c+=" f-"+sl.font; if(sl.size) c+=" sz-"+sl.size; return c; }
@@ -1876,6 +1877,7 @@ function renderClass(){
 let fitT=null;
 function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
+  { const sl0=curSlide(); if(sl0 && sl0.type==="note" && NOTE_SIZE[sl0.size]){ box.style.fontSize=(NOTE_SIZE[sl0.size]*(innerWidth<760?.5:1)*S.scale)+"px"; return; } }
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
   const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
@@ -2056,7 +2058,7 @@ function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
      <div class="field"><label>슬라이드 제목</label>${H.in("title",sl.title)}</div>
-     ${sl.type==="note"?`<div class="field"><label>글꼴</label><select class="inp" data-f="font"><option value=""${!sl.font?" selected":""}>기본 (나눔고딕 제목 + 고운돋움 본문)</option><option value="nanum"${sl.font==="nanum"?" selected":""}>나눔고딕</option><option value="gowun"${sl.font==="gowun"?" selected":""}>고운돋움</option></select></div>`:""}${sl.type==="draw"?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+     ${sl.type==="note"?`<div class="field"><label>글꼴</label><select class="inp" data-f="font"><option value=""${!sl.font?" selected":""}>기본 (나눔고딕 제목 + 고운돋움 본문)</option><option value="nanum"${sl.font==="nanum"?" selected":""}>나눔고딕</option><option value="gowun"${sl.font==="gowun"?" selected":""}>고운돋움</option></select></div>`:""}${(sl.type==="draw"||sl.type==="note")?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
      <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>`:""}
      <label class="chk"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기</label>`;
   const note = `<div class="field"><label>수업 메모 (폰에만 보임)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
