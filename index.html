@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Fredoka:wght@600&family=Noto+Sans+KR:wght@400;500;700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Nanum+Gothic:wght@400;700;800&family=Gowun+Dodum&family=Fredoka:wght@600&family=Noto+Sans+KR:wght@400;500;700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 :root{
@@ -937,7 +937,7 @@ body.mode-admin #app{background:#F7F4EE}
 }
 
 /* 관리자·리모컨 글꼴: 프리텐다드 */
-body.mode-admin,body.mode-admin button,body.mode-admin input,body.mode-admin select,body.mode-admin textarea,body.mode-admin .tg,body.mode-admin .btn,body.mode-admin .li,body.mode-admin .mini,body.mode-admin .help,body.mode-admin label,body.mode-admin .r-chip,body.mode-admin .note{font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",system-ui,sans-serif;letter-spacing:-.01em}
+body.mode-admin,body.mode-admin button,body.mode-admin input,body.mode-admin select,body.mode-admin textarea,body.mode-admin .tg,body.mode-admin .btn,body.mode-admin .li,body.mode-admin .mini,body.mode-admin .help,body.mode-admin label,body.mode-admin .r-chip,body.mode-admin .note{font-family:"Nanum Gothic","Noto Sans KR",system-ui,sans-serif;letter-spacing:0}
 body.mode-admin .r-title,body.mode-admin .r-h b,body.mode-admin .unit-h>span:not(.dh){font-family:var(--f-hand);font-weight:700;letter-spacing:0}
 body.mode-admin .r-title{font-size:28px}
 body.mode-admin .unit-h>span:not(.dh){font-size:19px}
@@ -946,6 +946,43 @@ body.mode-admin .tg,body.mode-admin .btn{font-weight:700}
 body.mode-admin .r-pad .nav{font-family:var(--f-hand);font-weight:700;font-size:26px}
 body.mode-admin .preview .slide,body.mode-admin .preview .slide *{letter-spacing:normal}
 .dguide{white-space:pre-line;line-height:1.35}
+
+/* 판서 슬라이드 */
+.fit-box.note{line-height:1.5}
+.nt-sec+.nt-sec{margin-top:1em;padding-top:.8em;border-top:2px dashed var(--line)}
+.nt-h{font-family:var(--f-hand);font-weight:700;font-size:1.25em;color:var(--orange-dk);margin-bottom:.35em}
+.nt-l{margin:.12em 0}
+.nt-l.en{font-family:var(--f-serif);font-weight:500}
+.nt-ar{margin:.1em 0 .25em 1.2em;color:var(--ink);position:relative}
+.nt-ar::before{content:"→";position:absolute;left:-1.1em;color:var(--orange)}
+.nt-sp{height:.55em}
+.nt-tb{border-collapse:collapse;margin:.3em 0 .4em;font-size:.92em;min-width:60%}
+.nt-tb th,.nt-tb td{border:1.5px solid var(--line);padding:.28em .7em;text-align:left;vertical-align:top}
+.nt-tb th{background:#FFF1E6;color:var(--orange-dk);font-weight:800}
+.nt-tb td.nt-c0{font-weight:700;white-space:nowrap}
+.nt-tb [data-en]{font-family:var(--f-serif);font-weight:600}
+.nt-in{font-family:ui-monospace,Consolas,"Noto Sans KR",monospace;font-size:14px;line-height:1.6;tab-size:14}
+
+/* 판서 글꼴: 기본은 나눔고딕 제목 + 고운돋움 본문 */
+.fit-box.note .nt-h{font-family:"Nanum Gothic",var(--f-ui);font-weight:800;color:var(--orange-dk)}
+.fit-box.note .nt-l:not(.en),.fit-box.note .nt-ar,.fit-box.note .nt-tb td:not([data-en]){font-family:"Gowun Dodum",var(--f-ui);font-weight:400}
+.fit-box.note .nt-tb th{font-family:"Nanum Gothic",var(--f-ui);font-weight:800}
+.slide.f-nanum .fit-box.note .nt-l:not(.en),.slide.f-nanum .fit-box.note .nt-ar,.slide.f-nanum .fit-box.note .nt-tb td:not([data-en]){font-family:"Nanum Gothic",var(--f-ui);font-weight:400}
+.slide.f-gowun .fit-box.note .nt-h,.slide.f-gowun .fit-box.note .nt-tb th{font-family:"Gowun Dodum",var(--f-ui);font-weight:400}
+.slide.f-nanum .dguide{font-family:"Nanum Gothic",var(--f-ui)!important;font-weight:800}
+.slide.f-gowun .dguide{font-family:"Gowun Dodum",var(--f-ui)!important;font-weight:400}
+
+/* 판서: 나눔고딕 */
+.fit-box.note,.fit-box.note .nt-l:not(.en),.fit-box.note .nt-ar,.fit-box.note .nt-tb th,.fit-box.note .nt-tb td:not([data-en]){font-family:"Nanum Gothic","Noto Sans KR",sans-serif;font-weight:700}
+.fit-box.note .nt-h{font-family:"Nanum Gothic","Noto Sans KR",sans-serif;font-weight:800}
+.fit-box.note .nt-tb th{font-weight:800}
+.slide.f-nanum .dguide{font-family:"Nanum Gothic","Noto Sans KR",sans-serif!important;font-weight:800}
+
+/* 대기 화면을 뺀 전체: 나눔고딕 */
+body:not(.on-cover){--f-ui:"Nanum Gothic","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--f-hand:"Nanum Gothic","Noto Sans KR",sans-serif;--f-ko:var(--f-ui)}
+body:not(.on-cover),body:not(.on-cover) button,body:not(.on-cover) input,body:not(.on-cover) select,body:not(.on-cover) textarea{font-family:var(--f-ui)}
+body:not(.on-cover) .bar .ttl b,body:not(.on-cover) .tab,body:not(.on-cover) .ib,body:not(.on-cover) .nav,body:not(.on-cover) .tg,body:not(.on-cover) .count{font-weight:800}
+body:not(.on-cover) .blk .lab{font-weight:800}
 </style>
 </head>
 <body>
@@ -1004,7 +1041,7 @@ const API = {
 };
 const TYPES = {
   text:{name:"원문"}, reading:{name:"문장 읽기"}, textmap:{name:"구조 표시"}, structure:{name:"구조도"},
-  task:{name:"활동"}, free:{name:"큰 글씨"}, draw:{name:"그림판"},
+  task:{name:"활동"}, note:{name:"판서"}, free:{name:"큰 글씨"}, draw:{name:"그림판"},
   vocab:{name:"어휘"}, sentence:{name:"문장 분석"}, question:{name:"예시 문제"}, translate:{name:"해석"},
   background:{name:"배경지식"}, image:{name:"이미지"}
 };
@@ -1076,11 +1113,11 @@ const UIEN=(()=>{ try{ return localStorage.getItem("cb_ui")==="en"; }catch(e){ r
 function L(ko,en){ return UIEN?en:ko; }
 document.documentElement.classList.toggle("ui-ko",!UIEN);
 try{ const pk=JSON.parse(localStorage.getItem("cb_pick")||"null"); if(pk){ S.pick.n=pk.n||26; S.pick.excl=pk.excl!==false; } }catch(e){}
-const ICONS={text:"📖",reading:"🔦",textmap:"🎨",structure:"🧩",task:"⏱️",free:"💬",draw:"✏️",vocab:"🔤",sentence:"🔍",question:"❓",translate:"🌏",background:"💡",image:"🖼️"};
+const ICONS={note:"✍️",text:"📖",reading:"🔦",textmap:"🎨",structure:"🧩",task:"⏱️",free:"💬",draw:"✏️",vocab:"🔤",sentence:"🔍",question:"❓",translate:"🌏",background:"💡",image:"🖼️"};
 function slideIcon(sl){ return ICONS[sl.type]||"📄"; }
 function slideTitle(sl){ return sl.tab || (sl.title||"").replace(/\s*\n\s*/g," ") || TYPES[sl.type]?.name || "슬라이드"; }
 const KO2EN={"원문":"Passage","문제를 풀어 보세요":"Solve","문장 읽기":"Close reading","구조 표시":"Structure map","구조도":"Structure","어휘":"Vocabulary","문장 분석":"Sentences","예시 문제":"Check","내용 일치":"Check","해석":"Translation","배경지식":"Background","이미지":"Image","큰 글씨":"Note","그림판":"Sketch","활동":"Activity"};
-const EN_TYPE={text:"Passage",reading:"Close reading",textmap:"Structure map",structure:"Structure",task:"Solve",free:"Note",draw:"Sketch",vocab:"Vocabulary",sentence:"Sentences",question:"Check",translate:"Translation",background:"Background",image:"Image"};
+const EN_TYPE={note:"Notes",text:"Passage",reading:"Close reading",textmap:"Structure map",structure:"Structure",task:"Solve",free:"Note",draw:"Sketch",vocab:"Vocabulary",sentence:"Sentences",question:"Check",translate:"Translation",background:"Background",image:"Image"};
 function uiName(sl){ if(!UIEN) return slideTitle(sl); if(sl.tab) return sl.tab; const t=(sl.title||"").replace(/\s*\n\s*/g," "); if(!t) return EN_TYPE[sl.type]||"Slide"; const m=t.match(/^문장 (\d+)$/); if(m) return "Sentence "+m[1]; return KO2EN[t]||t; }
 
 /* ================= slide renderers ================= */
@@ -1362,6 +1399,7 @@ function czMarks(t){ return (String(t||"").match(/\[\[.+?\]\]/g)||[]).length; }
 function czCount(sl){ let n=0; (sl.blocks||[]).forEach(b=>n+=czMarks(b.ko)); if(sl.sub) n+=Math.max(1,czMarks(sl.sub)); return n; }
 function stepInfo(p, sl){
   if(!sl) return null;
+  if(sl.type==="note" && !sl.all){ const n=noteSections(sl.body).length; return n>1?{key:"sec",min:0,max:n-1}:null; }
   if(sl.type==="vocab" && !S.reveal.vlist){ const n=(sl.items||[]).length; return n?{key:"vq",min:0,max:2*n-1}:null; }
   if(sl.type==="textmap"){ const st=(p.slides||[]).find(x=>x.type==="structure"); return {key:"step",min:0,max:(st?.blocks||[]).length}; }
   if(sl.type==="structure" && sl.blank){ const n=czCount(sl); return n?{key:"sbk",min:0,max:n}:null; }
@@ -1369,14 +1407,42 @@ function stepInfo(p, sl){
   return null;
 }
 function stepPatch(si,v){ return si.key==="sent"?{sent:v,ko:false,vc:false,gm:false}:{[si.key]:v}; }
-const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab"];
+const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab","note"];
 
 /* 슬라이드별 글꼴·크기 */
-const FONT_OPTS={"":"기본",hand:"손글씨 (감자꽃)",serif:"명조",sans:"고딕"};
+const FONT_OPTS={"":"기본",nanum:"나눔고딕",gowun:"고운돋움",hand:"손글씨 (감자꽃)",serif:"명조",sans:"고딕"};
 const SIZE_OPTS={"":"기본",s:"작게",m:"보통",l:"크게",xl:"아주 크게"};
 const SIZE_CAP={l:60,m:44,s:32};
 const SIZE_MUL={l:1.2,m:1,s:.85};
 function slideLook(sl){ if(!sl) return ""; let c=""; if(sl.font) c+=" f-"+sl.font; if(sl.size) c+=" sz-"+sl.size; return c; }
+
+/* ===== 판서 슬라이드: 줄줄 붙여 넣으면 정리해서 보여 주기 ===== */
+const NOTE_HEAD=/^\s*(?:\d{1,2}\s*[.)]|[★☆■□●◆▶✔✅]|#{1,3})\s*/;
+function noteSections(body){
+  const lines=String(body||"").replace(/\r/g,"").split("\n"), secs=[]; let cur=null;
+  for(const ln of lines){
+    if(NOTE_HEAD.test(ln) && ln.trim().length<60 && !ln.includes("\t")){ cur={head:ln.trim().replace(/^#{1,3}\s*/,""),lines:[]}; secs.push(cur); }
+    else { if(!cur){ cur={head:"",lines:[]}; secs.push(cur); } cur.lines.push(ln); }
+  }
+  secs.forEach(x=>{ while(x.lines.length && !x.lines[x.lines.length-1].trim()) x.lines.pop(); while(x.lines.length && !x.lines[0].trim()) x.lines.shift(); });
+  return secs.filter(x=>x.head||x.lines.length);
+}
+function noteSecHTML(sec){
+  let h=sec.head?`<div class="nt-h">${inline(sec.head)}</div>`:"", i=0; const L=sec.lines;
+  const isEn=t=>{ const a=(t.match(/[A-Za-z]/g)||[]).length, k=(t.match(/[가-힣]/g)||[]).length; return a>8 && a>k*2; };
+  while(i<L.length){
+    const ln=L[i];
+    if(ln.includes("\t")){ const rows=[]; while(i<L.length && L[i].includes("\t")){ rows.push(L[i].split("\t")); i++; }
+      const nc=Math.max(...rows.map(r=>r.length));
+      h+=`<table class="nt-tb">${rows.map((r,ri)=>`<tr>${Array.from({length:nc},(_,ci)=>{ const c=(r[ci]||"").trim(), tag=ri===0?"th":"td"; return `<${tag}${ci===0&&ri>0?' class="nt-c0"':""}${/[A-Za-z]/.test(c) && !/[가-힣]/.test(c)?' data-en="1"':""}>${inline(c)}</${tag}>`; }).join("")}</tr>`).join("")}</table>`; continue; }
+    const t=ln.trim();
+    if(!t) h+=`<div class="nt-sp"></div>`;
+    else if(/^(→|➡️?|⇒|=>|->)/.test(t)) h+=`<div class="nt-ar">${inline(t.replace(/^(→|➡️?|⇒|=>|->)\s*/,""))}</div>`;
+    else h+=`<div class="nt-l${isEn(t)?" en":""}">${inline(t)}</div>`;
+    i++;
+  }
+  return `<section class="nt-sec">${h}</section>`;
+}
 function renderSlide(sl, ctx){
   // ctx: {reveal, live:boolean (interactive board)}
   const R = ctx.reveal||{};
@@ -1476,6 +1542,11 @@ function renderSlide(sl, ctx){
     case "image": {
       const src = sl.imgId ? "/img/"+sl.imgId : (sl.src||"");
       return `<div class="imgwrap">${src?`<img src="${esc(src)}" alt="${esc(sl.caption||"")}">`:`<p>이미지가 아직 없습니다.</p>`}${sl.caption?`<p>${inline(sl.caption)}</p>`:""}</div>`;
+    }
+    case "note": {
+      const secs=noteSections(sl.body); if(!secs.length) return `<div class="fit-box free"><div class="fb">판서 내용을 넣어 주세요.</div></div>`;
+      const all=!!sl.all || !ctx.live, k=Math.max(0,Math.min(R.sec||0,secs.length-1));
+      return `<div class="fit-box note">${(all?secs:[secs[k]]).map(noteSecHTML).join("")}</div>`;
     }
     case "free": default:
       return `<div class="fit-box free">${sl.title?`<div class="ft">${inline(sl.title)}</div>`:""}<div class="fb">${inline(sl.body||"")}</div></div>`;
@@ -1738,10 +1809,10 @@ function render(){
 
 /* ---------- class board ---------- */
 function renderClass(){
-  const app=$("#app");
+  const app=$("#app"); document.body.classList.remove("on-cover");
   { const st0=$(".stage"), key=S.cur.pid+":"+S.cur.idx; S.keepScroll=(st0 && S.lastStageKey===key)?st0.scrollTop:null; S.lastStageKey=key; }
   if(!S.isAdmin || S.blank){
-    const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses();
+    const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses(); document.body.classList.toggle("on-cover",!!pickCls);
     const mark=`<svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg>`;
     app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}${ddayHTML()}</div><div class="cv-mid"><b class="cv-title">ENGLISH${stickerHTML()}</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls${S.pendCls&&S.pendCls!==HOME_CLS?" other-picked":""}">${cl.map(c=>`<button class="cls num${c===HOME_CLS?" home":""}${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}${c===HOME_CLS?`<span class="ball" aria-hidden="true">⚽</span>`:""}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
@@ -1799,7 +1870,7 @@ let fitT=null;
 function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
-  const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(hi<lo) lo=hi;
+  const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=(best*S.scale)+"px";
   if(S.keepScroll!=null){ stage.scrollTop=S.keepScroll; S.keepScroll=null; }
@@ -1978,7 +2049,7 @@ function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
      <div class="field"><label>슬라이드 제목</label>${H.in("title",sl.title)}</div>
-     ${sl.type==="draw"?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+     ${sl.type==="note"?`<div class="field"><label>글꼴</label><select class="inp" data-f="font"><option value=""${!sl.font?" selected":""}>기본 (나눔고딕 제목 + 고운돋움 본문)</option><option value="nanum"${sl.font==="nanum"?" selected":""}>나눔고딕</option><option value="gowun"${sl.font==="gowun"?" selected":""}>고운돋움</option></select></div>`:""}${sl.type==="draw"?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
      <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>`:""}
      <label class="chk"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기</label>`;
   const note = `<div class="field"><label>수업 메모 (폰에만 보임)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
@@ -2034,6 +2105,14 @@ function slideForm(sl){
       <div class="field"><label>안내 문구 (위의 ‘슬라이드 제목’이 큰 글씨로 나옵니다)</label>${H.ta("body",sl.body,"예) 교재 p.44 3번",3)}</div>`; break;
     case "draw": body = `<div class="field"><label>그림판 위에 띄울 안내 문구 (선택)</label>${H.ta("body",sl.body,"예) 태양·지구·달의 위치를 그려 보자",3)}</div>`; break;
     case "textmap": body = `<p class="help">구조도 블록의 문장 번호대로 표시돼요.</p>`; break;
+    case "note": body = `<div class="field"><label>판서 내용 — 그대로 붙여 넣기</label><textarea class="inp nt-in" data-f="body" data-tabok="1" rows="20" placeholder="1. 핵심 개념
+조동사 = 화자의 판단
+➡️ 현재의 관점에서 과거의 일을 판단한다.
+
+2. 의미 정리
+표현	의미
+must have p.p.	~했음에 틀림없다">${esc(sl.body||"")}</textarea></div>
+      <label class="chk"><input type="checkbox" data-f="all"${sl.all?" checked":""}> 한 화면에 다 보기</label>`; break;
     default: body = `<div class="field"><label>본문</label>${H.ta("body",sl.body,"",8)}${mk}</div>`;
   }
   return top + body + note;
@@ -2067,6 +2146,7 @@ function readForm(target){
 }
 function newSlide(type){
   const base={id:uid(), type, title:""};
+  if(type==="note"){ base.title="판서"; base.body=""; }
   if(type==="text") base.paras=[];
   if(type==="structure"){ base.blocks=[{label:"도입",span:"",ko:""}]; }
   if(type==="vocab") base.items=[];
@@ -2355,7 +2435,7 @@ document.addEventListener("keydown", e=>{
     if(kk==="t"){ S.sheet="timer"; render(); } }
   if(e.key==="Escape"){ S.drawer=false; render(); }
 });
-document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="pw") $("[data-act=dologin]")?.click(); if(e.key==="Enter" && e.target.id==="gpw") $("[data-act=gate-go]")?.click(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Tab" && e.target.dataset && e.target.dataset.tabok){ e.preventDefault(); const t=e.target, a=t.selectionStart, b=t.selectionEnd; t.value=t.value.slice(0,a)+"\t"+t.value.slice(b); t.selectionStart=t.selectionEnd=a+1; t.dispatchEvent(new Event("input",{bubbles:true})); return; } if(e.key==="Enter" && e.target.id==="pw") $("[data-act=dologin]")?.click(); if(e.key==="Enter" && e.target.id==="gpw") $("[data-act=gate-go]")?.click(); });
 async function shrinkImage(file){
   if(file.size<900000 && /^image\/(png|jpeg|gif|webp)$/.test(file.type)) return file;
   const img=await createImageBitmap(file); const max=1800; const k=Math.min(1,max/Math.max(img.width,img.height));
