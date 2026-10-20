@@ -983,6 +983,13 @@ body:not(.on-cover){--f-ui:"Nanum Gothic","Noto Sans KR","Apple SD Gothic Neo","
 body:not(.on-cover),body:not(.on-cover) button,body:not(.on-cover) input,body:not(.on-cover) select,body:not(.on-cover) textarea{font-family:var(--f-ui)}
 body:not(.on-cover) .bar .ttl b,body:not(.on-cover) .tab,body:not(.on-cover) .ib,body:not(.on-cover) .nav,body:not(.on-cover) .tg,body:not(.on-cover) .count{font-weight:800}
 body:not(.on-cover) .blk .lab{font-weight:800}
+
+/* 칠판(수업) 화면 글씨: 고운돋움 — 관리자 화면은 나눔고딕 유지 */
+body:not(.on-cover):not(.mode-admin){--f-ui:"Gowun Dodum","Nanum Gothic","Noto Sans KR",sans-serif;--f-hand:"Gowun Dodum","Nanum Gothic","Noto Sans KR",sans-serif;--f-ko:var(--f-ui)}
+body:not(.on-cover):not(.mode-admin) .fit-box.note,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-l:not(.en),body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-ar,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-tb th,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-tb td:not([data-en]),body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-h{font-family:"Gowun Dodum","Nanum Gothic",sans-serif}
+/* 고운돋움은 획이 얇아서 칠판용으로 살짝 굵게 */
+body:not(.on-cover):not(.mode-admin) .stage,body:not(.on-cover):not(.mode-admin) .bar,body:not(.on-cover):not(.mode-admin) .tabs,body:not(.on-cover):not(.mode-admin) .foot,body:not(.on-cover):not(.mode-admin) .sheet,body:not(.on-cover):not(.mode-admin) .drawer{-webkit-text-stroke:.025em currentColor}
+body:not(.on-cover):not(.mode-admin) .en,body:not(.on-cover):not(.mode-admin) [data-en],body:not(.on-cover):not(.mode-admin) .para{-webkit-text-stroke:0}
 </style>
 </head>
 <body>
