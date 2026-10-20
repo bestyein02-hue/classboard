@@ -992,6 +992,14 @@ body:not(.on-cover):not(.mode-admin) .stage,body:not(.on-cover):not(.mode-admin)
 body:not(.on-cover):not(.mode-admin) .en,body:not(.on-cover):not(.mode-admin) [data-en],body:not(.on-cover):not(.mode-admin) .para{-webkit-text-stroke:0}
 .nt-key{color:var(--orange-dk);font-weight:800;margin:.15em 0;padding:.2em .5em;background:#FFF1E6;border-radius:8px;display:inline-block}
 .nt-l.nt-ind{margin-left:1.4em}
+
+/* 글자 색 */
+.tc-r{color:#D23B32}.tc-b{color:#2F6FD0}.tc-g{color:#1E8A5A}.tc-o{color:#E0601F}.tc-p{color:#7A4FB5}
+.tc-y{background:linear-gradient(transparent 40%,#FFE45C 40%,#FFE45C 92%,transparent 92%)}
+.tc{font-weight:inherit}
+.cbar{display:flex;gap:4px;flex-wrap:wrap;margin:2px 0 6px}
+.cb{border:1.5px solid #E6E0D6;background:#fff;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800;cursor:pointer}
+.cb-r{color:#D23B32}.cb-b{color:#2F6FD0}.cb-g{color:#1E8A5A}.cb-o{color:#E0601F}.cb-p{color:#7A4FB5}.cb-y{background:#FFE45C;border-color:#FFE45C;color:#1B1B1B}.cb-x{color:#8A847A}
 </style>
 </head>
 <body>
@@ -1074,12 +1082,14 @@ try{ S.cls=localStorage.getItem("cb_cls")||null; }catch(e){}
 /* ================= helpers ================= */
 const $ = (sel,root=document)=>root.querySelector(sel);
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const COLOR_KEY={빨강:"r",파랑:"b",초록:"g",주황:"o",보라:"p",노랑:"y"};
 function inline(s){
   let h = esc(s);
   h = h.replace(/\*\*(.+?)\*\*/g,'<mark class="key">$1</mark>')
        .replace(/__(.+?)__/g,'<u>$1</u>')
        .replace(/(^|[^*])\*([^*\s][^*]*?)\*/g,'$1<em>$2</em>')
-       .replace(/\[\[(.+?)\]\]/g,'<b class="czans">$1</b>');
+       .replace(/\[\[(.+?)\]\]/g,'<b class="czans">$1</b>')
+       .replace(/\{(빨강|파랑|초록|주황|보라|노랑):(.+?)\}/g,(m,c,t)=>`<span class="tc tc-${COLOR_KEY[c]}">${t}</span>`);
   return h;
 }
 function segs(s){
@@ -1130,7 +1140,7 @@ const EN_TYPE={note:"Notes",text:"Passage",reading:"Close reading",textmap:"Stru
 function uiName(sl){ if(!UIEN) return slideTitle(sl); if(sl.tab) return sl.tab; const t=(sl.title||"").replace(/\s*\n\s*/g," "); if(!t) return EN_TYPE[sl.type]||"Slide"; const m=t.match(/^문장 (\d+)$/); if(m) return "Sentence "+m[1]; return KO2EN[t]||t; }
 
 /* ================= slide renderers ================= */
-function plainS(x){ return String(x||"").replace(/\[(?:S|V|O|IO|DO|C|OC|M|X):/g,"").replace(/\((?:that|why|which|who|whom|when|where)\)\s*/gi,"").replace(/[\]*_]/g,"").replace(/\s+/g," ").trim().toLowerCase(); }
+function plainS(x){ return String(x||"").replace(/\{(?:빨강|파랑|초록|주황|보라|노랑):/g,"").replace(/\}/g,"").replace(/\[(?:S|V|O|IO|DO|C|OC|M|X):/g,"").replace(/\((?:that|why|which|who|whom|when|where)\)\s*/gi,"").replace(/[\]*_]/g,"").replace(/\s+/g," ").trim().toLowerCase(); }
 function sentInfo(P,i){
   const sl=P.slides||[], txt=sl.find(x=>x.type==="text"); if(!txt) return null;
   const sents=passageSentences(txt.paras||[]); if(i<0||i>=sents.length) return null;
@@ -2071,7 +2081,7 @@ function slideForm(sl){
   const mk = `<div class="help">강조 <code>**주제문**</code> · 밑줄 <code>__단어__</code> · 기울임 <code>*제목*</code></div>`;
   let body="";
   switch(sl.type){
-    case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}</div>`; break;
+    case "text": body = `<div class="field"><label>본문 (문단 사이에 빈 줄)</label><div class="cbar">${["빨강","파랑","초록","주황","보라","노랑"].map(c=>`<button type="button" class="cb cb-${COLOR_KEY[c]}" data-wrap="${c}" title="${c}">${c==="노랑"?"형광":c}</button>`).join("")}<button type="button" class="cb cb-x" data-wrap="" title="색 지우기">지우기</button></div>${H.ta("paras",(sl.paras||[]).join("\n\n"),"",14)}${mk}</div>`; break;
     case "structure": { const tx0=(S.draft.slides||[]).find(x=>x.type==="text"), ss0=tx0?passageSentences(tx0.paras||[]):[];
       body = `<label class="chk"><input type="checkbox" data-f="blank"${sl.blank?" checked":""}> 빈칸으로 시작</label>
       <p class="help" style="margin:-4px 0 12px">빈칸: <code>[[단어]]</code></p>
@@ -2120,7 +2130,7 @@ function slideForm(sl){
       <div class="field"><label>안내 문구 (위의 ‘슬라이드 제목’이 큰 글씨로 나옵니다)</label>${H.ta("body",sl.body,"예) 교재 p.44 3번",3)}</div>`; break;
     case "draw": body = `<div class="field"><label>그림판 위에 띄울 안내 문구 (선택)</label>${H.ta("body",sl.body,"예) 태양·지구·달의 위치를 그려 보자",3)}</div>`; break;
     case "textmap": body = `<p class="help">구조도 블록의 문장 번호대로 표시돼요.</p>`; break;
-    case "note": body = `<div class="field"><label>판서 내용 — 그대로 붙여 넣기</label><textarea class="inp nt-in" data-f="body" data-tabok="1" rows="20" placeholder="1. 핵심 개념
+    case "note": body = `<div class="field"><label>판서 내용 — 그대로 붙여 넣기</label><div class="cbar">${["빨강","파랑","초록","주황","보라","노랑"].map(c=>`<button type="button" class="cb cb-${COLOR_KEY[c]}" data-wrap="${c}" title="${c}">${c==="노랑"?"형광":c}</button>`).join("")}<button type="button" class="cb cb-x" data-wrap="" title="색 지우기">지우기</button></div><textarea class="inp nt-in" data-f="body" data-tabok="1" rows="20" placeholder="1. 핵심 개념
 조동사 = 화자의 판단
 ➡️ 현재의 관점에서 과거의 일을 판단한다.
 
@@ -2128,7 +2138,7 @@ function slideForm(sl){
 표현	의미
 must have p.p.	~했음에 틀림없다">${esc(sl.body||"")}</textarea></div>
       <label class="chk"><input type="checkbox" data-f="all"${sl.all?" checked":""}> 한 화면에 다 보기</label>`; break;
-    default: body = `<div class="field"><label>본문</label>${H.ta("body",sl.body,"",8)}${mk}</div>`;
+    default: body = `<div class="field"><label>본문</label><div class="cbar">${["빨강","파랑","초록","주황","보라","노랑"].map(c=>`<button type="button" class="cb cb-${COLOR_KEY[c]}" data-wrap="${c}" title="${c}">${c==="노랑"?"형광":c}</button>`).join("")}<button type="button" class="cb cb-x" data-wrap="" title="색 지우기">지우기</button></div>${H.ta("body",sl.body,"",8)}${mk}</div>`;
   }
   return top + body + note;
 }
@@ -2488,6 +2498,14 @@ document.addEventListener("pointerdown", e=>{
     cfg.done(order); };
   addEventListener("pointermove",mv,{passive:false}); addEventListener("pointerup",up); addEventListener("pointercancel",up);
 });
+
+document.addEventListener("mousedown",e=>{ if(e.target.closest("[data-wrap]")) e.preventDefault(); },true);
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-wrap]"); if(!b) return; e.stopPropagation();
+  const ta=b.closest(".field")?.querySelector("textarea"); if(!ta) return; const a=ta.selectionStart, z=ta.selectionEnd, c=b.dataset.wrap;
+  let v=ta.value, sel=v.slice(a,z);
+  if(!c){ const clean=sel.replace(/\{(?:빨강|파랑|초록|주황|보라|노랑):(.+?)\}/g,"$1"); ta.value=v.slice(0,a)+clean+v.slice(z); ta.selectionStart=a; ta.selectionEnd=a+clean.length; }
+  else { if(a===z){ toast("색을 바꿀 글자를 먼저 드래그해 주세요"); return; } sel=sel.replace(/\{(?:빨강|파랑|초록|주황|보라|노랑):(.+?)\}/g,"$1"); const w="{"+c+":"+sel+"}"; ta.value=v.slice(0,a)+w+v.slice(z); ta.selectionStart=a; ta.selectionEnd=a+w.length; }
+  ta.focus(); ta.dispatchEvent(new Event("input",{bubbles:true})); },true);
 /* swipe on board */
 let tx=null;
 document.addEventListener("touchstart",e=>{ if(S.mode==="class" && e.target.closest(".stage") && !e.target.closest("canvas")) tx=e.touches[0].clientX; },{passive:true});
