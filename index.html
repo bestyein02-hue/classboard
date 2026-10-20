@@ -1300,9 +1300,9 @@ const ANN={tool:"pen",size:1,pen:"#26294D",hl:"#FFE14D"};
 const PEN_COLORS=["#26294D","#E0524C","#2F6FE0","#1E9E5A","#8A63D2","#F08A24"];
 const HL_COLORS=["#FFE14D","#FF9BBE","#7FE0C4","#FFB36B","#9CC8FF","#D6B8FF"];
 const A_W={pen:[.0028,.0055,.0100], hl:[.012,.020,.032], eraser:[.015,.035,.070]};
-function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && (sl.type==="reading"||sl.type==="text"))?":"+(S.reveal.sent??-1):""); }
+function annKey(){ const sl=curSlide(); return S.cur.pid+":"+S.cur.idx+((sl && (sl.type==="reading"||sl.type==="text"))?":"+(S.reveal.sent??-1):(sl && sl.type==="note")?":s"+(S.reveal.sec||0):""); }
 function annStrokes(){ const k=annKey(); return S.drawData[k]||(S.drawData[k]=[]); }
-function annAlways(){ const sl=curSlide(); return !!(sl && ["draw","text","reading"].includes(sl.type)); }
+function annAlways(){ const sl=curSlide(); return !!(sl && ["draw","text","reading","note"].includes(sl.type)); }
 function annActive(){ return !!S.annOn || annAlways(); }
 function annToolsHTML(){
   if(S.annMin) return `<button class="at" data-act="a-min" aria-label="필기 다시 켜기"><span>✎</span><small>${L("필기 켜기","Pen on")}</small></button>`;
