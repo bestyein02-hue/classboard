@@ -990,6 +990,8 @@ body:not(.on-cover):not(.mode-admin) .fit-box.note,body:not(.on-cover):not(.mode
 /* 고운돋움은 획이 얇아서 칠판용으로 살짝 굵게 */
 body:not(.on-cover):not(.mode-admin) .stage,body:not(.on-cover):not(.mode-admin) .bar,body:not(.on-cover):not(.mode-admin) .tabs,body:not(.on-cover):not(.mode-admin) .foot,body:not(.on-cover):not(.mode-admin) .sheet,body:not(.on-cover):not(.mode-admin) .drawer{-webkit-text-stroke:.025em currentColor}
 body:not(.on-cover):not(.mode-admin) .en,body:not(.on-cover):not(.mode-admin) [data-en],body:not(.on-cover):not(.mode-admin) .para{-webkit-text-stroke:0}
+.nt-key{color:var(--orange-dk);font-weight:800;margin:.15em 0;padding:.2em .5em;background:#FFF1E6;border-radius:8px;display:inline-block}
+.nt-l.nt-ind{margin-left:1.4em}
 </style>
 </head>
 <body>
@@ -1433,7 +1435,10 @@ function noteSections(body){
     else { if(!cur){ cur={head:"",lines:[]}; secs.push(cur); } cur.lines.push(ln); }
   }
   secs.forEach(x=>{ while(x.lines.length && !x.lines[x.lines.length-1].trim()) x.lines.pop(); while(x.lines.length && !x.lines[0].trim()) x.lines.shift(); });
-  return secs.filter(x=>x.head||x.lines.length);
+  const out=[]; for(const x of secs){ if(!x.head && !x.lines.length) continue;
+    if(x.head && !x.lines.length && out.length){ out[out.length-1].lines.push("","\u0001"+x.head); continue; }
+    out.push(x); }
+  return out;
 }
 function noteSecHTML(sec){
   let h=sec.head?`<div class="nt-h">${inline(sec.head)}</div>`:"", i=0; const L=sec.lines;
@@ -1444,9 +1449,10 @@ function noteSecHTML(sec){
       const nc=Math.max(...rows.map(r=>r.length));
       h+=`<table class="nt-tb">${rows.map((r,ri)=>`<tr>${Array.from({length:nc},(_,ci)=>{ const c=(r[ci]||"").trim(), tag=ri===0?"th":"td"; return `<${tag}${ci===0&&ri>0?' class="nt-c0"':""}${/[A-Za-z]/.test(c) && !/[가-힣]/.test(c)?' data-en="1"':""}>${inline(c)}</${tag}>`; }).join("")}</tr>`).join("")}</table>`; continue; }
     const t=ln.trim();
-    if(!t) h+=`<div class="nt-sp"></div>`;
+    if(t.startsWith("\u0001")) h+=`<div class="nt-key">${inline(t.slice(1))}</div>`;
+    else if(!t) h+=`<div class="nt-sp"></div>`;
     else if(/^(→|➡️?|⇒|=>|->)/.test(t)) h+=`<div class="nt-ar">${inline(t.replace(/^(→|➡️?|⇒|=>|->)\s*/,""))}</div>`;
-    else h+=`<div class="nt-l${isEn(t)?" en":""}">${inline(t)}</div>`;
+    else h+=`<div class="nt-l${isEn(t)?" en":""}${/^( {2,}|\u3000)/.test(ln)?" nt-ind":""}">${inline(t)}</div>`;
     i++;
   }
   return `<section class="nt-sec">${h}</section>`;
@@ -2058,7 +2064,7 @@ function slideForm(sl){
   const top = `<div class="r-h"><b style="color:var(--ink);font-size:15px">${esc(TYPES[sl.type]?.name)} 슬라이드</b>
      <span><button class="btn sm" data-act="dupslide">복제</button> <button class="btn sm warn" data-act="delslide">삭제</button></span></div>
      <div class="field"><label>슬라이드 제목</label>${H.in("title",sl.title)}</div>
-     ${sl.type==="note"?`<div class="field"><label>글꼴</label><select class="inp" data-f="font"><option value=""${!sl.font?" selected":""}>기본 (나눔고딕 제목 + 고운돋움 본문)</option><option value="nanum"${sl.font==="nanum"?" selected":""}>나눔고딕</option><option value="gowun"${sl.font==="gowun"?" selected":""}>고운돋움</option></select></div>`:""}${(sl.type==="draw"||sl.type==="note")?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
+     ${(sl.type==="draw"||sl.type==="note")?`<div class="two"><div class="field"><label>글꼴</label><select class="inp" data-f="font">${Object.entries(FONT_OPTS).map(([k,v])=>`<option value="${k}"${(sl.font||"")===k?" selected":""}>${v}</option>`).join("")}</select></div>
      <div class="field"><label>글자 크기</label><select class="inp" data-f="size">${Object.entries(SIZE_OPTS).map(([k,v])=>`<option value="${k}"${(sl.size||"")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>`:""}
      <label class="chk"><input type="checkbox" data-f="hidden"${sl.hidden?" checked":""}> 칠판에서 빼기</label>`;
   const note = `<div class="field"><label>수업 메모 (폰에만 보임)</label>${H.ta("note",sl.note,"예) 2문단 첫 문장에서 However 짚기",3)}</div>`;
