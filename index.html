@@ -937,7 +937,7 @@ body.mode-admin #app{background:#F7F4EE}
 }
 
 /* 관리자·리모컨 글꼴: 프리텐다드 */
-body.mode-admin,body.mode-admin button,body.mode-admin input,body.mode-admin select,body.mode-admin textarea,body.mode-admin .tg,body.mode-admin .btn,body.mode-admin .li,body.mode-admin .mini,body.mode-admin .help,body.mode-admin label,body.mode-admin .r-chip,body.mode-admin .note{font-family:"Nanum Gothic","Noto Sans KR",system-ui,sans-serif;letter-spacing:0}
+body.mode-admin,body.mode-admin button,body.mode-admin input,body.mode-admin select,body.mode-admin textarea,body.mode-admin .tg,body.mode-admin .btn,body.mode-admin .li,body.mode-admin .mini,body.mode-admin .help,body.mode-admin label,body.mode-admin .r-chip,body.mode-admin .note{font-family:"OngleipKonkon","Nanum Gothic","Noto Sans KR",system-ui,sans-serif;letter-spacing:0}
 body.mode-admin .r-title,body.mode-admin .r-h b,body.mode-admin .unit-h>span:not(.dh){font-family:var(--f-hand);font-weight:700;letter-spacing:0}
 body.mode-admin .r-title{font-size:28px}
 body.mode-admin .unit-h>span:not(.dh){font-size:19px}
@@ -1030,6 +1030,21 @@ body[data-bf="ridi"]:not(.on-cover):not(.mode-admin) .stage,body[data-bf="nanum"
 .blk .body{padding:.38em .8em}
 .blk .lab{margin:.25em .2em .25em .4em;padding:.25em .35em}
 .flow.sums{margin-top:.42em}
+
+/* 관리자·리모컨 글꼴: 온글잎 콘콘체 */
+body.mode-admin{--f-ui:"OngleipKonkon","Nanum Gothic","Noto Sans KR",sans-serif;--f-hand:"OngleipKonkon","Nanum Gothic","Noto Sans KR",sans-serif;font-synthesis:none}
+body.mode-admin .inp,body.mode-admin textarea{font-family:"OngleipKonkon","Nanum Gothic","Noto Sans KR",sans-serif}
+body.mode-admin .nt-in{font-family:ui-monospace,Consolas,"Noto Sans KR",monospace}
+
+/* 판서 기본 글꼴: 강원교육모두체 (굵게) */
+body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note,body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note .nt-l:not(.en),body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note .nt-ar,body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note .nt-tb th,body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note .nt-tb td:not([data-en]),body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note .nt-h,body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note .nt-key{font-family:"GangwonModu","Nanum Gothic","Noto Sans KR",sans-serif;font-weight:700;-webkit-text-stroke:0}
+
+.fsz-row{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.fsz-lab{font-weight:700;color:var(--muted);margin-right:auto}
+.fsz-btn{display:flex;align-items:baseline;gap:2px;min-width:68px;min-height:52px;justify-content:center;border:1.5px solid var(--line);background:#fff;border-radius:12px;font-weight:800;color:var(--ink)}
+.fsz-btn:hover{border-color:var(--orange)}
+.fsz-pct{min-width:3.2em;text-align:center;font-size:18px}
+.fsz-reset{border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px}
 </style>
 </head>
 <body>
@@ -1330,11 +1345,21 @@ function rvPrint(){
 async function rvPng(){
   if(!window.html2canvas){ toast(L("이미지 저장을 쓸 수 없습니다","Image export is unavailable")); return; }
   const P=getP(S.cur.pid), sl=curSlide(); S.sheet=null; render(); await new Promise(r=>setTimeout(r,350));
-  const st=$(".stage"); if(!st) return;
+  const st=$(".stage"), cvA=$("#ann"); if(!st) return;
+  toast(L("이미지 만드는 중…","Saving…"));
+  const vw=st.clientWidth, vh=st.clientHeight, fullH=Math.max(st.scrollHeight,vh), scale=2;
   try{
-    const cv=await html2canvas(st,{backgroundColor:"#ffffff",scale:2,useCORS:true,logging:false});
-    const ann=$("#ann"); if(ann && annStrokes().length){ cv.getContext("2d").drawImage(ann,0,0,cv.width,cv.height); }
-    cv.toBlob(b=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=((P?P.title:"slide")+"_"+(sl?uiName(sl):"")).replace(/[\\/:*?"<>|]/g,"")+".png"; document.body.appendChild(a); a.click(); a.remove(); toast(L("이미지로 저장했습니다","Saved as image")); },"image/png");
+    /* 스크롤로 가려진 부분까지 펼쳐서 통째로 찍기 */
+    const out=await html2canvas(st,{backgroundColor:"#ffffff",scale,useCORS:true,logging:false,width:vw,height:fullH,windowHeight:Math.max(innerHeight,fullH+400),
+      onclone:doc=>{ const c=doc.querySelector(".stage"); if(c){ c.style.height=fullH+"px"; c.style.maxHeight="none"; c.style.overflow="visible"; c.style.flex="none"; } const a=doc.querySelector("#app"); if(a){ a.style.height="auto"; a.style.overflow="visible"; } doc.body.style.height="auto"; doc.documentElement.style.height="auto"; const r=doc.querySelector("#rpanel"); if(r) r.remove(); }});
+    /* 필기도 같은 위치에 그려 넣기 (필기 좌표는 화면 높이 기준 + 스크롤 위치 포함) */
+    const strokes=annStrokes(), H=cvA?cvA.clientHeight:vh, W=cvA?cvA.clientWidth:vw;
+    if(strokes.length){ const g=out.getContext("2d"); g.save(); g.scale(out.width/W, out.width/W);
+      for(const k of strokes){ if(!k.p.length) continue; g.save(); g.lineJoin="round"; g.lineCap=k.t==="hl"?"butt":"round"; g.lineWidth=Math.max(k.t==="pen"?2:6,k.w*W);
+        if(k.t==="eraser"){ g.globalCompositeOperation="destination-out"; g.strokeStyle="#000"; } else { g.strokeStyle=k.c; g.globalAlpha=k.t==="hl"?0.4:1; }
+        g.beginPath(); g.moveTo(k.p[0][0]*W,k.p[0][1]*H); if(k.p.length===1) g.lineTo(k.p[0][0]*W+.01,k.p[0][1]*H); else for(let i=1;i<k.p.length;i++) g.lineTo(k.p[i][0]*W,k.p[i][1]*H); g.stroke(); g.restore(); }
+      g.restore(); }
+    out.toBlob(b=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=((P?P.title:"slide")+"_"+(sl?uiName(sl):"")).replace(/[\\/:*?"<>|]/g,"")+".png"; document.body.appendChild(a); a.click(); a.remove(); toast(L("이미지로 저장했어요","Saved")); },"image/png");
   }catch(e){ toast(L("이미지를 만들지 못했습니다","Could not create the image")); }
 }
 /* ===== 필기 (어느 화면에서든 펜·형광펜·지우개) ===== */
@@ -1460,7 +1485,7 @@ const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab",
 
 /* 슬라이드별 글꼴·크기 */
 const BOARD_FONTS={konkon:"온글잎 콘콘체 (기본)",modu:"강원교육모두체",ridi:"리디바탕",gowun:"고운돋움",nanum:"나눔고딕"};
-const FONT_OPTS={"":"기본 (칠판 글꼴)",konkon:"온글잎 콘콘체",modu:"강원교육모두체",ridi:"리디바탕",nanum:"나눔고딕",gowun:"고운돋움",hand:"손글씨 (감자꽃)",serif:"명조"};
+const FONT_OPTS={"":"기본",konkon:"온글잎 콘콘체",modu:"강원교육모두체",ridi:"리디바탕",nanum:"나눔고딕",gowun:"고운돋움",hand:"손글씨 (감자꽃)",serif:"명조"};
 const NOTE_SIZE={s:36,m:46,l:60,xl:76};
 const SIZE_OPTS={"":"기본 (자동)",s:"작게",m:"보통",l:"크게",xl:"아주 크게"};
 const SIZE_CAP={l:60,m:44,s:32};
@@ -1994,7 +2019,7 @@ function renderSheet(){
     const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
     const fs=!!document.fullscreenElement;
     const body = S.isAdmin
-      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("prep","준비 화면",S.blank)}${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장")}${B("a-clearall","모든 쪽 필기 지우기")}${B("sound","소리 확인")}${B("smaller","글자 작게 (가−)")}${B("bigger","글자 크게 (가+)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("closewin","창 닫기")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}${B("close","닫기")}</div>
+      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("prep","준비 화면",S.blank)}${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장 (이미지)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}</div><div class="fsz-row"><span class="fsz-lab">글자 크기</span><button class="fsz-btn" data-act="smaller" aria-label="글자 작게"><span style="font-size:18px">가</span>−</button><b class="fsz-pct">${Math.round(S.scale*100)}%</b><button class="fsz-btn" data-act="bigger" aria-label="글자 크게"><span style="font-size:30px">가</span>+</button><button class="fsz-reset" data-act="size-reset">원래대로</button></div>
 `
       : `<button class="btn pri big" data-act="pair">수업 시작</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
     if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls)+(S.pendCls===HOME_CLS?` <span class="home-ball">⚽</span>`:""):"ENGLISH"}</h3>${body}</div>`;
@@ -2388,7 +2413,7 @@ document.addEventListener("click", async e=>{
     case "paste-go": return importPaste();
     case "pk-go": return pickGo();
     case "pk-reset": S.pick.hist=[]; S.pick.cur=null; return render();
-    case "review": S.sheet="review"; return render();
+    case "review": return rvPng();
     case "rv-print": return rvPrint();
     case "rv-png": return rvPng();
     case "tl-reset": return setReveal({tl:[0,0,0,0,0,0]});
@@ -2411,8 +2436,9 @@ document.addEventListener("click", async e=>{
     case "close": S.drawer=false; S.sheet=null; stopPairPoll(); return render();
     case "prev": return step(-1);
     case "next": return step(1);
-    case "smaller": S.sheet=null; return setScale(S.scale-.1);
-    case "bigger": S.sheet=null; return setScale(S.scale+.1);
+    case "smaller": return setScale(S.scale-.1);
+    case "bigger": return setScale(S.scale+.1);
+    case "size-reset": return setScale(1);
     case "full": S.sheet=null; render(); try{ document.fullscreenElement? document.exitFullscreen() : await document.documentElement.requestFullscreen(); }catch(err){ toast("브라우저 메뉴의 전체 화면을 써 주세요"); } return;
     case "teacher": S.sheet="teacher"; return render();
     case "pair": return startPair();
