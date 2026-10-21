@@ -985,8 +985,8 @@ body:not(.on-cover) .bar .ttl b,body:not(.on-cover) .tab,body:not(.on-cover) .ib
 body:not(.on-cover) .blk .lab{font-weight:800}
 
 /* 칠판(수업) 화면 글씨: 고운돋움 — 관리자 화면은 나눔고딕 유지 */
-body:not(.on-cover):not(.mode-admin){--f-ui:"Gowun Dodum","Nanum Gothic","Noto Sans KR",sans-serif;--f-hand:"Gowun Dodum","Nanum Gothic","Noto Sans KR",sans-serif;--f-ko:var(--f-ui)}
-body:not(.on-cover):not(.mode-admin) .fit-box.note,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-l:not(.en),body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-ar,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-tb th,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-tb td:not([data-en]),body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-h{font-family:"Gowun Dodum","Nanum Gothic",sans-serif}
+body:not(.on-cover):not(.mode-admin){--f-ui:"OngleipKonkon","Gowun Dodum","Nanum Gothic","Noto Sans KR",sans-serif;--f-hand:"OngleipKonkon","Gowun Dodum","Nanum Gothic","Noto Sans KR",sans-serif;--f-ko:var(--f-ui)}
+body:not(.on-cover):not(.mode-admin) .fit-box.note,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-l:not(.en),body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-ar,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-tb th,body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-tb td:not([data-en]),body:not(.on-cover):not(.mode-admin) .fit-box.note .nt-h{font-family:var(--f-ui)}
 /* 고운돋움은 획이 얇아서 칠판용으로 살짝 굵게 */
 body:not(.on-cover):not(.mode-admin) .stage,body:not(.on-cover):not(.mode-admin) .bar,body:not(.on-cover):not(.mode-admin) .tabs,body:not(.on-cover):not(.mode-admin) .foot,body:not(.on-cover):not(.mode-admin) .sheet,body:not(.on-cover):not(.mode-admin) .drawer{-webkit-text-stroke:.025em currentColor}
 body:not(.on-cover):not(.mode-admin) .en,body:not(.on-cover):not(.mode-admin) [data-en],body:not(.on-cover):not(.mode-admin) .para{-webkit-text-stroke:0}
@@ -1000,6 +1000,27 @@ body:not(.on-cover):not(.mode-admin) .en,body:not(.on-cover):not(.mode-admin) [d
 .cbar{display:flex;gap:4px;flex-wrap:wrap;margin:2px 0 6px}
 .cb{border:1.5px solid #E6E0D6;background:#fff;border-radius:999px;padding:3px 10px;font-size:13px;font-weight:800;cursor:pointer}
 .cb-r{color:#D23B32}.cb-b{color:#2F6FD0}.cb-g{color:#1E8A5A}.cb-o{color:#E0601F}.cb-p{color:#7A4FB5}.cb-y{background:#FFE45C;border-color:#FFE45C;color:#1B1B1B}.cb-x{color:#8A847A}
+
+/* 칠판 글꼴: 온글잎 콘콘체 (눈누 웹폰트, 웹·임베딩 사용 허용) */
+@font-face{font-family:'OngleipKonkon';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/2412-1@1.0/Ownglyph_corncorn-Rg.woff2') format('woff2');font-weight:normal;font-display:swap}
+body:not(.on-cover):not(.mode-admin){font-synthesis:none}
+body:not(.on-cover):not(.mode-admin) .stage,body:not(.on-cover):not(.mode-admin) .bar,body:not(.on-cover):not(.mode-admin) .tabs,body:not(.on-cover):not(.mode-admin) .foot,body:not(.on-cover):not(.mode-admin) .sheet,body:not(.on-cover):not(.mode-admin) .drawer{-webkit-text-stroke:.012em currentColor}
+
+/* 칠판 글꼴 고르기 */
+@font-face{font-family:'GangwonModu';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFLightA.woff') format('woff');font-weight:100 350;font-display:swap}
+@font-face{font-family:'GangwonModu';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFBoldA.woff') format('woff');font-weight:351 900;font-display:swap}
+@font-face{font-family:'RIDIBatang';src:url('https://cdn.jsdelivr.net/npm/@kfonts/ridi-batang@0.2.0/RIDIBatang.woff2') format('woff2'),url('https://cdn.jsdelivr.net/npm/@kfonts/ridi-batang@0.2.0/RIDIBatang.woff') format('woff');font-display:swap}
+body[data-bf="modu"]:not(.on-cover):not(.mode-admin){--f-ui:"GangwonModu","Noto Sans KR",sans-serif;--f-hand:"GangwonModu","Noto Sans KR",sans-serif}
+body[data-bf="ridi"]:not(.on-cover):not(.mode-admin){--f-ui:"RIDIBatang","Noto Serif KR",serif;--f-hand:"RIDIBatang","Noto Serif KR",serif}
+body[data-bf="gowun"]:not(.on-cover):not(.mode-admin){--f-ui:"Gowun Dodum","Noto Sans KR",sans-serif;--f-hand:"Gowun Dodum","Noto Sans KR",sans-serif}
+body[data-bf="nanum"]:not(.on-cover):not(.mode-admin){--f-ui:"Nanum Gothic","Noto Sans KR",sans-serif;--f-hand:"Nanum Gothic","Noto Sans KR",sans-serif}
+body[data-bf="ridi"]:not(.on-cover):not(.mode-admin) .stage,body[data-bf="nanum"]:not(.on-cover):not(.mode-admin) .stage,body[data-bf="modu"]:not(.on-cover):not(.mode-admin) .stage{-webkit-text-stroke:0}
+/* 슬라이드별 글꼴 (그림판·판서) */
+.slide.f-konkon .dguide,.slide.f-konkon .fit-box.note,.slide.f-konkon .fit-box.note *:not(.en):not([data-en]){font-family:"OngleipKonkon",sans-serif!important}
+.slide.f-modu .dguide,.slide.f-modu .fit-box.note,.slide.f-modu .fit-box.note *:not(.en):not([data-en]){font-family:"GangwonModu",sans-serif!important}
+.slide.f-ridi .dguide,.slide.f-ridi .fit-box.note,.slide.f-ridi .fit-box.note *:not(.en):not([data-en]){font-family:"RIDIBatang",serif!important}
+.slide.f-nanum .fit-box.note,.slide.f-nanum .fit-box.note *:not(.en):not([data-en]){font-family:"Nanum Gothic",sans-serif!important}
+.slide.f-gowun .dguide,.slide.f-gowun .fit-box.note,.slide.f-gowun .fit-box.note *:not(.en):not([data-en]){font-family:"Gowun Dodum",sans-serif!important}
 </style>
 </head>
 <body>
@@ -1429,7 +1450,8 @@ function stepPatch(si,v){ return si.key==="sent"?{sent:v,ko:false,vc:false,gm:fa
 const FIT_TYPES = ["text","textmap","structure","reading","task","free","vocab","note"];
 
 /* 슬라이드별 글꼴·크기 */
-const FONT_OPTS={"":"기본",nanum:"나눔고딕",gowun:"고운돋움",hand:"손글씨 (감자꽃)",serif:"명조",sans:"고딕"};
+const BOARD_FONTS={konkon:"온글잎 콘콘체 (기본)",modu:"강원교육모두체",ridi:"리디바탕",gowun:"고운돋움",nanum:"나눔고딕"};
+const FONT_OPTS={"":"기본 (칠판 글꼴)",konkon:"온글잎 콘콘체",modu:"강원교육모두체",ridi:"리디바탕",nanum:"나눔고딕",gowun:"고운돋움",hand:"손글씨 (감자꽃)",serif:"명조"};
 const NOTE_SIZE={s:36,m:46,l:60,xl:76};
 const SIZE_OPTS={"":"기본 (자동)",s:"작게",m:"보통",l:"크게",xl:"아주 크게"};
 const SIZE_CAP={l:60,m:44,s:32};
@@ -1610,7 +1632,7 @@ function fxHTML(){ const k=curTheme(), T=k&&THEMES[k]; if(!T) return "";
 function ddayHTML(){ const ev=(evtCfg().events)||[]; const t0=new Date(); t0.setHours(0,0,0,0); let best=null;
   for(const e of ev){ if(!e||!e.date||!e.name) continue; const d=new Date(e.date+"T00:00:00"), n=Math.round((d-t0)/864e5); if(n>=0 && n<=30 && (!best||n<best.n)) best={n,name:e.name}; }
   if(!best) return ""; return `<div class="cv-dday">${esc(best.name)} <b>${best.n===0?"D-DAY":"D-"+best.n}</b>${best.n===0?" 화이팅!":""}</div>`; }
-async function evtSave(){ const c=S.evt||{}; try{ await API.put("passages","_events",{title:"_events",slides:[],theme:c.theme||"auto",events:c.events||[]}); localStorage.setItem("cb_evt",JSON.stringify({theme:c.theme||"auto",events:c.events||[]})); toast("저장했어요"); }catch(e){ toast("저장하지 못했습니다"); } }
+async function evtSave(){ const c=S.evt||{}; try{ await API.put("passages","_events",{title:"_events",slides:[],theme:c.theme||"auto",events:c.events||[],boardFont:c.boardFont||"konkon"}); localStorage.setItem("cb_evt",JSON.stringify({theme:c.theme||"auto",events:c.events||[],boardFont:c.boardFont||"konkon"})); toast("저장했어요"); }catch(e){ toast("저장하지 못했습니다"); } }
 
 /* ===== 준비 모드: 선생님 개인 진도 (YE로 들어올 때) ===== */
 const ME_CLS="_me";
@@ -1740,7 +1762,7 @@ async function startPair(){
 /* ================= data loading ================= */
 async function loadData(){
   const d = await API.req("GET","/api/data");
-  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.prog=(({id,...b})=>b)(ps.find(x=>x.id==="_prog")||{id:0}); S.evt=(({id,...b})=>b)(ps.find(x=>x.id==="_events")||{id:0}); try{ localStorage.setItem("cb_evt",JSON.stringify({theme:S.evt.theme||"auto",events:S.evt.events||[]})); }catch(e){} try{ localStorage.setItem("cb_classes",JSON.stringify(progClasses())); }catch(e){} S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
+  const ps=d.passages||[]; S.cfg=ps.find(x=>x.id==="_cfg")||{}; S.prog=(({id,...b})=>b)(ps.find(x=>x.id==="_prog")||{id:0}); S.evt=(({id,...b})=>b)(ps.find(x=>x.id==="_events")||{id:0}); try{ localStorage.setItem("cb_evt",JSON.stringify({theme:S.evt.theme||"auto",events:S.evt.events||[],boardFont:S.evt.boardFont||"konkon"})); }catch(e){} try{ localStorage.setItem("cb_classes",JSON.stringify(progClasses())); }catch(e){} S.units=d.units||[]; S.passages=ps.filter(x=>!String(x.id).startsWith("_")); S.ver=d.ver||0;
 }
 async function boot(){
   render();
@@ -1822,6 +1844,7 @@ function softRender(){
 /* ================= RENDER ================= */
 function render(){
   if(S.drawing && S.mode==="class") return;
+  document.body.dataset.bf=(evtCfg().boardFont)||"konkon";
   document.body.classList.toggle("mode-admin", S.mode==="admin");
   document.documentElement.style.setProperty("--fs", S.scale);
   const app = $("#app");
@@ -2246,6 +2269,7 @@ function renderSettings(){
   const el=$("#settings"); if(!el) return; setTimeout(loadBackups,0);
   el.innerHTML = `<div class="r-card"><h5>백업</h5>
     <div class="row-btns"><button class="btn pri" data-act="export">백업 저장</button><label class="btn" style="display:inline-flex;align-items:center">백업 불러오기<input type="file" id="importfile" accept=".json,application/json" hidden></label></div></div>
+  <div class="r-card"><h5>칠판 글꼴</h5><div class="field"><select class="inp" id="boardfont">${Object.entries(BOARD_FONTS).map(([k,v])=>`<option value="${k}"${(((S.evt||{}).boardFont)||"konkon")===k?" selected":""}>${v}</option>`).join("")}</select></div></div>
   <div class="r-card"><h5>대기 화면 꾸미기</h5>
     <div class="field"><select class="inp" id="themesel">${Object.entries(THEME_NAMES).map(([k,v])=>`<option value="${k}"${((S.evt||{}).theme||"auto")===k?" selected":""}>${v}</option>`).join("")}</select></div>
     <div class="ev-list">${(((S.evt||{}).events)||[]).map((e,i)=>`<div class="ev-row"><input class="inp" data-ev="${i}|name" value="${esc(e.name||"")}" placeholder="행사 이름"><input class="inp" type="date" data-ev="${i}|date" value="${esc(e.date||"")}"><button class="mini" data-evdel="${i}" aria-label="삭제">✕</button></div>`).join("")}</div>
@@ -2423,6 +2447,7 @@ document.addEventListener("input", e=>{
 });
 document.addEventListener("change", async e=>{
   const t=e.target;
+  if(t.id==="boardfont"){ S.evt=S.evt||{}; S.evt.boardFont=t.value; document.body.dataset.bf=t.value; return evtSave(); }
   if(t.id==="themesel"){ S.evt=S.evt||{}; S.evt.theme=t.value; return evtSave(); }
   if(t.dataset && t.dataset.ev){ const [i,k]=t.dataset.ev.split("|"); S.evt=S.evt||{}; S.evt.events=S.evt.events||[]; S.evt.events[+i][k]=t.value; return; }
   if(t.id==="rpick"){ return go(t.value,0); }
