@@ -1058,6 +1058,24 @@ body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note,body:not(.on-cover)
 .szgrp .ib.sz small{font-size:.72em}
 .szgrp .ib.sz:first-child{border-top-right-radius:0;border-bottom-right-radius:0;border-right-width:1px}
 .szgrp .ib.sz:last-child{border-top-left-radius:0;border-bottom-left-radius:0;border-left-width:1px}
+
+/* 슬라이드 탭 줄 + 오른쪽 도구 */
+.tabrow{display:flex;align-items:center;background:#fff;border-bottom:2px solid var(--ink);gap:10px}
+.tabrow .tabs{flex:1;min-width:0;border-bottom:0;background:transparent}
+.tb-tools{display:flex;align-items:center;gap:6px;padding:6px 16px 6px 0;flex:none}
+.tbb{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:46px;height:46px;padding:0 10px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-weight:800;font-size:18px;cursor:pointer}
+.tbb:hover{border-color:var(--orange)}
+.tbb.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.tbb-pair{display:inline-flex}
+.tbb-pair .tbb{min-width:42px;font-family:var(--f-ui)}
+.tbb-pair .tbb:first-child{border-radius:12px 0 0 12px;border-right-width:.75px}
+.tbb-pair .tbb:last-child{border-radius:0 12px 12px 0;border-left-width:.75px;font-size:24px}
+.tbb-pair .tbb small{font-size:14px}
+.tbb-end{background:#1B1B1B;border-color:#1B1B1B;color:#fff}
+.tbb-end svg{color:#FF8A5B}
+.tbb-end:hover{background:#000;border-color:#000}
+.tbb-menu{color:var(--orange-dk)}
+@media (max-width:760px){ .tabrow{flex-wrap:wrap} .tb-tools{padding:4px 10px;width:100%;justify-content:flex-end} .tbb{height:40px;min-width:40px} }
 </style>
 </head>
 <body>
@@ -1902,6 +1920,17 @@ function render(){
 }
 
 /* ---------- class board ---------- */
+
+/* 도구 줄 아이콘 */
+const _sv=(d,extra="")=>`<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${extra}>${d}</svg>`;
+const ICO={
+  pen:_sv('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>'),
+  timer:_sv('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/>'),
+  expand:_sv('<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>'),
+  shrink:_sv('<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/>'),
+  stop:'<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" fill="currentColor"/></svg>',
+  book:'<svg viewBox="0 0 64 40" width="30" aria-hidden="true"><path fill="currentColor" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="currentColor" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/></svg>'
+};
 function renderClass(){
   const app=$("#app"); document.body.classList.remove("on-cover");
   { const st0=$(".stage"), key=S.cur.pid+":"+S.cur.idx; S.keepScroll=(st0 && S.lastStageKey===key)?st0.scrollTop:null; S.lastStageKey=key; }
@@ -1931,14 +1960,18 @@ function renderClass(){
     <button class="ib" data-act="drawer" aria-label="Contents">${L("목차","Contents")}</button>
     <div class="ttl"><small>${S.cls?esc(clsLabel(S.cls))+" · ":""}${p?esc(unitName(p.unitId)):""}</small><b>${p?esc(p.title):"English"}</b></div>
     ${live?`<span class="live"><i></i>${L("리모컨 연결됨","Remote connected")}</span>`:""}
-    ${window.PointerEvent?`<button class="ib${annActive()&&!S.annMin?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
-    <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
-    <span class="szgrp"><button class="ib sz" data-act="smaller" aria-label="글자 작게"><small>가</small>−</button><button class="ib sz" data-act="bigger" aria-label="글자 크게">가+</button></span>
-    <button class="ib endc" data-act="end-class">${L("수업 끝","End class")}</button>
-    ${document.fullscreenEnabled!==false?`<button class="ib fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}
-    <button class="ib solid ye bookbtn" data-act="teacher" aria-label="메뉴"><svg class="bk-ico" viewBox="0 0 64 40" aria-hidden="true"><path fill="currentColor" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="currentColor" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/></svg></button>
   </header>
-  ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:""}
+  <div class="tabrow">
+    ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:`<span class="tabs"></span>`}
+    <div class="tb-tools">
+      ${window.PointerEvent?`<button class="tbb${annActive()&&!S.annMin?" on":""}" data-act="a-toggle" aria-label="필기" title="필기">${ICO.pen}</button>`:""}
+      <button class="tbb" data-act="timer" aria-label="타이머" title="타이머">${ICO.timer}</button>
+      <span class="tbb-pair"><button class="tbb sz" data-act="smaller" aria-label="글자 작게" title="글자 작게"><small>가</small></button><button class="tbb sz" data-act="bigger" aria-label="글자 크게" title="글자 크게">가</button></span>
+      ${document.fullscreenEnabled!==false?`<button class="tbb fsb" data-act="fs" aria-label="전체화면" title="전체화면">${document.fullscreenElement?ICO.shrink:ICO.expand}</button>`:""}
+      <button class="tbb tbb-end" data-act="end-class" aria-label="수업 끝" title="수업 끝">${ICO.stop}<span>끝</span></button>
+      <button class="tbb tbb-menu" data-act="teacher" aria-label="메뉴" title="메뉴">${ICO.book}</button>
+    </div>
+  </div>
   <main class="stage">${
     !p ? `<div class="empty"><b>아직 수업 자료가 없어요</b>오른쪽 위 ‘YE’에서 관리자 모드로 들어가 지문을 추가하세요.</div>`
     : (!sl || !vis.length) ? `<div class="empty"><b>칠판에 넣은 슬라이드가 없어요</b>편집 화면에서 슬라이드를 ‘넣음’으로 바꾸거나 새로 추가하세요.</div>`
@@ -2595,7 +2628,7 @@ async function installApp(){
   if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; S.sheet=null; render(); ev.prompt(); try{ await ev.userChoice; }catch(x){} return; }
   S.sheet="install"; render();
 }
-document.addEventListener("fullscreenchange",()=>{ document.querySelectorAll(".fsb").forEach(b=>b.textContent=document.fullscreenElement?"⤡":"⛶"); setTimeout(()=>{ fitAll(); placePanel(); initAnn(); },150); });
+document.addEventListener("fullscreenchange",()=>{ document.querySelectorAll(".fsb").forEach(b=>{ b.innerHTML=b.classList.contains("tbb")?(document.fullscreenElement?ICO.shrink:ICO.expand):(document.fullscreenElement?"⤡":"⛶"); }); setTimeout(()=>{ fitAll(); placePanel(); initAnn(); },150); });
 setInterval(tickTmr,300);
 boot();
 </script>
