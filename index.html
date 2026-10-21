@@ -1021,6 +1021,15 @@ body[data-bf="ridi"]:not(.on-cover):not(.mode-admin) .stage,body[data-bf="nanum"
 .slide.f-ridi .dguide,.slide.f-ridi .fit-box.note,.slide.f-ridi .fit-box.note *:not(.en):not([data-en]){font-family:"RIDIBatang",serif!important}
 .slide.f-nanum .fit-box.note,.slide.f-nanum .fit-box.note *:not(.en):not([data-en]){font-family:"Nanum Gothic",sans-serif!important}
 .slide.f-gowun .dguide,.slide.f-gowun .fit-box.note,.slide.f-gowun .fit-box.note *:not(.en):not([data-en]){font-family:"Gowun Dodum",sans-serif!important}
+
+/* 구조도: 화살표 줄을 없애고 블록 사이에 작게 → 글씨를 더 크게 */
+.flow>.arrow{display:none}
+.flow>.blk+.arrow+.blk,.flow.sums>.blk+.blk{margin-top:.42em}
+.flow>.arrow+.blk{position:relative}
+.flow>.arrow+.blk::before{content:"▼";position:absolute;top:-.78em;left:2.55em;font-size:.6em;line-height:1;color:var(--dash);z-index:1}
+.blk .body{padding:.38em .8em}
+.blk .lab{margin:.25em .2em .25em .4em;padding:.25em .35em}
+.flow.sums{margin-top:.42em}
 </style>
 </head>
 <body>
@@ -1918,11 +1927,11 @@ function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
   { const sl0=curSlide(); if(sl0 && sl0.type==="note" && NOTE_SIZE[sl0.size]){ box.style.fontSize=(NOTE_SIZE[sl0.size]*(innerWidth<760?.5:1)*S.scale)+"px"; return; } }
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
-  const small=innerWidth<760, min=small?15:(innerHeight<1000?15:20); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
+  const small=innerWidth<760, min=small?15:(box.querySelector('.flow')?34:(innerHeight<1000?15:20)); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=(best*S.scale)+"px";
   if(S.keepScroll!=null){ stage.scrollTop=S.keepScroll; S.keepScroll=null; }
-  const cu=$(".rs.cur");
+  const cu=$(".rs.cur")||(S.reveal.sbk?$('.cz[data-cz="'+(S.reveal.sbk-1)+'"]'):null);
   if(cu){ const sr=stage.getBoundingClientRect(), rects=cu.getClientRects(); if(rects.length){ const top=rects[0].top, bot=rects[rects.length-1].bottom, pad=16;
     if(top<sr.top+pad) stage.scrollTop-= (sr.top+pad-top); else if(bot>sr.bottom-pad) stage.scrollTop+= Math.min(bot-(sr.bottom-pad), top-(sr.top+pad)); } }
 }
