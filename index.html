@@ -1045,6 +1045,19 @@ body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note,body:not(.on-cover)
 .fsz-btn:hover{border-color:var(--orange)}
 .fsz-pct{min-width:3.2em;text-align:center;font-size:18px}
 .fsz-reset{border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px}
+
+/* 메뉴 = 책 버튼 */
+.bookbtn{display:inline-flex;align-items:center;justify-content:center;min-width:58px;color:var(--orange-dk)}
+.bookbtn .bk-ico{width:30px;height:auto}
+.cv-markbtn{background:none;border:0;padding:6px 10px;cursor:pointer;border-radius:12px;line-height:0}
+.cv-markbtn:active{transform:scale(.94)}
+.lock.cover~.lock-fs{right:18px}
+
+.szgrp{display:inline-flex;gap:0}
+.szgrp .ib.sz{min-width:52px;padding-left:10px;padding-right:10px;font-family:Fredoka,var(--f-ui)!important}
+.szgrp .ib.sz small{font-size:.72em}
+.szgrp .ib.sz:first-child{border-top-right-radius:0;border-bottom-right-radius:0;border-right-width:1px}
+.szgrp .ib.sz:last-child{border-top-left-radius:0;border-bottom-left-radius:0;border-left-width:1px}
 </style>
 </head>
 <body>
@@ -1894,8 +1907,8 @@ function renderClass(){
   { const st0=$(".stage"), key=S.cur.pid+":"+S.cur.idx; S.keepScroll=(st0 && S.lastStageKey===key)?st0.scrollTop:null; S.lastStageKey=key; }
   if(!S.isAdmin || S.blank){
     const pickCls=!S.isAdmin || !S.cls, cl=S.isAdmin?progClasses():cachedClasses(); document.body.classList.toggle("on-cover",!!pickCls);
-    const mark=`<svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg>`;
-    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}${ddayHTML()}</div><div class="cv-mid"><b class="cv-title">ENGLISH${stickerHTML()}</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls${S.pendCls&&S.pendCls!==HOME_CLS?" other-picked":""}">${cl.map(c=>`<button class="cls num${c===HOME_CLS?" home":""}${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}${c===HOME_CLS?`<span class="ball" aria-hidden="true">⚽</span>`:""}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button><button class="ib solid ye lock-ye" data-act="teacher" aria-label="YE 메뉴">YE</button>${S.sheet?renderSheet():""}`;
+    const mark=`<button class="cv-markbtn" data-act="bookpw" aria-label="메뉴"><svg class="cv-mark" viewBox="0 0 64 40" aria-hidden="true"><g><path fill="#fff" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#fff" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/><g stroke="#E0601F" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".55"><path d="M11 15 C16 13.6 21 13.8 26 15.6"/><path d="M11 20.5 C16 19.1 21 19.3 26 21.1"/><path d="M11 26 C16 24.6 21 24.8 26 26.6"/><path d="M53 15 C48 13.6 43 13.8 38 15.6"/><path d="M53 20.5 C48 19.1 43 19.3 38 21.1"/><path d="M53 26 C48 24.6 43 24.8 38 26.6"/></g></g></svg></button>`;
+    app.innerHTML = `${pickCls ? `<div class="lock cover"><div class="cv-top">${mark}${ddayHTML()}</div><div class="cv-mid"><b class="cv-title">ENGLISH${stickerHTML()}</b><span class="cv-rule"></span><small class="cv-by">SEO</small></div><div class="cv-bot"><div class="cv-cls-lab">CLASS</div><div class="lock-cls${S.pendCls&&S.pendCls!==HOME_CLS?" other-picked":""}">${cl.map(c=>`<button class="cls num${c===HOME_CLS?" home":""}${c===S.pendCls?" on":""}" data-lockcls="${esc(c)}" aria-label="${esc(c)}">${esc(String(c).replace(/\s*반$/,""))}${c===HOME_CLS?`<span class="ball" aria-hidden="true">⚽</span>`:""}</button>`).join("")}</div></div></div>` : `<div class="lock"><div class="lock-t"></div></div>`}<button class="ib lock-fs fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button>${pickCls?"":`<button class="ib solid ye lock-ye bookbtn" data-act="teacher" aria-label="메뉴"><svg class="bk-ico" viewBox="0 0 64 40" aria-hidden="true"><path fill="currentColor" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="currentColor" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/></svg></button>`}${S.sheet?renderSheet():""}`;
     if(S.sheet==="pair") drawQR(); return;
   }
   const p=getP(S.cur.pid);
@@ -1920,10 +1933,10 @@ function renderClass(){
     ${live?`<span class="live"><i></i>${L("리모컨 연결됨","Remote connected")}</span>`:""}
     ${window.PointerEvent?`<button class="ib${annActive()&&!S.annMin?" on":""}" data-act="a-toggle" aria-label="Pen">${L("필기","Pen")}</button>`:""}
     <button class="ib" data-act="timer" aria-label="Timer">${L("타이머","Timer")}</button>
-    <button class="ib" data-act="picker">${L("뽑기","Pick")}</button>
+    <span class="szgrp"><button class="ib sz" data-act="smaller" aria-label="글자 작게"><small>가</small>−</button><button class="ib sz" data-act="bigger" aria-label="글자 크게">가+</button></span>
     <button class="ib endc" data-act="end-class">${L("수업 끝","End class")}</button>
     ${document.fullscreenEnabled!==false?`<button class="ib fsb" data-act="fs" aria-label="전체화면">${document.fullscreenElement?"⤡":"⛶"}</button>`:""}
-    <button class="ib solid ye" data-act="teacher" title="Made by YE" aria-label="YE 메뉴">YE</button>
+    <button class="ib solid ye bookbtn" data-act="teacher" aria-label="메뉴"><svg class="bk-ico" viewBox="0 0 64 40" aria-hidden="true"><path fill="currentColor" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="currentColor" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/></svg></button>
   </header>
   ${p?`<nav class="tabs" aria-label="슬라이드">${vis.map(i=>`<button class="tab${i===S.cur.idx?" on":""}" data-go="${i}">${esc(uiName(slides[i]))}</button>`).join("")}</nav>`:""}
   <main class="stage">${
@@ -1952,7 +1965,7 @@ function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
   { const sl0=curSlide(); if(sl0 && sl0.type==="note" && NOTE_SIZE[sl0.size]){ box.style.fontSize=(NOTE_SIZE[sl0.size]*(innerWidth<760?.5:1)*S.scale)+"px"; return; } }
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
-  const small=innerWidth<760, min=small?15:(box.querySelector('.flow')?34:(innerHeight<1000?15:20)); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
+  const small=innerWidth<760, min=small?15:(box.querySelector('.flow')?34:box.querySelector('.para')?38:(innerHeight<1000?15:20)); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=(best*S.scale)+"px";
   if(S.keepScroll!=null){ stage.scrollTop=S.keepScroll; S.keepScroll=null; }
@@ -2019,11 +2032,11 @@ function renderSheet(){
     const B=(act,lab,pri)=>`<button class="btn${pri?" pri":""}" data-act="${act}">${lab}</button>`;
     const fs=!!document.fullscreenElement;
     const body = S.isAdmin
-      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("prep","준비 화면",S.blank)}${B("admin","관리자 화면 열기",!S.blank)}${B("review","복습 자료 저장 (이미지)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}</div><div class="fsz-row"><span class="fsz-lab">글자 크기</span><button class="fsz-btn" data-act="smaller" aria-label="글자 작게"><span style="font-size:18px">가</span>−</button><b class="fsz-pct">${Math.round(S.scale*100)}%</b><button class="fsz-btn" data-act="bigger" aria-label="글자 크게"><span style="font-size:30px">가</span>+</button><button class="fsz-reset" data-act="size-reset">원래대로</button></div>
+      ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("prep","준비 화면",S.blank)}${B("admin","관리자 화면 열기",!S.blank)}${B("picker","학생 뽑기")}${B("review","복습 자료 저장 (이미지)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}</div>
 `
       : `<button class="btn pri big" data-act="pair">수업 시작</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
     if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls)+(S.pendCls===HOME_CLS?` <span class="home-ball">⚽</span>`:""):"ENGLISH"}</h3>${body}</div>`;
-    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>YE 메뉴</h3>${body}</div>`;
+    return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>메뉴</h3>${body}</div>`;
   }
   if(S.sheet==="pair") return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="QR로 입장">
     ${S.pendCls?`<h3 class="mini-t">${esc(S.pendCls)}</h3>`:""}
@@ -2442,6 +2455,7 @@ document.addEventListener("click", async e=>{
     case "full": S.sheet=null; render(); try{ document.fullscreenElement? document.exitFullscreen() : await document.documentElement.requestFullscreen(); }catch(err){ toast("브라우저 메뉴의 전체 화면을 써 주세요"); } return;
     case "teacher": S.sheet="teacher"; return render();
     case "pair": return startPair();
+    case "bookpw": S.pendCls=null; S.sheet=null; clearTimeout(S.homeT);
     case "pwopen": S.loginTo=(innerWidth<760)?"admin":"class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwclass": S.loginTo="class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwlogin": S.loginTo="admin"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
