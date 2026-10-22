@@ -1083,6 +1083,11 @@ body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note,body:not(.on-cover)
 .tabrow .tabs::-webkit-scrollbar{display:none;height:0;width:0}
 .tabrow .tab{margin-bottom:0;padding:10px 2px 8px;flex:none}
 .tb-tools{overflow:visible}
+
+/* 대기 화면: 영어(ENGLISH·SEO·CLASS·숫자)는 Fredoka 그대로, 한글만 콘콘체 */
+body.on-cover{--f-hand:"OngleipKonkon","Gamja Flower","Noto Sans KR",sans-serif;--f-ui:"OngleipKonkon","Noto Sans KR",sans-serif;font-synthesis:none}
+body.on-cover .sheet,body.on-cover .sheet .btn,body.on-cover .sheet .inp,body.on-cover .linkbtn,body.on-cover .remem,body.on-cover .cv-dday{font-family:"OngleipKonkon","Noto Sans KR",sans-serif}
+body.on-cover .sheet.smini .mini-t,body.on-cover .cv-dday b{font-family:Fredoka,"OngleipKonkon",sans-serif}
 </style>
 </head>
 <body>
@@ -2005,7 +2010,7 @@ function fitAll(){
   const stage=$(".stage"), box=stage && $(".fit-box",stage); if(!box) return;
   { const sl0=curSlide(); if(sl0 && sl0.type==="note" && NOTE_SIZE[sl0.size]){ box.style.fontSize=(NOTE_SIZE[sl0.size]*(innerWidth<760?.5:1)*S.scale)+"px"; return; } }
   const cs=getComputedStyle(stage), pc=getComputedStyle(box.parentElement), avail=stage.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(pc.paddingTop)-parseFloat(pc.paddingBottom)-14;
-  const small=innerWidth<760, min=small?15:(box.querySelector('.flow')?34:box.querySelector('.para')?38:(innerHeight<1000?15:20)); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
+  const small=innerWidth<760, min=small?15:(box.querySelector('.flow')?34:box.querySelector('.para')?32:(innerHeight<1000?15:20)); const cap=SIZE_CAP[(curSlide()||{}).size]; let lo=min, hi=small?30:Math.min(cap||78, box.querySelector('.flow')?46:78), best=min; if(cap && !small) hi=cap; if(box.classList.contains('note') && !cap) hi=Math.min(hi,small?24:50); if(hi<lo) lo=hi;
   while(hi-lo>0.5){ const mid=(lo+hi)/2; box.style.fontSize=mid+"px"; if(box.scrollHeight<=avail){ best=mid; lo=mid; } else hi=mid; }
   box.style.fontSize=(best*S.scale)+"px";
   if(S.keepScroll!=null){ stage.scrollTop=S.keepScroll; S.keepScroll=null; }
