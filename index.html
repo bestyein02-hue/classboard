@@ -1291,10 +1291,8 @@ function tmCmd(cmd){ const sl=curSlide(), def=((sl&&sl.type==="task"?parseFloat(
 function beep(){ try{ const c=S.audio; if(!c) return; if(c.state==="suspended") c.resume(); [[0,880],[0.18,1320]].forEach(([t,f])=>{ const o=c.createOscillator(), g=c.createGain(); o.type="sine"; o.frequency.value=f; o.connect(g); g.connect(c.destination); const T=c.currentTime+t; g.gain.setValueAtTime(0.0001,T); g.gain.exponentialRampToValueAtTime(0.35,T+0.02); g.gain.exponentialRampToValueAtTime(0.0001,T+0.45); o.start(T); o.stop(T+0.5); }); }catch(e){} }
 function tickTmr(){
   const on=gtOn(), sl=curSlide(), sec=on?gtSecs():((sl&&sl.type==="task")?(parseFloat(sl.minutes)||2)*60:0);
-  if(on && S.gtm.run && sec<=0 && !S.gtDone){ S.gtDone=true; const tot=S.gtm.total||120; S.gtm={...S.gtm,run:false,sec:0}; S.gtEnd=null; beep(); gtRefresh();
-    // 끝나면 3초 뒤 처음 시간으로 되돌려 둠 (시작만 누르면 다시 같은 시간)
-    clearTimeout(S.gtResetT); S.gtResetT=setTimeout(()=>{ if(S.gtm && !S.gtm.off && !S.gtm.run && gtSecs()<=0){ S.gtm={sec:tot,run:false,at:Date.now(),total:tot}; S.gtDone=false; gtApply(); pushLive(); gtRefresh(); } },3000);
-    return; }
+  if(on && S.gtm.run && sec<=0 && !S.gtDone){ /* 시간이 다 되면 소리만 내고 화면의 타이머 표시는 바로 없앰 */
+    S.gtLast=S.gtm.total||120; beep(); S.gtm={off:true,at:Date.now()}; gtApply(); pushLive(); gtRefresh(); return; }
   const done=on && sec<=0;
   document.querySelectorAll(".tmr-txt").forEach(el=>{ el.textContent=fmtT(sec); el.classList.toggle("done",done); });
 }
@@ -2477,7 +2475,7 @@ document.addEventListener("click", async e=>{
     case "tl-reset": return setReveal({tl:[0,0,0,0,0,0]});
     case "today-add": { const sel=$("#todaysel"); if(sel && sel.value && !S.today.includes(sel.value)){ S.today.push(sel.value); pushLive(); renderRemote(); } return; }
     case "uilang": try{ localStorage.setItem("cb_ui",UIEN?"ko":"en"); }catch(x){} setLastMode(S.mode); location.reload(); return;
-    case "gt-go": return gtCmd("go",120);
+    case "gt-go": return gtCmd("go",S.gtLast||120);
     case "gt-pause": return gtCmd("pause");
     case "gt-reset": return gtCmd("reset");
     case "tm-go": return tmCmd("go");
