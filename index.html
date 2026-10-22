@@ -1088,6 +1088,17 @@ body:not(.on-cover) .slide:not([class*=" f-"]) .fit-box.note,body:not(.on-cover)
 body.on-cover{--f-hand:"OngleipKonkon","Gamja Flower","Noto Sans KR",sans-serif;--f-ui:"OngleipKonkon","Noto Sans KR",sans-serif;font-synthesis:none}
 body.on-cover .sheet,body.on-cover .sheet .btn,body.on-cover .sheet .inp,body.on-cover .linkbtn,body.on-cover .remem,body.on-cover .cv-dday{font-family:"OngleipKonkon","Noto Sans KR",sans-serif}
 body.on-cover .sheet.smini .mini-t,body.on-cover .cv-dday b{font-family:Fredoka,"OngleipKonkon",sans-serif}
+
+/* 문제 풀이: 타이머 버튼을 화면 안으로 */
+.tk-ctl{display:flex;gap:14px;justify-content:center;margin-top:.5em;flex-wrap:wrap}
+.tk-b{font-size:26px;font-weight:800;min-width:150px;min-height:64px;padding:0 22px;border-radius:16px;border:2px solid var(--line);background:#fff;color:var(--ink);font-family:var(--f-ui)}
+.tk-b.go{background:var(--orange);border-color:var(--orange);color:#fff}
+.tk-b:active{transform:scale(.96)}
+/* 알림은 위쪽에 (아래 버튼을 가리지 않게) */
+.toast{top:calc(150px + env(safe-area-inset-top,0px));bottom:auto}
+
+.fit-box .tk-ctl{gap:10px;margin-top:.35em}
+.fit-box .tk-ctl .tk-b{font-size:22px!important;min-width:118px;min-height:52px;height:52px;padding:0 18px;border-radius:14px;line-height:1}
 </style>
 </head>
 <body>
@@ -1610,7 +1621,7 @@ function renderSlide(sl, ctx){
       return `<div class="fit-box${cur>=0?" has-cur":""}">${paras}</div>`+((ctx.live && cur>=0)?readingPanel(sentInfo(P,cur),R):"");
     }
     case "task": {
-      return `<div class="fit-box task"><div class="tk-t">${inline((UIEN&&(!sl.title||sl.title==="문제를 풀어 보세요"))?"Solve the questions":(sl.title||"문제를 풀어 보세요"))}</div>${sl.body?`<div class="tk-b">${inline(sl.body)}</div>`:""}<div class="tm tmr-txt">${fmtT(tmrSecs(sl))}</div></div>`;
+      return `<div class="fit-box task"><div class="tk-t">${inline((UIEN&&(!sl.title||sl.title==="문제를 풀어 보세요"))?"Solve the questions":(sl.title||"문제를 풀어 보세요"))}</div>${sl.body?`<div class="tk-b">${inline(sl.body)}</div>`:""}<div class="tm tmr-txt">${fmtT(tmrSecs(sl))}</div>${ctx.live?`<div class="tk-ctl"><button class="tk-b go" data-act="tm-go">▶ ${L("시작","Start")}</button><button class="tk-b" data-act="tm-pause">❚❚ ${L("멈춤","Pause")}</button><button class="tk-b" data-act="tm-reset">↺ ${L("처음으로","Reset")}</button></div>`:""}</div>`;
     }
     case "draw": {
       return `<div class="drawwrap">${sl.body?`<div class="dguide">${inline(sl.body)}</div>`:""}</div>`;
@@ -1964,7 +1975,7 @@ function renderClass(){
     : (sl.type==="structure" && sl.blank) ? `<div class="tools"><button class="tg${S.reveal.hint?" on":""}" data-rv="hint">${L("힌트","Hint")}</button><button class="tg" data-act="sbk-reset">${L("다시 가리기","Hide all")}</button></div>`
     : sl.type==="vocab" ? `<div class="tools">${S.reveal.vlist?`<button class="tg${S.reveal.cover?" on":""}" data-rv="cover">${L("뜻 가리기","Hide meanings")}</button>`:`<button class="tg" data-act="vq-dir">${S.reveal.dir==="ke"?L("한→영","KO→EN"):L("영→한","EN→KO")}</button><button class="tg" data-act="vq-shuf">${L("섞기","Shuffle")}</button>`}<button class="tg${S.reveal.vlist?" on":""}" data-act="vq-list">${L("목록으로","List")}</button></div>`
     : sl.type==="question" ? `<div class="tools"><button class="tg${S.reveal.tally?" on":""}" data-rv="tally">${L("손 들기 집계","Hand count")}</button><button class="tg" data-act="tl-reset">${L("0으로","Zero")}</button><button class="tg${S.reveal.answer?" on":""}" data-rv="answer">${L("정답","Answer")}</button></div>`
-    : sl.type==="task" ? `<div class="tools"><button class="tg" data-act="tm-go">${L("시작","Start")}</button><button class="tg" data-act="tm-pause">${L("멈춤","Pause")}</button><button class="tg" data-act="tm-reset">${L("처음으로","Reset")}</button></div>` : "";
+    : "";
   app.innerHTML = `
   <header class="bar">
     <button class="ib" data-act="drawer" aria-label="Contents">${L("목차","Contents")}</button>
@@ -1995,7 +2006,7 @@ function renderClass(){
     <span class="count">${vis.indexOf(S.cur.idx)+1} / ${vis.length}</span>
     <span class="navpair"><button class="nav nav-back" data-act="prev" aria-label="이전">‹</button><button class="nav" data-act="next">${L("다음 ›","Next ›")}</button></span>
   </footer>`:""}
-  ${gtOn()&&S.sheet!=="timer"?`<button class="gtchip${S.gtDone?" done":""}" data-act="timer" aria-label="타이머"><span class="tmr-txt">${fmtT(gtSecs())}</span></button>`:""}
+  ${gtOn()&&S.sheet!=="timer"&&!(sl&&sl.type==="task")?`<button class="gtchip${S.gtDone?" done":""}" data-act="timer" aria-label="타이머"><span class="tmr-txt">${fmtT(gtSecs())}</span></button>`:""}
   ${asleep?`<div class="sleep" role="status"><span>${L("연결이 멈췄어요. 선생님 칠판을 따라가려면 다시 연결하세요.","Connection paused. Reconnect to follow the teacher.")}</span><button class="btn pri sm" data-act="wake">${L("다시 연결","Reconnect")}</button></div>`:""}
   ${S.drawer?renderDrawer():""}
   ${S.sheet?renderSheet():""}`;
