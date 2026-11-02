@@ -1222,6 +1222,8 @@ const S = {
 try{ const sc = parseFloat(localStorage.getItem("sb_scale")); if(sc) S.scale = sc; }catch(e){}
 try{ S.cls=localStorage.getItem("cb_cls")||null; }catch(e){}
 
+/* 내 컴퓨터(학생이 만질 일 없는 기기): 다시 열어도 바로 열리고, 번호·꾹 누르기 없음 */
+function isMe(){ try{ return localStorage.getItem("cb_me")==="1"; }catch(e){ return false; } }
 /* ================= helpers ================= */
 const $ = (sel,root=document)=>root.querySelector(sel);
 const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1896,11 +1898,13 @@ async function loadData(){
 }
 async function boot(){
   render();
+  /* 칠판·컴퓨터(넓은 화면)는 QR로만 입장: 예전에 남은 '30일 기억' 로그인은 열 때 지움. 폰(좁은 화면)은 그대로 유지 */
+  try{ if(innerWidth>=760 && !PAIR_FROM_URL && localStorage.getItem("cb_tok")){ API.req("POST","/api/logout").catch(()=>{}); API.setToken(""); } }catch(e){}
   if(API.token){ try{ const me=await API.req("GET","/api/me"); if(me.admin) S.isAdmin=true; else API.setToken(""); }catch(e){} }
   if(PAIR_FROM_URL) S.pendingPair=PAIR_FROM_URL;
   if(!S.isAdmin){ S.dbState="ok"; if(S.pendingPair){ S.loginTo="admin"; S.sheet="login"; setTimeout(()=>{ const p=$("#pw"); if(p) p.focus(); },80); } render(); return; }
   const toAdmin=(PAIR_FROM_URL || innerWidth<760 || lastMode()!=="class");
-  if(!toAdmin) S.bootCover=true;
+  if(!toAdmin && !isMe()) S.bootCover=true;
   await afterLogin(toAdmin ? "admin" : "class");
 }
 /* 로그인(비밀번호·폰 QR) 뒤: 자료를 불러오고 칠판(수업 화면) 또는 관리자 화면으로 */
@@ -2125,7 +2129,7 @@ function renderSheet(){
     <h3 class="mini-t">${esc(S.pinTitle||"")}${S.pinTitle===HOME_CLS?` <span class="home-ball">⚽</span>`:""}</h3>
     ${Date.now()<(+localStorage.getItem("cb_pinlock")||0)?`<p class="pin-lock">잠시 후 다시</p>`:""}
     <div class="pin-dots${S.pinErr?" err":""}">${[0,1,2,3].map(i=>`<i class="${i<n?"on":""}"></i>`).join("")}</div>
-    <div class="pin-keys">${(()=>{ if(!S.pinOrder){ const d=[0,1,2,3,4,5,6,7,8,9]; for(let i=9;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; } S.pinOrder=[...d.slice(0,9),"",d[9],"⌫"]; } return S.pinOrder; })().map(k=>k===""?`<span></span>`:`<button class="pk" data-pin="${k}">${k}</button>`).join("")}</div></div>`; }
+    <div class="pin-keys">${(()=>{ if(!S.pinOrder){ const d=[0,1,2,3,4,5,6,7,8,9]; for(let i=9;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; } S.pinOrder=[...d.slice(0,9),"",d[9],"⌫"]; } return S.pinOrder; })().map(k=>k===""?`<span></span>`:`<button class="pk" data-pin="${k}">${k}</button>`).join("")}</div><button class="linkbtn" data-act="lockdev">QR로 열기</button></div>`; }
   if(S.sheet==="paste"){
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="분석기에서 가져오기" style="width:min(640px,94vw)">
     <h3>지문분석기에서 가져오기</h3>
@@ -2173,7 +2177,7 @@ function renderSheet(){
   if(S.sheet==="login") return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="비밀번호">
     <h3 class="mini-t">${S.pendCls?esc(S.pendCls):(S.pendingPair?"입장":"ENGLISH")}</h3>
     <div class="field"><input class="inp" id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"></div>
-    <label class="remem"><input type="checkbox" id="remember" checked> 30일 기억</label>
+    <label class="remem"><input type="checkbox" id="remember"${innerWidth<760?" checked":""}> 30일 기억</label>
     <div class="err" id="pwerr"></div>
     <button class="btn pri big" data-act="dologin">입장</button></div>`;
   return "";
@@ -2456,7 +2460,7 @@ function renderSettings(){
     <div class="code-in"><input class="inp" id="pinset" type="password" inputmode="numeric" placeholder="숫자 4~8자리" autocomplete="new-password"><button class="btn pri" data-act="pin-save">정하기</button></div>
     ${S.cfg&&S.cfg.pinHash?'<button class="btn sm" data-act="pin-clear" style="margin-top:8px">번호 없애기</button>':""}</div>
   <div class="r-card"><h5>이 기기</h5>
-    <button class="btn" data-act="forget">이 기기 로그아웃</button></div>
+    <div class="row-btns"><button class="btn${isMe()?" pri":""}" data-act="meset">${isMe()?"내 컴퓨터로 쓰는 중 · 해제":"내 컴퓨터로 쓰기"}</button><button class="btn" data-act="forget">이 기기 로그아웃</button></div></div>
   <div class="r-card"><h5>자동 백업 (최근 14일)</h5><div id="bklist" class="bk-list"><span class="help">불러오는 중…</span></div></div>
   <div class="r-card"><h5>모든 기기 로그아웃</h5><button class="btn warn" data-act="logoutall">모든 기기 로그아웃</button></div>`;
 }
@@ -2478,14 +2482,14 @@ document.addEventListener("click", async e=>{
   if(ds.bkday){ const d=ds.bkday; if(!confirm(d+" 상태로 되돌릴까요?\n지금 자료는 오늘 날짜 백업으로 남아요.")) return;
     try{ await API.req("POST","/api/backups/restore",{day:d}); await loadData(); S.draft=null; S.editPid=null; toast(d.slice(5).replace("-","월 ")+"일 상태로 되돌렸어요"); renderSettings(); }catch(x){ toast(x.message||"되돌리지 못했어요"); } return; }
   if(ds.evdel!=null){ S.evt=S.evt||{}; (S.evt.events||[]).splice(+ds.evdel,1); return renderSettings(); }
-  if((ds.lockcls || ds.act==="bookpw") && document.body.classList.contains("on-cover") && !S.holdOK) return;
+  if((ds.lockcls || ds.act==="bookpw") && document.body.classList.contains("on-cover") && !S.holdOK && !isMe()) return;
   S.holdOK=false;
   if(ds.lockcls){ const c=ds.lockcls; try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(x){}
     const wait=c===HOME_CLS?1100:0; /* 담임 반은 공이 통통 튀는 걸 먼저 보여 주고 */
     if(!S.isAdmin){ S.pendCls=c; S.sheet=null; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ if(S.pendCls===c && !S.isAdmin){ S.sheet="teacher"; render(); } },wait); return; }
     const startC=()=>{ setCls(c,true); S.doneP={}; S.blank=false; const n=nextFor(c); toast(c+" 수업 시작"); if(n&&n.pid) return go(n.pid,n.idx); pushLive(); render(); };
     const opened=Date.now()<(S.unlockUntil||0); if(opened){ S.unlockUntil=0; pushLive(); }
-    if(S.cfg && S.cfg.pinHash && !opened){ S.pinNext=startC; S.pinTitle=c; S.pinBuf=""; S.pendCls=c; S.sheet=null; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ S.sheet="pin"; render(); },wait); return; }
+    if(S.cfg && S.cfg.pinHash && !opened && !isMe()){ S.pinNext=startC; S.pinTitle=c; S.pinBuf=""; S.pendCls=c; S.sheet=null; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ S.sheet="pin"; render(); },wait); return; }
     if(wait){ S.pendCls=c; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ S.pendCls=null; startC(); },wait); return; }
     return startC(); }
   if(ds.cls){ setCls(S.cls===ds.cls?null:ds.cls); S.doneP={}; return rerenderHere(); }
@@ -2594,17 +2598,18 @@ document.addEventListener("click", async e=>{
     case "bigger": return setScale(S.scale+.1);
     case "size-reset": return setScale(1);
     case "full": S.sheet=null; render(); try{ document.fullscreenElement? document.exitFullscreen() : await document.documentElement.requestFullscreen(); }catch(err){ toast("브라우저 메뉴의 전체 화면을 써 주세요"); } return;
+    case "lockdev": { const c=S.pendCls; S.pinOrder=null; S.pinNext=null; S.pinBuf=""; S.sheet=null; await lockDevice(); S.pendCls=c; S.sheet="teacher"; return render(); }
     case "teacher": S.sheet="teacher"; return render();
     case "pair": return startPair();
     case "bookpw": S.pendCls=null; S.sheet=null; clearTimeout(S.homeT);
       if(!S.isAdmin){ S.sheet="teacher"; return render(); }
-      if(S.isAdmin){ const opened=Date.now()<(S.unlockUntil||0); if(opened){ S.unlockUntil=0; pushLive(); return startPrep(); } if(S.cfg && S.cfg.pinHash){ S.pinNext=()=>startPrep(); S.pinTitle="ENGLISH"; S.pinBuf=""; S.sheet="pin"; return render(); } return startPrep(); }
+      if(S.isAdmin){ const opened=Date.now()<(S.unlockUntil||0); if(opened){ S.unlockUntil=0; pushLive(); return startPrep(); } if(S.cfg && S.cfg.pinHash && !isMe()){ S.pinNext=()=>startPrep(); S.pinTitle="ENGLISH"; S.pinBuf=""; S.sheet="pin"; return render(); } return startPrep(); }
     case "pwopen": S.loginTo=(innerWidth<760)?"admin":"class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwclass": S.loginTo="class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwlogin": S.loginTo="admin"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "dologin": {
       const pw=$("#pw").value, err=$("#pwerr");
-      try{ const r=await API.req("POST","/api/login",{password:pw, remember:$("#remember").checked}); API.setToken(r.token,$("#remember").checked); }
+      try{ const r=await API.req("POST","/api/login",{password:pw, remember:$("#remember").checked}); API.setToken(r.token,$("#remember").checked); try{ if($("#remember").checked) localStorage.setItem("cb_me","1"); }catch(e){} }
       catch(x){ err.textContent = x.status===401 ? "비밀번호가 맞지 않습니다." : (x.message||"로그인하지 못했습니다."); return; }
       if(S.mode==="admin"){ S.sheet=null; S.isAdmin=true; render(); toast("다시 로그인했습니다. 저장을 눌러 주세요"); return; }
       S.sheet=null; await afterLogin(S.pendingPair ? "admin" : (S.loginTo||"admin")); return;
@@ -2627,8 +2632,9 @@ document.addEventListener("click", async e=>{
       const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,1)],{type:"application/json"}));
       const d=new Date(); a.download=`수업보드백업_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
       document.body.appendChild(a); a.click(); a.remove(); return; }
-    case "logoutall": if(!confirm("모든 기기를 로그아웃할까요?\n이 기기도 포함됩니다.")) return; try{ await API.req("POST","/api/logout-all"); API.setToken(""); try{localStorage.removeItem("cb_tok");}catch(e){} S.isAdmin=false; S.mode="class"; setLastMode("class"); toast("전체 로그아웃했습니다"); render(); }catch(x){ toast(x.message||"로그아웃하지 못했습니다"); } return;
-    case "forget": await API.req("POST","/api/logout").catch(()=>{}); API.setToken(""); S.isAdmin=false; S.mode="class"; render(); toast("로그아웃했습니다"); return;
+    case "logoutall": if(!confirm("모든 기기를 로그아웃할까요?\n이 기기도 포함됩니다.")) return; try{ localStorage.removeItem("cb_me"); await API.req("POST","/api/logout-all"); API.setToken(""); try{localStorage.removeItem("cb_tok");}catch(e){} S.isAdmin=false; S.mode="class"; setLastMode("class"); toast("전체 로그아웃했습니다"); render(); }catch(x){ toast(x.message||"로그아웃하지 못했습니다"); } return;
+    case "meset": try{ if(isMe()) localStorage.removeItem("cb_me"); else localStorage.setItem("cb_me","1"); }catch(x){} toast(isMe()?"이 기기를 내 컴퓨터로 정했어요":"내 컴퓨터 설정을 풀었어요"); return renderSettings();
+    case "forget": try{ localStorage.removeItem("cb_me"); }catch(x){} await API.req("POST","/api/logout").catch(()=>{}); API.setToken(""); S.isAdmin=false; S.mode="class"; render(); toast("로그아웃했습니다"); return;
   }
 });
 document.addEventListener("input", e=>{
@@ -2728,7 +2734,7 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-wrap]"); 
 /* 대기 화면: 반 숫자·책 그림은 꾹(0.8초) 눌러야 반응 — 학생들의 장난 클릭 막기 */
 (function(){ let t=null, el=null;
   const cancel=()=>{ clearTimeout(t); t=null; if(el) el.classList.remove("holding"); el=null; };
-  document.addEventListener("pointerdown",e=>{ S.eatClick=false; if(!document.body.classList.contains("on-cover")) return;
+  document.addEventListener("pointerdown",e=>{ S.eatClick=false; if(isMe() || !document.body.classList.contains("on-cover")) return;
     const b=e.target.closest("[data-lockcls],.cv-markbtn"); if(!b) return; cancel(); el=b; b.classList.add("holding");
     t=setTimeout(()=>{ const x=el; cancel(); if(!x) return; S.holdOK=true; x.click(); S.eatClick=true; clearTimeout(S.eatT); S.eatT=setTimeout(()=>{ S.eatClick=false; },3000); },800); },true);
   /* 꾹 누르기가 끝나고 손을 뗄 때 생기는 '톡' 한 번만 무시 */
