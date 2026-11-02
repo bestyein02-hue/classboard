@@ -1099,6 +1099,47 @@ body.on-cover .sheet.smini .mini-t,body.on-cover .cv-dday b{font-family:Fredoka,
 
 .fit-box .tk-ctl{gap:10px;margin-top:.35em}
 .fit-box .tk-ctl .tk-b{font-size:22px!important;min-width:118px;min-height:52px;height:52px;padding:0 18px;border-radius:14px;line-height:1}
+
+/* 번호 패드 */
+.pinpad{width:min(340px,90vw)}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin:4px 0 18px}
+.pin-dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);display:block}
+.pin-dots i.on{background:var(--orange);border-color:var(--orange)}
+.pin-dots.err{animation:pinshake .35s}
+.pin-dots.err i{border-color:#D23B32}
+@keyframes pinshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pin-keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pk{height:64px;border-radius:16px;border:1.5px solid var(--line);background:#fff;font-family:Fredoka,var(--f-ui);font-weight:600;font-size:28px;color:var(--ink)}
+.pk:active{background:#FFF1E6;border-color:var(--orange)}
+
+/* 꾹 누르는 동안 차오르는 표시 */
+.lock-cls .cls.num,.cv-markbtn{position:relative;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.lock-cls .cls.num::before,.cv-markbtn::before{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(224,96,31,.28);transform:scaleY(0);transform-origin:bottom;pointer-events:none}
+.lock-cls .cls.num.holding::before,.cv-markbtn.holding::before{transform:scaleY(1);transition:transform .8s linear}
+.cv-markbtn::before{background:rgba(255,255,255,.35);border-radius:12px}
+.pin-lock{color:#D23B32;font-weight:700;margin:-6px 0 8px}
+
+.r-open{width:100%;min-height:62px;font-size:22px;font-weight:800;margin-bottom:10px;border-radius:16px;background:#1B1B1B;border-color:#1B1B1B;color:#fff}
+.r-open.on{background:var(--orange);border-color:var(--orange)}
+
+#rfab{position:fixed;right:14px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:35;display:flex;align-items:center;gap:6px;padding:12px 18px;border:0;border-radius:999px;background:#1B1B1B;color:#fff;font-weight:800;font-size:17px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-family:var(--f-ui)}
+#rfab span{font-size:18px}
+
+/* 폰 떠 있는 버튼 */
+#rfab{position:fixed;right:12px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:35;display:flex;flex-direction:column;align-items:flex-end;gap:8px;padding:0;background:none;border:0;border-radius:0;box-shadow:none}
+#rfab button{border:0;border-radius:999px;padding:12px 18px;font-size:16px;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.22);font-family:var(--f-ui)}
+#rfab .fab-open{background:#1B1B1B;color:#fff}
+#rfab .fab-open.on{background:var(--orange)}
+#rfab .fab-rem{background:#fff;color:var(--ink)}
+
+/* 폰은 리모컨 위주: 위쪽 탭 줄을 숨기고 화면을 리모컨으로만 */
+.r-links{display:none}
+@media (max-width:760px){
+  body.mode-admin.tab-remote .adm-top{display:none}
+  body.mode-admin.tab-remote .remote{padding-top:max(14px,env(safe-area-inset-top,0px))}
+  .r-links{display:flex;justify-content:center;align-items:center;gap:8px;margin:18px 0 8px;color:#B5AEA2;font-size:14px}
+  .r-links button{background:none;border:0;color:#8A847A;font-size:14px;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
+}
 </style>
 </head>
 <body>
@@ -1769,7 +1810,7 @@ function pushLive(){
   if(!S.isAdmin) return;
   clearTimeout(liveTimer);
   liveTimer = setTimeout(()=>{
-    const body = {pid:S.cur.pid, idx:S.cur.idx, reveal:S.reveal, scale:S.scale, gt:S.gtm||null, today:S.today, cls:S.cls||null, blank:!!S.blank, endAt:S.endAt||0, ts:Date.now(), by:S.session};
+    const body = {pid:S.cur.pid, idx:S.cur.idx, reveal:S.reveal, scale:S.scale, gt:S.gtm||null, today:S.today, cls:S.cls||null, blank:!!S.blank, endAt:S.endAt||0, unlockUntil:S.unlockUntil||0, ts:Date.now(), by:S.session};
     S.lastLiveTs = body.ts;
     liveQueue = liveQueue.then(()=>API.req("POST","/api/live",body)).catch(()=>{});
   },120);
@@ -1834,13 +1875,13 @@ async function approvePending(){
 }
 async function startPair(){
   stopPairPoll(); S.pairCode="…"; S.sheet="pair"; render();
-  try{ const r=await API.req("POST","/api/pair"); S.pairCode=r.code; S.pairAt=Date.now(); }
+  try{ const r=await API.req("POST","/api/pair"); S.pairCode=r.code; S.pairKey=r.key||""; S.pairAt=Date.now(); }
   catch(e){ S.pairCode="----"; render(); toast("번호를 받지 못했습니다"); return; }
   render();
   pairTimer=setInterval(async()=>{
     if(S.sheet!=="pair" || Date.now()-S.pairAt>5*60e3){ stopPairPoll(); return; }
-    try{ const r=await API.req("GET","/api/pair/"+S.pairCode);
-      if(r.status==="ok"){ stopPairPoll(); API.setToken(r.token,false); S.sheet=null; await afterLogin("class"); toast("칠판을 열었습니다"); }
+    try{ const r=await API.req("GET","/api/pair/"+S.pairCode+(S.pairKey?"?k="+encodeURIComponent(S.pairKey):""));
+      if(r.status==="ok"){ stopPairPoll(); API.setToken(r.token,false); S.sheet=null; await afterLogin("class"); }
       else if(r.status==="expired"){ stopPairPoll(); }
     }catch(e){}
   },2000);
@@ -1855,7 +1896,9 @@ async function boot(){
   if(API.token){ try{ const me=await API.req("GET","/api/me"); if(me.admin) S.isAdmin=true; else API.setToken(""); }catch(e){} }
   if(PAIR_FROM_URL) S.pendingPair=PAIR_FROM_URL;
   if(!S.isAdmin){ S.dbState="ok"; if(S.pendingPair){ S.loginTo="admin"; S.sheet="login"; setTimeout(()=>{ const p=$("#pw"); if(p) p.focus(); },80); } render(); return; }
-  await afterLogin((PAIR_FROM_URL || lastMode()!=="class") ? "admin" : "class");
+  const toAdmin=(PAIR_FROM_URL || innerWidth<760 || lastMode()!=="class");
+  if(!toAdmin) S.bootCover=true;
+  await afterLogin(toAdmin ? "admin" : "class");
 }
 /* 로그인(비밀번호·폰 QR) 뒤: 자료를 불러오고 칠판(수업 화면) 또는 관리자 화면으로 */
 async function afterLogin(to){
@@ -1867,6 +1910,7 @@ async function afterLogin(to){
   if(to==="admin"){ enterAdmin(); approvePending(); }
   else { S.mode="class"; S.sheet=null; setLastMode("class");
     if(S.pendCls){ const c=S.pendCls; S.pendCls=null; setCls(c,true); S.doneP={}; const n=nextFor(c); if(n&&n.pid){ S.cur={pid:n.pid,idx:n.idx}; S.reveal={}; } S.blank=false; pushLive(); }
+    else if(S.pairSetup || S.bootCover){ S.pairSetup=false; S.bootCover=false; S.blank=true; setCls(null,true); }
     else if(!S.pendingPair){ startPrep(true); }
     render(); }
 }
@@ -1910,11 +1954,13 @@ async function pollLive(){
     const mid=d?(d.by+":"+d.ts):"";
     if(d && d.by!==S.session && mid!==S.lastMid){
       S.lastMid=mid; S.lastLiveTs=d.ts;
+      /* 대기 화면(표지)에 있는 칠판은 다른 교실·기기의 수업 신호를 따라가지 않음 — 폰의 '칠판 열기'만 받음 */
+      if(S.mode==="class" && document.body.classList.contains("on-cover")){ if(d.unlockUntil) S.unlockUntil=d.unlockUntil; if(S.endSeen===undefined) S.endSeen=d.endAt||0; polling=false; return; }
       S.blank=!!d.blank;
       if(S.endSeen===undefined) S.endSeen=d.endAt||0;
       else if(d.endAt && d.endAt!==S.endSeen){ S.endSeen=d.endAt; S.drawData={}; S.drawBackup={}; const remembered=(()=>{ try{ return !!localStorage.getItem("cb_tok"); }catch(e){ return false; } })(); if(!remembered && S.mode==="class"){ polling=false; return lockDevice(); } }
       if(d.pid && getP(d.pid)) S.cur={pid:d.pid, idx:d.idx||0};
-      S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); }  if("cls" in d) setCls(d.cls||null,true);
+      S.reveal=d.reveal||{}; if(d.scale) S.scale=d.scale; if(d.gt && d.gt.at!==S.gtMsgAt){ S.gtMsgAt=d.gt.at; S.gtm=d.gt; gtApply(); }  if("cls" in d) setCls(d.cls||null,true); if(d.unlockUntil) S.unlockUntil=d.unlockUntil;
       S.remoteSeen=Date.now(); softRender();
     }
   }catch(e){}
@@ -1928,8 +1974,26 @@ function softRender(){
 }
 
 /* ================= RENDER ================= */
+
+/* 폰: 어느 화면에서든 오른쪽 아래 '리모컨' 버튼 (리모컨 화면에서는 숨김) */
+function remoteFab(){
+  /* 폰: 어느 화면에서든 오른쪽 아래에 [칠판 열기] [리모컨] 버튼 */
+  let g=document.getElementById("rfab"); const old=document.getElementById("rfab"); 
+  const phone=innerWidth<760, onRemote=S.mode==="admin" && S.adminTab==="remote";
+  const show=phone && S.isAdmin && !onRemote && !document.body.classList.contains("on-cover");
+  if(!show){ if(g) g.remove(); return; }
+  if(!g || g.tagName!=="DIV"){ if(old) old.remove(); g=document.createElement("div"); g.id="rfab"; document.body.appendChild(g);
+    g.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; e.stopPropagation();
+      if(b.dataset.fab==="open"){ S.unlockUntil=Date.now()+60e3; pushLive(); toast("1분 안에 칠판에서 반을 꾹 누르세요"); remoteFab(); if(S.mode==="admin"&&S.adminTab==="remote") renderRemote(); setTimeout(remoteFab,61e3); }
+      else { if(S.dirty && !confirm("저장하지 않은 수정이 있습니다. 리모컨으로 갈까요?")) return; S.dirty=false; S.sheet=null; S.drawer=false; S.mode="admin"; S.adminTab="remote"; setLastMode("admin"); render(); } }); }
+  const opened=Date.now()<(S.unlockUntil||0);
+  g.innerHTML=`<button type="button" data-fab="remote" class="fab-rem">📱 리모컨</button>`;
+}
+window.addEventListener("resize",()=>setTimeout(remoteFab,50));
 function render(){
   if(S.drawing && S.mode==="class") return;
+  if(S.mode==="admin") document.body.classList.remove("on-cover");
+  setTimeout(remoteFab,0);
   document.body.dataset.bf=(evtCfg().boardFont)||"konkon";
   document.body.classList.toggle("mode-admin", S.mode==="admin");
   document.documentElement.style.setProperty("--fs", S.scale);
@@ -2053,6 +2117,12 @@ function renderSheet(){
     ${ios?`<p>Safari 아래쪽 <b>공유 버튼(□↑)</b> → <b>홈 화면에 추가</b>를 누르세요. 주황 책 아이콘이 생겨요.</p>`
         :`<p>브라우저 주소창 오른쪽의 <b>설치 아이콘(⊕ 또는 모니터 모양)</b>을 누르거나, 메뉴(⋮) → <b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누르세요.</p><p>전자칠판은 Chrome이나 Edge에서 설치하면 바탕화면 아이콘으로 전체 화면이 바로 열려요.</p>`}
     <div class="row-btns"><button class="btn" data-act="close">닫기</button></div></div>`; }
+  if(S.sheet==="pin"){ const n=(S.pinBuf||"").length;
+    return `<div class="scrim" data-act="close"></div><div class="sheet smini pinpad" role="dialog" aria-label="번호">
+    <h3 class="mini-t">${esc(S.pinTitle||"")}${S.pinTitle===HOME_CLS?` <span class="home-ball">⚽</span>`:""}</h3>
+    ${Date.now()<(+localStorage.getItem("cb_pinlock")||0)?`<p class="pin-lock">잠시 후 다시</p>`:""}
+    <div class="pin-dots${S.pinErr?" err":""}">${[0,1,2,3].map(i=>`<i class="${i<n?"on":""}"></i>`).join("")}</div>
+    <div class="pin-keys">${(()=>{ if(!S.pinOrder){ const d=[0,1,2,3,4,5,6,7,8,9]; for(let i=9;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; } S.pinOrder=[...d.slice(0,9),"",d[9],"⌫"]; } return S.pinOrder; })().map(k=>k===""?`<span></span>`:`<button class="pk" data-pin="${k}">${k}</button>`).join("")}</div></div>`; }
   if(S.sheet==="paste"){
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="분석기에서 가져오기" style="width:min(640px,94vw)">
     <h3>지문분석기에서 가져오기</h3>
@@ -2088,7 +2158,7 @@ function renderSheet(){
     const body = S.isAdmin
       ? `${S.blank?`<div class="row-btns" style="margin-bottom:10px">${B("unblank","칠판 다시 띄우기",1)}</div>`:""}<div class="ye-grid">${B("prep","준비 화면",S.blank)}${B("admin","관리자 화면 열기",!S.blank)}${B("picker","학생 뽑기")}${B("review","복습 자료 저장 (이미지)")}${B("full",fs?"전체화면 끝내기":"전체화면")}${B("uilang",UIEN?"화면 글자 한국어로":"Screen text in English")}</div>
 `
-      : `<button class="btn pri big" data-act="pair">수업 시작</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
+      : `<button class="btn pri big" data-act="pair">${S.pendCls?"수업 시작":"열기"}</button><button class="linkbtn" data-act="pwopen">비밀번호로 열기</button>`;
     if(!S.isAdmin) return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="수업 시작"><h3 class="mini-t">${S.pendCls?esc(S.pendCls)+(S.pendCls===HOME_CLS?` <span class="home-ball">⚽</span>`:""):"ENGLISH"}</h3>${body}</div>`;
     return `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-label="YE 메뉴"><h3>메뉴</h3>${body}</div>`;
   }
@@ -2100,7 +2170,7 @@ function renderSheet(){
   if(S.sheet==="login") return `<div class="scrim" data-act="close"></div><div class="sheet smini" role="dialog" aria-label="비밀번호">
     <h3 class="mini-t">${S.pendCls?esc(S.pendCls):(S.pendingPair?"입장":"ENGLISH")}</h3>
     <div class="field"><input class="inp" id="pw" type="password" autocomplete="current-password" placeholder="비밀번호"></div>
-    <label class="remem"><input type="checkbox" id="remember"${innerWidth<760?" checked":""}> 30일 기억</label>
+    <label class="remem"><input type="checkbox" id="remember" checked> 30일 기억</label>
     <div class="err" id="pwerr"></div>
     <button class="btn pri big" data-act="dologin">입장</button></div>`;
   return "";
@@ -2112,7 +2182,7 @@ function drawQR(){
 
 /* ---------- admin ---------- */
 function renderAdmin(){
-  const app=$("#app");
+  const app=$("#app"); document.body.classList.toggle("tab-remote", S.adminTab==="remote");
   app.innerHTML = `
   <header class="adm-top">
     <b class="adm-brand"><svg viewBox="0 0 64 40" aria-hidden="true"><path fill="#E0601F" d="M31 11 C24 6.5 14 6 6 8.5 L6 35 C14 32.5 24 32.8 31 37 Z"/><path fill="#E0601F" d="M33 11 C40 6.5 50 6 58 8.5 L58 35 C50 32.5 40 32.8 33 37 Z"/></svg><span>관리자</span></b>
@@ -2363,7 +2433,8 @@ function renderRemote(){
   ${help?`<div class="r-card r-help">${help}</div>`:""}
   <details class="r-card r-more"${S.blank||S.moreOpen?" open":""} ontoggle="S.moreOpen=this.open"><summary>더보기</summary><div class="r-toggles">
     ${S.blank?`<button class="tg on" data-act="unblank">다시 보이기</button>`:`<button class="tg" data-act="blank-board">잠깐 가리기</button>`}<button class="tg" data-act="end-class">수업 끝</button><button class="tg" data-act="a-clearall">필기 지우기</button></div>
-    <div class="code-in" style="margin-top:10px"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="칠판 번호"><button class="btn pri" data-act="unlock">열기</button></div></details>
+    <div class="code-in" style="margin-top:10px"><input class="inp" id="pcode" inputmode="numeric" maxlength="4" placeholder="칠판에 뜬 번호 4자리" autocomplete="off"><button class="btn pri" data-act="unlock">열기</button></div></details>
+  <div class="r-links"><button data-tab="edit">자료 편집</button><span>·</span><button data-tab="settings">설정</button><span>·</span><button data-act="exitadmin">수업 화면</button></div>
   <div class="r-pad"><button class="nav" data-act="prev">‹ 이전</button><button class="nav" data-act="next">다음 ›</button></div>`;
 }
 function renderSettings(){
@@ -2389,17 +2460,29 @@ function renderSettings(){
 /* ================= events ================= */
 document.addEventListener("click", async e=>{
   if(S.justDragged && Date.now()-S.justDragged<350){ e.preventDefault(); return; }
-  const t = e.target.closest("[data-act],[data-bkday],[data-evdel],[data-lockcls],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
+  const t = e.target.closest("[data-act],[data-pin],[data-bkday],[data-evdel],[data-lockcls],[data-cls],[data-clsgo],[data-pdone],[data-go],[data-gt],[data-gtadd],[data-rs],[data-atool],[data-asize],[data-acolor],[data-bk],[data-cz],[data-sinc],[data-pinc],[data-tl],[data-today],[data-tmove],[data-pick],[data-choice],[data-vocab],[data-tr],[data-sent],[data-tab],[data-edit],[data-sel],[data-addslide],[data-addp],[data-uren],[data-udel],[data-umove],[data-pmove],[data-smove],[data-radd],[data-rdel],[data-rmove],[data-rv]");
   if(!t) return;
   const ds=t.dataset;
   if(ds.go!=null){ return go(S.cur.pid, +ds.go); }
+  if(ds.pin!=null){ const lockU=+localStorage.getItem("cb_pinlock")||0; if(Date.now()<lockU){ S.pinBuf=""; render(); return; }
+    const k=ds.pin; S.pinErr=false; if(k==="⌫") S.pinBuf=(S.pinBuf||"").slice(0,-1); else S.pinBuf=((S.pinBuf||"")+k).slice(0,8);
+    render(); const v=S.pinBuf;
+    if(v.length>=4){ const h=await pinHash(v); if(S.cfg && h===S.cfg.pinHash){ localStorage.setItem("cb_pinfail","0"); S.pinOrder=null; const fn=S.pinNext; S.pinNext=null; S.pinBuf=""; S.sheet=null; S.pendCls=null; if(fn) fn(); else render(); }
+      else if(v.length>=8 || v.length===(S.cfg.pinLen||4)){ S.pinErr=true; S.pinBuf=""; const nf=(+localStorage.getItem("cb_pinfail")||0)+1;
+        if(nf>=5){ localStorage.setItem("cb_pinlock",String(Date.now()+5*60e3)); localStorage.setItem("cb_pinfail","0"); } else localStorage.setItem("cb_pinfail",String(nf));
+        render(); } }
+    return; }
   if(ds.bkday){ const d=ds.bkday; if(!confirm(d+" 상태로 되돌릴까요?\n지금 자료는 오늘 날짜 백업으로 남아요.")) return;
     try{ await API.req("POST","/api/backups/restore",{day:d}); await loadData(); S.draft=null; S.editPid=null; toast(d.slice(5).replace("-","월 ")+"일 상태로 되돌렸어요"); renderSettings(); }catch(x){ toast(x.message||"되돌리지 못했어요"); } return; }
   if(ds.evdel!=null){ S.evt=S.evt||{}; (S.evt.events||[]).splice(+ds.evdel,1); return renderSettings(); }
+  if((ds.lockcls || ds.act==="bookpw") && document.body.classList.contains("on-cover") && !S.holdOK) return;
+  S.holdOK=false;
   if(ds.lockcls){ const c=ds.lockcls; try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); }catch(x){}
     const wait=c===HOME_CLS?1100:0; /* 담임 반은 공이 통통 튀는 걸 먼저 보여 주고 */
     if(!S.isAdmin){ S.pendCls=c; S.sheet=null; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ if(S.pendCls===c && !S.isAdmin){ S.sheet="teacher"; render(); } },wait); return; }
     const startC=()=>{ setCls(c,true); S.doneP={}; S.blank=false; const n=nextFor(c); toast(c+" 수업 시작"); if(n&&n.pid) return go(n.pid,n.idx); pushLive(); render(); };
+    const opened=Date.now()<(S.unlockUntil||0); if(opened){ S.unlockUntil=0; pushLive(); }
+    if(S.cfg && S.cfg.pinHash && !opened){ S.pinNext=startC; S.pinTitle=c; S.pinBuf=""; S.pendCls=c; S.sheet=null; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ S.sheet="pin"; render(); },wait); return; }
     if(wait){ S.pendCls=c; render(); clearTimeout(S.homeT); S.homeT=setTimeout(()=>{ S.pendCls=null; startC(); },wait); return; }
     return startC(); }
   if(ds.cls){ setCls(S.cls===ds.cls?null:ds.cls); S.doneP={}; return rerenderHere(); }
@@ -2450,6 +2533,7 @@ document.addEventListener("click", async e=>{
 
   switch(ds.act){
     case "drawer": S.drawer=true; return render();
+    case "board-unlock": S.unlockUntil=Date.now()+60e3; pushLive(); toast("1분 안에 칠판에서 반을 꾹 누르세요"); rerenderHere(); setTimeout(()=>{ if(S.mode==="admin"&&S.adminTab==="remote") renderRemote(); },61e3); return;
     case "prep": S.sheet=null; return startPrep();
     case "ev-add": S.evt=S.evt||{}; S.evt.events=S.evt.events||[]; S.evt.events.push({name:"",date:""}); return renderSettings();
     case "ev-save": return evtSave();
@@ -2463,7 +2547,7 @@ document.addEventListener("click", async e=>{
     case "timer": S.sheet="timer"; return render();
     case "admin": S.sheet="gate"; render(); setTimeout(()=>$("#gpw")?.focus(),60); return;
     case "gate-go": return gateGo();
-    case "pin-save": { const v=($("#pinset")?.value||"").trim(); if(!/^\d{4,8}$/.test(v)){ toast("숫자 4~8자리로 넣어 주세요"); return; } const h=await pinHash(v); try{ await API.put("passages","_cfg",{title:"_cfg",slides:[],pinHash:h}); S.cfg={pinHash:h}; toast("관리자 화면 번호를 정했어요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return; }
+    case "pin-save": { const v=($("#pinset")?.value||"").trim(); if(!/^\d{4,8}$/.test(v)){ toast("숫자 4~8자리로 넣어 주세요"); return; } const h=await pinHash(v); try{ await API.put("passages","_cfg",{title:"_cfg",slides:[],pinHash:h,pinLen:v.length}); S.cfg={pinHash:h,pinLen:v.length}; toast("관리자 화면 번호를 정했어요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return; }
     case "pin-clear": try{ await API.put("passages","_cfg",{title:"_cfg",slides:[]}); S.cfg={}; toast("번호를 없앴어요. 이제 비밀번호로 확인해요"); renderSettings(); }catch(x){ toast("저장하지 못했습니다"); } return;
     case "unblank": S.blank=false; S.sheet=null; pushLive(); toast("칠판을 다시 띄웠어요"); return S.mode==="admin"?renderRemote():render();
     case "blank-board": S.blank=true; S.sheet=null; pushLive(); toast("잠깐 가렸어요"); return S.mode==="admin"&&S.adminTab==="remote"?renderRemote():render();
@@ -2500,7 +2584,7 @@ document.addEventListener("click", async e=>{
     case "a-min": S.annMin=!S.annMin; toast(S.annMin?"필기 멈춤":"필기 켜짐"); return render();
     case "setboard": try{ localStorage.setItem("cb_board","1"); }catch(x){} toast("칠판으로 지정했습니다. 새로고침하면 적용됩니다"); return;
     case "unboard": try{ localStorage.removeItem("cb_board"); }catch(x){} toast("지정을 풀었습니다. 새로고침하면 적용됩니다"); return;
-    case "close": S.drawer=false; S.sheet=null; stopPairPoll(); return render();
+    case "close": S.drawer=false; S.sheet=null; S.pinOrder=null; stopPairPoll(); return render();
     case "prev": return step(-1);
     case "next": return step(1);
     case "smaller": return setScale(S.scale-.1);
@@ -2510,6 +2594,8 @@ document.addEventListener("click", async e=>{
     case "teacher": S.sheet="teacher"; return render();
     case "pair": return startPair();
     case "bookpw": S.pendCls=null; S.sheet=null; clearTimeout(S.homeT);
+      if(!S.isAdmin){ S.sheet="teacher"; return render(); }
+      if(S.isAdmin){ const opened=Date.now()<(S.unlockUntil||0); if(opened){ S.unlockUntil=0; pushLive(); return startPrep(); } if(S.cfg && S.cfg.pinHash){ S.pinNext=()=>startPrep(); S.pinTitle="ENGLISH"; S.pinBuf=""; S.sheet="pin"; return render(); } return startPrep(); }
     case "pwopen": S.loginTo=(innerWidth<760)?"admin":"class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwclass": S.loginTo="class"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
     case "pwlogin": S.loginTo="admin"; S.sheet="login"; render(); setTimeout(()=>$("#pw")?.focus(),50); return;
@@ -2522,7 +2608,7 @@ document.addEventListener("click", async e=>{
     }
     case "exitadmin": return exitAdmin();
     case "answer": return setReveal({answer:!S.reveal.answer});
-    case "unlock": { const c=$("#pcode").value.trim(); if(!/^\d{4}$/.test(c)){ toast("4자리 번호를 넣어 주세요"); return; } try{ await API.req("POST","/api/pair/approve",{code:c}); toast("칠판을 열었습니다"); $("#pcode").value=""; }catch(x){ toast(x.message||"보내지 못했습니다"); } return; }
+    case "unlock": { const c=$("#pcode").value.trim(); if(!/^\d{4}$/.test(c)){ toast("4자리 번호를 넣어 주세요"); return; } try{ await API.req("POST","/api/pair/approve",{code:c}); toast("칠판을 열었어요"); $("#pcode").value=""; }catch(x){ toast(x.message||"보내지 못했습니다"); } return; }
     case "save": return saveDraft();
     case "addunit": { const v=prompt("단원 이름 (예: 수프림 12과)"); if(!v||!v.trim()) return; const id=uid(); try{ await API.put("units",id,{title:v.trim(), order:S.units.length}); S.units.push({id,title:v.trim(),order:S.units.length}); renderTree(); }catch(x){ toast("만들지 못했습니다"); } return; }
     case "delp": { if(!confirm(`‘${S.draft.title}’ 지문을 지울까요? 되돌릴 수 없습니다.`)) return; const id=S.draft.id; await API.del("passages",id); S.passages=S.passages.filter(p=>p.id!==id); S.draft=null; S.editPid=null; S.dirty=false; renderAdminSide(true); return; }
@@ -2544,6 +2630,7 @@ document.addEventListener("click", async e=>{
 });
 document.addEventListener("input", e=>{
   const t=e.target;
+  if(t.id==="pcode"){ t.value=t.value.replace(/\D/g,"").slice(0,4); if(t.value.length===4) $("[data-act=unlock]")?.click(); return; }
   if(S.mode!=="admin" || !S.draft) return;
   if(t.dataset.pf){ S.draft[t.dataset.pf]=t.value; markDirty(); return; }
   if(t.dataset.f || t.dataset.r) readForm(t);
@@ -2634,6 +2721,18 @@ document.addEventListener("click",e=>{ const b=e.target.closest("[data-wrap]"); 
   if(!c){ const clean=sel.replace(/\{(?:빨강|파랑|초록|주황|보라|노랑):(.+?)\}/g,"$1"); ta.value=v.slice(0,a)+clean+v.slice(z); ta.selectionStart=a; ta.selectionEnd=a+clean.length; }
   else { if(a===z){ toast("색을 바꿀 글자를 먼저 드래그해 주세요"); return; } sel=sel.replace(/\{(?:빨강|파랑|초록|주황|보라|노랑):(.+?)\}/g,"$1"); const w="{"+c+":"+sel+"}"; ta.value=v.slice(0,a)+w+v.slice(z); ta.selectionStart=a; ta.selectionEnd=a+w.length; }
   ta.focus(); ta.dispatchEvent(new Event("input",{bubbles:true})); },true);
+
+/* 대기 화면: 반 숫자·책 그림은 꾹(0.8초) 눌러야 반응 — 학생들의 장난 클릭 막기 */
+(function(){ let t=null, el=null;
+  const cancel=()=>{ clearTimeout(t); t=null; if(el) el.classList.remove("holding"); el=null; };
+  document.addEventListener("pointerdown",e=>{ S.eatClick=false; if(!document.body.classList.contains("on-cover")) return;
+    const b=e.target.closest("[data-lockcls],.cv-markbtn"); if(!b) return; cancel(); el=b; b.classList.add("holding");
+    t=setTimeout(()=>{ const x=el; cancel(); if(!x) return; S.holdOK=true; x.click(); S.eatClick=true; clearTimeout(S.eatT); S.eatT=setTimeout(()=>{ S.eatClick=false; },3000); },800); },true);
+  /* 꾹 누르기가 끝나고 손을 뗄 때 생기는 '톡' 한 번만 무시 */
+  document.addEventListener("click",e=>{ if(S.eatClick){ S.eatClick=false; e.stopPropagation(); e.preventDefault(); } },true);
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>document.addEventListener(ev,e=>{ if(el && (ev!=="pointerleave" || e.target===el)) cancel(); },true));
+  document.addEventListener("contextmenu",e=>{ if(e.target.closest("[data-lockcls],.cv-markbtn")) e.preventDefault(); },true);
+})();
 /* swipe on board */
 let tx=null;
 document.addEventListener("touchstart",e=>{ if(S.mode==="class" && e.target.closest(".stage") && !e.target.closest("canvas")) tx=e.touches[0].clientX; },{passive:true});
